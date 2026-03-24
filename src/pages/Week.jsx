@@ -88,10 +88,10 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
                 className="w-full text-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 group hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
                 onClick={() => setEditingCard(card)}
               >
-                <div className="font-medium text-gray-900 dark:text-gray-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                <div className="font-medium text-gray-900 dark:text-gray-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-3">
                   {card.vietnamese}
                 </div>
-                <div className="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                <div className="text-gray-500 dark:text-gray-400 text-sm mb-3 line-clamp-2">
                   {card.english}
                 </div>
                 <div className="flex items-center gap-2">

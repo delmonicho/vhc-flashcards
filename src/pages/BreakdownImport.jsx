@@ -2,24 +2,29 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import ThemeToggle from '../components/ThemeToggle'
 
-const CLAUDE_PROMPT_PREFIX = `For each Vietnamese phrase below, generate a word-by-word breakdown aligned with the English translation. Return ONLY a valid JSON array — no markdown fences, no explanation. Use this exact format:
+const CLAUDE_PROMPT_PREFIX = `For each numbered Vietnamese phrase below, generate a word-by-word breakdown aligned with the English translation. Return ONLY a valid JSON array — no markdown fences, no explanation. Use this exact format:
 
 [
   {
-    "vietnamese": "<exact phrase as given>",
+    "index": 1,
+    "vietnamese": "<exact phrase as given, without the [N] prefix>",
     "breakdown": [
       { "vi": "<Vietnamese chunk>", "en": "<English chunk>" }
     ]
   }
 ]
 
-Keep chunks to 1–3 words. The "vietnamese" value must exactly match the phrase as given.
+Keep chunks to 1–3 words. The "vietnamese" value must exactly match the phrase as given (no [N] prefix). Preserve the same order and include every phrase.
 
 Phrases:
 `
 
 function buildPrompt(cards) {
-  return CLAUDE_PROMPT_PREFIX + cards.map(c => c.vietnamese).join('\n')
+  return CLAUDE_PROMPT_PREFIX + cards.map((c, i) => `[${i + 1}] ${c.vietnamese}`).join('\n')
+}
+
+function normalizeText(s) {
+  return s.trim().replace(/\s+/g, ' ')
 }
 
 export default function BreakdownImport({ onNavigate, dark, onToggleDark }) {
@@ -69,6 +74,7 @@ export default function BreakdownImport({ onNavigate, dark, onToggleDark }) {
       for (const item of data) {
         if (typeof item.vietnamese !== 'string') throw new Error('Each item must have a "vietnamese" string field.')
         if (!Array.isArray(item.breakdown)) throw new Error('Each item must have a "breakdown" array.')
+        if (item.index != null && typeof item.index !== 'number') throw new Error('"index" must be a number.')
       }
       setParsed(data)
     } catch (err) {
@@ -86,16 +92,21 @@ export default function BreakdownImport({ onNavigate, dark, onToggleDark }) {
       .select('id, vietnamese')
       .eq('week_id', selectedWeekId)
 
-    const cardMap = {}
-    for (const card of cards || []) {
-      cardMap[card.vietnamese] = card.id
+    // Build both an index map (1-based) and a normalized string map for fallback
+    const indexMap = {}
+    const stringMap = {}
+    for (let i = 0; i < (cards || []).length; i++) {
+      indexMap[i + 1] = cards[i].id
+      stringMap[normalizeText(cards[i].vietnamese)] = cards[i].id
     }
 
     let updated = 0
     const notFound = []
 
     for (const item of parsed) {
-      const cardId = cardMap[item.vietnamese]
+      const cardId =
+        (item.index != null ? indexMap[item.index] : null) ??
+        stringMap[normalizeText(item.vietnamese)]
       if (!cardId) {
         notFound.push(item.vietnamese)
         continue
