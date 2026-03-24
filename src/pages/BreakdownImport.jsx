@@ -91,6 +91,7 @@ export default function BreakdownImport({ onNavigate, dark, onToggleDark }) {
       .from('flashcards')
       .select('id, vietnamese')
       .eq('week_id', selectedWeekId)
+      .order('created_at', { ascending: true })
 
     // Build both an index map (1-based) and a normalized string map for fallback
     const indexMap = {}
