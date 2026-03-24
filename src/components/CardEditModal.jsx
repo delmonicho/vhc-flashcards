@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { CHUNK_COLORS } from '../lib/colors'
 
-export default function CardEditModal({ card, onSave, onClose }) {
+export default function CardEditModal({ card, onSave, onDelete, onClose }) {
   const [vietnamese, setVietnamese] = useState(card.vietnamese)
   const [english, setEnglish] = useState(card.english)
   const [segments, setSegments] = useState(card.breakdown || [])
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   async function handleSave() {
     setSaving(true)
@@ -31,6 +33,13 @@ export default function CardEditModal({ card, onSave, onClose }) {
 
   function addSegment() {
     setSegments(prev => [...prev, { vi: '', en: '' }])
+  }
+
+  async function handleDelete() {
+    setDeleting(true)
+    const { error } = await supabase.from('flashcards').delete().eq('id', card.id)
+    if (!error) onDelete(card.id)
+    setDeleting(false)
   }
 
   return (
@@ -120,21 +129,51 @@ export default function CardEditModal({ card, onSave, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-700 flex gap-3">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-medium disabled:opacity-50 active:bg-blue-700"
-          >
-            {saving ? 'Saving…' : 'Save'}
-          </button>
-          <button
-            onClick={onClose}
-            disabled={saving}
-            className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2.5 rounded-lg font-medium active:bg-gray-50 dark:active:bg-gray-800"
-          >
-            Cancel
-          </button>
+        <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-700">
+          {confirmDelete ? (
+            <div className="flex items-center gap-3">
+              <span className="flex-1 text-sm text-gray-600 dark:text-gray-400">Delete this card?</span>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium text-sm disabled:opacity-50 active:bg-red-700"
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium px-1"
+              >
+                Delete
+              </button>
+              <div className="flex-1 flex gap-3 justify-end">
+                <button
+                  onClick={onClose}
+                  disabled={saving}
+                  className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2.5 rounded-lg font-medium active:bg-gray-50 dark:active:bg-gray-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-medium disabled:opacity-50 active:bg-blue-700"
+                >
+                  {saving ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

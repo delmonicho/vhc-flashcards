@@ -38,6 +38,11 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
     setEditingCard(null)
   }
 
+  function handleModalDelete(cardId) {
+    setCards(prev => prev.filter(c => c.id !== cardId))
+    setEditingCard(null)
+  }
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto p-6 text-center text-gray-500 dark:text-gray-400 py-12">
@@ -115,6 +120,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
         <CardEditModal
           card={editingCard}
           onSave={handleModalSave}
+          onDelete={handleModalDelete}
           onClose={() => setEditingCard(null)}
         />
       )}
