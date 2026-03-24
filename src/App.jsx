@@ -27,7 +27,7 @@ export default function App() {
   const themeProps = { dark, onToggleDark: toggleDark }
 
   return (
-    <div className={`${dark ? 'dark' : ''} min-h-screen bg-white dark:bg-gray-950 transition-colors duration-200`}>
+    <div className={`${dark ? 'dark' : ''} min-h-screen bg-co-warm dark:bg-gray-950 transition-colors duration-200`}>
       {view.page === 'week' ? (
         <Week weekId={view.weekId} onNavigate={navigate} {...themeProps} />
       ) : view.page === 'study' ? (

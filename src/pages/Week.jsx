@@ -4,6 +4,16 @@ import VocabInput from '../components/VocabInput'
 import ThemeToggle from '../components/ThemeToggle'
 import CardEditModal from '../components/CardEditModal'
 
+function LoadingDots() {
+  return (
+    <div className="flex justify-center gap-2 py-16">
+      <span className="loading-dot" />
+      <span className="loading-dot" />
+      <span className="loading-dot" />
+    </div>
+  )
+}
+
 export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
   const [week, setWeek] = useState(null)
   const [cards, setCards] = useState([])
@@ -44,30 +54,27 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
   }
 
   if (loading) {
-    return (
-      <div className="max-w-2xl mx-auto p-6 text-center text-gray-500 dark:text-gray-400 py-12">
-        Loading…
-      </div>
-    )
+    return <LoadingDots />
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
+    <div className="page-fade-in max-w-2xl mx-auto px-4 py-6 md:px-8">
+      {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => onNavigate('home')}
-          className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-2xl leading-none"
+          className="w-9 h-9 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none"
           aria-label="Back"
         >
           ←
         </button>
-        <h1 className="flex-1 text-2xl font-bold truncate text-gray-900 dark:text-gray-100">
+        <h1 className="flex-1 font-display text-2xl font-bold truncate text-co-ink dark:text-gray-100">
           {week?.title}
         </h1>
         <button
           onClick={() => onNavigate('study', weekId)}
           disabled={cards.length === 0}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-40 active:bg-green-700"
+          className="bg-co-fern text-white px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150"
         >
           Study
         </button>
@@ -78,34 +85,34 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
 
       {cards.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+          <h2 className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-3">
             {cards.length} {cards.length === 1 ? 'card' : 'cards'}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {cards.map(card => (
               <button
                 key={card.id}
-                className="w-full text-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 group hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+                className="w-full text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98]"
                 onClick={() => setEditingCard(card)}
               >
-                <div className="font-medium text-gray-900 dark:text-gray-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-3">
+                <div className="font-display font-semibold text-co-ink dark:text-gray-100 mb-1 line-clamp-3 text-sm leading-snug">
                   {card.vietnamese}
                 </div>
-                <div className="text-gray-500 dark:text-gray-400 text-sm mb-3 line-clamp-2">
+                <div className="text-co-muted dark:text-gray-400 text-xs mb-3 line-clamp-2">
                   {card.english}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span
-                    className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${
+                    className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-medium ${
                       card.source === 'class'
-                        ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
-                        : 'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300'
+                        ? 'bg-co-blush text-co-primary'
+                        : 'bg-co-cream text-co-gold'
                     }`}
                   >
                     {card.source}
                   </span>
                   {card.breakdown && (
-                    <span className="text-xs text-gray-400 dark:text-gray-600">
+                    <span className="text-xs text-co-muted dark:text-gray-600">
                       {card.breakdown.length} chunks
                     </span>
                   )}

@@ -20,16 +20,17 @@ export default function BreakdownDisplay({
   onSpeakChunk,
   onSpeakFull,
   speakingKey,
+  inverted = false,
 }) {
   if (!breakdown || breakdown.length === 0) return null
 
   return (
-    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-      <div className="text-xs text-gray-400 dark:text-gray-600 uppercase tracking-wide mb-2">
+    <div className={`mt-4 pt-4 ${inverted ? 'border-t border-white/15' : 'border-t border-co-border dark:border-gray-700'}`}>
+      <div className={`text-xs uppercase tracking-widest font-semibold mb-2 ${inverted ? 'text-white/40' : 'text-co-muted dark:text-gray-600'}`}>
         breakdown
       </div>
       <div className="space-y-1.5">
-        {/* Vietnamese row — each pill is a speak button */}
+        {/* Vietnamese row — tappable if onSpeakChunk provided */}
         <div className="flex flex-wrap gap-1.5">
           {breakdown.map((seg, i) => {
             const key = `chunk-${i}`
@@ -72,10 +73,14 @@ export default function BreakdownDisplay({
       {onSpeakFull && (
         <button
           onClick={onSpeakFull}
-          className="mt-3 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          className={`mt-3 flex items-center gap-1.5 text-xs transition-colors ${
+            inverted
+              ? 'text-white/40 hover:text-white/70'
+              : 'text-co-muted hover:text-co-ink dark:hover:text-gray-300'
+          }`}
           aria-label="Hear full phrase"
         >
-          <SpeakerIcon active={speakingKey === 'full'} className="w-3.5 h-3.5" />
+          <SpeakerIcon active={speakingKey === 'full'} />
           Hear full phrase
         </button>
       )}

@@ -1,27 +1,9 @@
-// Shared color palette for breakdown chunk pills
+// Chunk breakdown pill colors — warm, playful palette
 export const CHUNK_COLORS = [
-  {
-    pill: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-    swatch: 'bg-blue-400',
-  },
-  {
-    pill: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-    swatch: 'bg-emerald-400',
-  },
-  {
-    pill: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-    swatch: 'bg-amber-400',
-  },
-  {
-    pill: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
-    swatch: 'bg-rose-400',
-  },
-  {
-    pill: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
-    swatch: 'bg-violet-400',
-  },
-  {
-    pill: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
-    swatch: 'bg-cyan-400',
-  },
+  { pill: 'bg-[#FFE4EC] text-[#C0394F]', swatch: 'bg-[#F9A8C9]' },
+  { pill: 'bg-[#FFF3CC] text-[#B07D00]', swatch: 'bg-[#F5C842]' },
+  { pill: 'bg-[#D6F5E3] text-[#276648]', swatch: 'bg-[#7DC99B]' },
+  { pill: 'bg-[#D6EEFF] text-[#1A5F8A]', swatch: 'bg-[#7ABDE8]' },
+  { pill: 'bg-[#EDE4FF] text-[#5B3FA6]', swatch: 'bg-[#B8A0FF]' },
+  { pill: 'bg-[#FFE8D6] text-[#B05A20]', swatch: 'bg-[#F5A623]' },
 ]

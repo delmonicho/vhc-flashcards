@@ -21,6 +21,16 @@ function SpeakerIcon({ active }) {
   )
 }
 
+function LoadingDots() {
+  return (
+    <div className="flex justify-center gap-2 py-20">
+      <span className="loading-dot" />
+      <span className="loading-dot" />
+      <span className="loading-dot" />
+    </div>
+  )
+}
+
 export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
@@ -41,7 +51,6 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
       })
   }, [weekId])
 
-  // Check for Vietnamese voice availability — voices may load async
   useEffect(() => {
     if (localStorage.getItem(BANNER_KEY)) return
     const check = () => {
@@ -78,21 +87,15 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="max-w-lg mx-auto p-6 text-center text-gray-500 dark:text-gray-400 py-12">
-        Loading…
-      </div>
-    )
-  }
+  if (loading) return <LoadingDots />
 
   if (cards.length === 0) {
     return (
       <div className="max-w-lg mx-auto p-6 text-center py-12 space-y-4">
-        <p className="text-gray-500 dark:text-gray-400">No cards to study yet.</p>
+        <p className="text-co-muted dark:text-gray-400">No cards to study yet.</p>
         <button
           onClick={() => onNavigate('week', weekId)}
-          className="text-blue-600 dark:text-blue-400 font-medium"
+          className="text-co-primary font-semibold"
         >
           ← Back to week
         </button>
@@ -104,24 +107,27 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
   const progress = (index + 1) / cards.length
 
   return (
-    <div className="max-w-lg mx-auto p-6">
-      {/* Header + progress */}
+    <div className="page-fade-in max-w-lg mx-auto px-4 py-6 md:px-8">
+      {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <button
           onClick={() => onNavigate('week', weekId)}
-          className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-2xl leading-none"
+          className="w-9 h-9 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none"
           aria-label="Back to week"
         >
           ←
         </button>
         <div className="flex-1">
-          <div className="text-sm text-gray-500 dark:text-gray-400 mb-1.5">
+          <div className="text-sm text-co-muted dark:text-gray-400 mb-1.5">
             {index + 1} / {cards.length}
           </div>
-          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="h-2 bg-co-border dark:bg-gray-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-600 rounded-full transition-all duration-300"
-              style={{ width: `${progress * 100}%` }}
+              className="h-full rounded-full transition-all duration-300"
+              style={{
+                width: `${progress * 100}%`,
+                background: 'linear-gradient(to right, #E8526A, #F5A623)',
+              }}
             />
           </div>
         </div>
@@ -130,14 +136,14 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
 
       {/* No Vietnamese voice banner */}
       {showVoiceBanner && (
-        <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl px-4 py-3 mb-4 text-sm text-amber-800 dark:text-amber-300">
+        <div className="flex items-start gap-3 bg-co-cream dark:bg-amber-900/20 border border-co-gold/40 rounded-2xl px-4 py-3 mb-4 text-sm text-co-ink dark:text-amber-300">
           <span className="flex-1">
-            No Vietnamese voice found on this device. Pronunciation may use a default voice.
-            For best results on iPad, go to <strong>Settings → Accessibility → Spoken Content → Voices → Vietnamese</strong>.
+            No Vietnamese voice found. For best results on iPad, go to{' '}
+            <strong>Settings → Accessibility → Spoken Content → Voices → Vietnamese</strong>.
           </span>
           <button
             onClick={dismissBanner}
-            className="text-amber-500 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-200 ml-2 leading-none text-lg"
+            className="text-co-muted hover:text-co-ink ml-1 leading-none text-lg"
             aria-label="Dismiss"
           >
             ×
@@ -145,42 +151,62 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
         </div>
       )}
 
-      {/* Flashcard — tap to toggle translation */}
+      {/* Flashcard */}
       <div
         onClick={() => setFlipped(f => !f)}
-        className="relative w-full rounded-2xl border-2 flex flex-col items-start p-8 transition-colors bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 active:bg-gray-50 dark:active:bg-gray-800 cursor-pointer"
+        className={`relative w-full rounded-3xl cursor-pointer shadow-lg transition-colors duration-300 overflow-hidden ${
+          flipped
+            ? 'bg-co-navy dark:bg-co-navy'
+            : 'bg-co-surface dark:bg-gray-800'
+        }`}
         style={{ minHeight: '14rem' }}
       >
-        <div className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 w-full text-center">
-          {card.vietnamese}
+        <div key={String(flipped)} className="flip-in p-8">
+          {flipped ? (
+            /* Back face */
+            <div>
+              <div className="text-xs text-white/40 text-center mb-3 font-medium uppercase tracking-widest">
+                {card.vietnamese}
+              </div>
+              <div className="text-xl text-white/95 text-center border-t border-white/15 pt-4">
+                {card.english}
+              </div>
+              {card.breakdown && (
+                <div onClick={e => e.stopPropagation()}>
+                  <BreakdownDisplay
+                    breakdown={card.breakdown}
+                    inverted
+                    speakingKey={speakingKey}
+                    onSpeakChunk={(i, text) => handleSpeak(`chunk-${i}`, text)}
+                    onSpeakFull={() => handleSpeak('full', card.vietnamese, 1)}
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Front face */
+            <div className="flex flex-col items-center justify-center min-h-[8rem] text-center">
+              <div className="font-display text-2xl font-bold text-co-ink dark:text-gray-100 mb-4">
+                {card.vietnamese}
+              </div>
+              <div className="text-sm text-co-muted dark:text-gray-500">
+                tap to reveal
+              </div>
+            </div>
+          )}
         </div>
 
-        {flipped ? (
-          <>
-            <div className="text-lg text-gray-600 dark:text-gray-300 border-t border-gray-100 dark:border-gray-700 pt-4 w-full text-center">
-              {card.english}
-            </div>
-            {card.breakdown && (
-              <div className="w-full" onClick={e => e.stopPropagation()}>
-                <BreakdownDisplay
-                  breakdown={card.breakdown}
-                  speakingKey={speakingKey}
-                  onSpeakChunk={(i, text) => handleSpeak(`chunk-${i}`, text)}
-                  onSpeakFull={() => handleSpeak('full', card.vietnamese, 1)}
-                />
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-sm text-gray-400 dark:text-gray-600 w-full text-center">
-            tap to reveal
-          </div>
-        )}
-
-        {/* Speaker button — speaks full phrase at learning rate */}
+        {/* Speaker button */}
         <button
-          onClick={e => { e.stopPropagation(); handleSpeak('card', card.vietnamese) }}
-          className="absolute bottom-4 right-4 w-11 h-11 flex items-center justify-center rounded-full text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          onClick={e => {
+            e.stopPropagation()
+            handleSpeak('card', card.vietnamese)
+          }}
+          className={`absolute bottom-4 right-4 w-11 h-11 flex items-center justify-center rounded-full transition-all ${
+            flipped
+              ? 'text-white/50 hover:text-white/90 hover:bg-white/10'
+              : 'text-co-primary/60 hover:text-co-primary hover:bg-co-primary/10'
+          }`}
           aria-label="Pronounce Vietnamese"
         >
           <SpeakerIcon active={speakingKey === 'card'} />
@@ -192,7 +218,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
         <button
           onClick={() => goTo(index - 1)}
           disabled={index === 0}
-          className="w-14 h-14 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 disabled:opacity-30 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-gray-200 active:bg-gray-50 dark:active:bg-gray-800 transition-colors text-2xl"
+          className="w-14 h-14 flex items-center justify-center rounded-2xl border-2 border-co-border dark:border-gray-700 text-co-muted dark:text-gray-400 disabled:opacity-30 hover:border-co-primary hover:text-co-primary dark:hover:border-co-primary dark:hover:text-co-primary active:bg-co-surface dark:active:bg-gray-800 transition-all duration-150 text-2xl"
           aria-label="Previous card"
         >
           ‹
@@ -200,7 +226,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
         <button
           onClick={() => goTo(index + 1)}
           disabled={index === cards.length - 1}
-          className="w-14 h-14 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 disabled:opacity-30 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-gray-200 active:bg-gray-50 dark:active:bg-gray-800 transition-colors text-2xl"
+          className="w-14 h-14 flex items-center justify-center rounded-2xl border-2 border-co-border dark:border-gray-700 text-co-muted dark:text-gray-400 disabled:opacity-30 hover:border-co-primary hover:text-co-primary dark:hover:border-co-primary dark:hover:text-co-primary active:bg-co-surface dark:active:bg-gray-800 transition-all duration-150 text-2xl"
           aria-label="Next card"
         >
           ›

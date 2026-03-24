@@ -6,7 +6,7 @@ export default function VocabInput({ weekId, onCardCreated }) {
   const [source, setSource] = useState('class')
   const [input, setInput] = useState('')
   const [state, setState] = useState('idle') // idle | loading | preview | error
-  const [preview, setPreview] = useState(null) // { vietnamese, english }
+  const [preview, setPreview] = useState(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -57,22 +57,25 @@ export default function VocabInput({ weekId, onCardCreated }) {
   }
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-4">
+    <div className="bg-co-surface dark:bg-gray-800/50 border border-co-border dark:border-gray-700 rounded-2xl p-4 space-y-4">
       {/* Source toggle */}
       <div className="flex gap-2">
-        {['class', 'homework'].map(s => (
+        {[
+          { id: 'class', label: 'Class' },
+          { id: 'homework', label: 'Homework' },
+        ].map(({ id, label }) => (
           <button
-            key={s}
-            onClick={() => setSource(s)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              source === s
-                ? s === 'class'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-orange-500 text-white'
-                : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'
+            key={id}
+            onClick={() => setSource(id)}
+            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-150 ${
+              source === id
+                ? id === 'class'
+                  ? 'bg-co-primary text-white shadow-sm'
+                  : 'bg-co-gold text-white shadow-sm'
+                : 'bg-white dark:bg-gray-700 border border-co-border dark:border-gray-600 text-co-muted dark:text-gray-400'
             }`}
           >
-            {s === 'class' ? 'Class' : 'Homework'}
+            {label}
           </button>
         ))}
       </div>
@@ -81,7 +84,7 @@ export default function VocabInput({ weekId, onCardCreated }) {
       {state !== 'preview' && (
         <div className="flex gap-2">
           <input
-            className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 border border-co-border dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary transition-shadow"
             placeholder="Type Vietnamese word or phrase…"
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -91,7 +94,7 @@ export default function VocabInput({ weekId, onCardCreated }) {
           <button
             onClick={handleAdd}
             disabled={!input.trim() || state === 'loading'}
-            className="bg-blue-600 text-white px-5 py-3 rounded-lg font-medium disabled:opacity-50 active:bg-blue-700 min-w-20"
+            className="bg-co-primary text-white px-5 py-3 rounded-xl font-semibold disabled:opacity-50 hover:scale-105 active:scale-95 transition-all duration-150 min-w-16"
           >
             {state === 'loading' ? '…' : 'Add'}
           </button>
@@ -100,28 +103,29 @@ export default function VocabInput({ weekId, onCardCreated }) {
 
       {/* Error */}
       {state === 'error' && (
-        <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+        <p className="text-red-500 text-sm">{error}</p>
       )}
 
       {/* Preview */}
       {state === 'preview' && preview && (
         <div className="space-y-3">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-2">
+          <div className="bg-co-cream dark:bg-gray-700/50 border border-co-gold/40 dark:border-gray-600 rounded-xl p-4 space-y-2">
+            <div className="text-xs text-co-muted uppercase tracking-widest font-semibold mb-1">✨ Translation preview</div>
             <input
-              className="w-full text-lg font-semibold text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full font-display text-lg font-semibold text-co-ink dark:text-gray-100 bg-white dark:bg-gray-700 border border-co-border dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-co-primary"
               value={preview.vietnamese}
               onChange={e => setPreview({ ...preview, vietnamese: e.target.value })}
             />
             <input
-              className="w-full text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full text-co-ink dark:text-gray-300 bg-white dark:bg-gray-700 border border-co-border dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-co-primary"
               value={preview.english}
               onChange={e => setPreview({ ...preview, english: e.target.value })}
             />
             <span
-              className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${
+              className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-medium ${
                 source === 'class'
-                  ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
-                  : 'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300'
+                  ? 'bg-co-blush text-co-primary'
+                  : 'bg-co-cream text-co-gold'
               }`}
             >
               {source}
@@ -131,14 +135,14 @@ export default function VocabInput({ weekId, onCardCreated }) {
             <button
               onClick={handleConfirm}
               disabled={saving}
-              className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium disabled:opacity-50 active:bg-green-700"
+              className="flex-1 bg-co-primary text-white py-3 rounded-full font-semibold disabled:opacity-50 hover:scale-105 active:scale-95 transition-all duration-150"
             >
               {saving ? 'Saving…' : 'Confirm ✓'}
             </button>
             <button
               onClick={handleCancel}
               disabled={saving}
-              className="flex-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium active:bg-gray-50 dark:active:bg-gray-700"
+              className="px-6 py-3 text-co-muted dark:text-gray-400 font-semibold hover:text-co-ink dark:hover:text-gray-200 transition-colors"
             >
               Cancel
             </button>

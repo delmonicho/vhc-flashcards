@@ -124,38 +124,39 @@ export default function BreakdownImport({ onNavigate, dark, onToggleDark }) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
+    <div className="page-fade-in max-w-2xl mx-auto px-4 py-6 md:px-8">
+      {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <button
           onClick={() => onNavigate('home')}
-          className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-2xl leading-none"
+          className="w-9 h-9 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none"
           aria-label="Back"
         >
           ←
         </button>
-        <h1 className="flex-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h1 className="flex-1 font-display text-2xl font-bold text-co-ink dark:text-gray-100">
           Import Breakdowns
         </h1>
         <ThemeToggle dark={dark} onToggle={onToggleDark} />
       </div>
 
       {/* Instructions */}
-      <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6 text-sm text-gray-600 dark:text-gray-400 space-y-1">
-        <p>1. <strong className="text-gray-800 dark:text-gray-200">Select a week</strong> — the Claude prompt is copied to your clipboard automatically.</p>
+      <div className="bg-co-surface dark:bg-gray-800/50 border border-co-border dark:border-gray-700 rounded-2xl p-4 mb-6 text-sm text-co-muted dark:text-gray-400 space-y-1">
+        <p>1. <strong className="text-co-ink dark:text-gray-200">Select a week</strong> — the Claude prompt is copied to your clipboard automatically.</p>
         <p>2. Paste into a Claude chat and send. Copy the JSON it returns.</p>
         <p>3. Paste the JSON below, preview, then import.</p>
       </div>
 
       {/* Week selector */}
       <div className="mb-6">
-        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
+        <label className="block text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-1.5">
           Week
         </label>
         <div className="flex items-center gap-3">
           <select
             value={selectedWeekId}
             onChange={e => handleWeekChange(e.target.value)}
-            className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 border border-co-border dark:border-gray-600 rounded-xl px-4 py-2.5 bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-co-primary"
           >
             <option value="">Select a week…</option>
             {weeks.map(w => (
@@ -163,7 +164,7 @@ export default function BreakdownImport({ onNavigate, dark, onToggleDark }) {
             ))}
           </select>
           {copied && (
-            <span className="text-sm text-green-600 dark:text-green-400 font-medium whitespace-nowrap">
+            <span className="text-sm text-co-fern dark:text-co-fern font-medium whitespace-nowrap">
               ✓ Prompt copied
             </span>
           )}
@@ -172,7 +173,7 @@ export default function BreakdownImport({ onNavigate, dark, onToggleDark }) {
 
       {/* JSON textarea */}
       <div className="mb-4">
-        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
+        <label className="block text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-1.5">
           Paste JSON from Claude
         </label>
         <textarea
@@ -180,12 +181,12 @@ export default function BreakdownImport({ onNavigate, dark, onToggleDark }) {
           onChange={e => { setJsonText(e.target.value); setParsed(null); setResults(null) }}
           placeholder='[{"vietnamese": "...", "breakdown": [{"vi": "...", "en": "..."}]}]'
           rows={10}
-          className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 text-sm font-mono bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          className="w-full border border-co-border dark:border-gray-600 rounded-xl px-4 py-3 text-sm font-mono bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-co-primary resize-none"
         />
       </div>
 
       {parseError && (
-        <p className="text-red-600 dark:text-red-400 text-sm mb-4">{parseError}</p>
+        <p className="text-red-500 dark:text-red-400 text-sm mb-4">{parseError}</p>
       )}
 
       {/* Action buttons */}
@@ -193,27 +194,33 @@ export default function BreakdownImport({ onNavigate, dark, onToggleDark }) {
         <button
           onClick={handlePreview}
           disabled={!jsonText.trim() || !selectedWeekId}
-          className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2.5 rounded-lg font-medium disabled:opacity-50 active:bg-gray-50 dark:active:bg-gray-800"
+          className="flex-1 border border-co-border dark:border-gray-600 text-co-muted dark:text-gray-300 py-2.5 rounded-xl font-semibold disabled:opacity-50 hover:border-co-primary hover:text-co-primary transition-all"
         >
           Preview
         </button>
         <button
           onClick={handleImport}
           disabled={!parsed || importing || !selectedWeekId}
-          className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-medium disabled:opacity-50 active:bg-blue-700"
+          className="flex-1 bg-co-primary text-white py-2.5 rounded-full font-semibold disabled:opacity-50 hover:scale-105 active:scale-95 transition-all duration-150"
         >
-          {importing ? 'Importing…' : 'Import'}
+          {importing ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="loading-dot" />
+              <span className="loading-dot" />
+              <span className="loading-dot" />
+            </span>
+          ) : 'Import'}
         </button>
       </div>
 
       {/* Results */}
       {results && (
-        <div className={`rounded-xl p-4 mb-6 text-sm ${
+        <div className={`rounded-2xl p-4 mb-6 text-sm border ${
           results.notFound.length === 0
-            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-300'
-            : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
+            ? 'bg-co-fern/10 border-co-fern/30 text-co-fern'
+            : 'bg-co-gold/10 border-co-gold/30 text-co-gold'
         }`}>
-          <p className="font-medium">
+          <p className="font-semibold">
             {results.updated} updated
             {results.notFound.length > 0 && `, ${results.notFound.length} not found`}
           </p>
@@ -228,22 +235,22 @@ export default function BreakdownImport({ onNavigate, dark, onToggleDark }) {
       {/* Preview table */}
       {parsed && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          <h2 className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest">
             Preview — {parsed.length} {parsed.length === 1 ? 'card' : 'cards'}
           </h2>
           {parsed.map((item, i) => (
             <div
               key={i}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4"
+              className="bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4"
             >
-              <div className="font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <div className="font-display font-semibold text-co-ink dark:text-gray-100 mb-2">
                 {item.vietnamese}
               </div>
               <div className="flex flex-wrap gap-1">
                 {item.breakdown.map((seg, j) => (
                   <span
                     key={j}
-                    className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded"
+                    className="text-xs bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-300 px-2 py-0.5 rounded-lg"
                   >
                     {seg.vi} → {seg.en}
                   </span>
