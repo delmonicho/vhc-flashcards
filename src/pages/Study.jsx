@@ -42,7 +42,7 @@ function InlineChunks({ breakdown, field, onSpeak, speakingKey }) {
           return (
             <button
               key={i}
-              onClick={() => onSpeak(i, seg.vi)}
+              onClick={e => { e.stopPropagation(); onSpeak(i, seg.vi) }}
               className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 mx-0.5 my-0.5 text-sm font-medium min-h-[2.75rem] active:opacity-70 transition-opacity ${colorClass}`}
             >
               {seg[field]}
@@ -204,7 +204,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
         <div key={String(flipped)} className="flip-in p-8">
           {flipped ? (
             /* Back face */
-            <div onClick={e => e.stopPropagation()}>
+            <div>
               {card.breakdown ? (
                 <>
                   <InlineChunks
