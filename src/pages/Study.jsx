@@ -34,7 +34,7 @@ function LoadingDots() {
 function InlineChunks({ breakdown, field, onSpeak, speakingKey }) {
   const interactive = field === 'vi' && !!onSpeak
   return (
-    <div className="text-center leading-relaxed">
+    <div className="w-full text-center leading-relaxed">
       {breakdown.map((seg, i) => {
         const colorClass = CHUNK_COLORS[i % CHUNK_COLORS.length].pill
         const active = speakingKey === `chunk-${i}`
@@ -206,20 +206,20 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
             /* Back face */
             <div className="flex flex-col items-center justify-center min-h-[10rem]">
               {card.breakdown ? (
-                <>
+                <div className="w-full flex flex-col items-center">
                   <InlineChunks
                     breakdown={card.breakdown}
                     field="vi"
                     onSpeak={(i, text) => handleSpeak(`chunk-${i}`, text)}
                     speakingKey={speakingKey}
                   />
-                  <div className="w-full border-t border-co-border dark:border-white/15 my-4" />
+                  <div className="w-4/5 border-t border-co-border dark:border-white/15 my-4" />
                   <InlineChunks
                     breakdown={card.breakdown}
                     field="en"
                     speakingKey={speakingKey}
                   />
-                </>
+                </div>
               ) : (
                 <>
                   <div className="text-xs text-co-muted dark:text-white/40 text-center mb-3 font-medium uppercase tracking-widest">
@@ -259,22 +259,20 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
         >
           <SpeakerIcon active={speakingKey === 'card'} />
         </button>
-      </div>
 
-      {/* Navigation arrows */}
-      <div className="flex justify-between mt-6">
+        {/* Navigation arrows */}
         <button
-          onClick={() => goTo(index - 1)}
+          onClick={e => { e.stopPropagation(); goTo(index - 1) }}
           disabled={index === 0}
-          className="w-14 h-14 flex items-center justify-center rounded-2xl border-2 border-co-border dark:border-gray-700 text-co-muted dark:text-gray-400 disabled:opacity-30 hover:border-co-primary hover:text-co-primary dark:hover:border-co-primary dark:hover:text-co-primary active:bg-co-surface dark:active:bg-gray-800 transition-all duration-150 text-2xl"
+          className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-co-ink/50 dark:text-white/40 disabled:opacity-0 hover:bg-black/20 dark:hover:bg-white/20 hover:text-co-ink dark:hover:text-white active:scale-90 transition-all duration-150 text-3xl"
           aria-label="Previous card"
         >
           ‹
         </button>
         <button
-          onClick={() => goTo(index + 1)}
+          onClick={e => { e.stopPropagation(); goTo(index + 1) }}
           disabled={index === cards.length - 1}
-          className="w-14 h-14 flex items-center justify-center rounded-2xl border-2 border-co-border dark:border-gray-700 text-co-muted dark:text-gray-400 disabled:opacity-30 hover:border-co-primary hover:text-co-primary dark:hover:border-co-primary dark:hover:text-co-primary active:bg-co-surface dark:active:bg-gray-800 transition-all duration-150 text-2xl"
+          className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-co-ink/50 dark:text-white/40 disabled:opacity-0 hover:bg-black/20 dark:hover:bg-white/20 hover:text-co-ink dark:hover:text-white active:scale-90 transition-all duration-150 text-3xl"
           aria-label="Next card"
         >
           ›
