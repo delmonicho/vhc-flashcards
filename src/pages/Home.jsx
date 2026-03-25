@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import Logo from '../components/Logo'
+import Logo from '../components/Logo.old'
 import ThemeToggle from '../components/ThemeToggle'
 
 function LoadingDots() {

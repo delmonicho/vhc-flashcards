@@ -1,9 +1,59 @@
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <path d="M50 75 C18 68 8 36 26 18 C36 50 44 64 50 75Z" fill="#F9A8C9"/>
-  <path d="M50 75 C82 68 92 36 74 18 C64 50 56 64 50 75Z" fill="#F9A8C9"/>
-  <path d="M50 75 C25 55 24 24 38 10 C44 42 48 60 50 75Z" fill="#F0A0C2"/>
-  <path d="M50 75 C75 55 76 24 62 10 C56 42 52 60 50 75Z" fill="#F0A0C2"/>
-  <path d="M50 75 C36 42 36 16 50 5 C64 16 64 42 50 75Z" fill="#E890B8"/>
-  <circle cx="50" cy="72" r="10" fill="#F5C842"/>
-  <circle cx="50" cy="72" r="5"  fill="#FFE060"/>
+  <defs>
+    <!-- Petal templates, no fill — applied per <use> so they inherit -->
+    <ellipse id="op" cx="50" cy="25" rx="6.5" ry="12"/>
+    <ellipse id="mp" cx="50" cy="34" rx="5"   ry="9"/>
+    <ellipse id="cp" cx="50" cy="41" rx="3.8" ry="7"/>
+  </defs>
+
+  <!-- Radial spokes (12 directions) -->
+  <line x1="50" y1="50" x2="50"   y2="10"    stroke="#C04060" stroke-width="0.6" opacity="0.6"/>
+  <line x1="50" y1="50" x2="70"   y2="15.36" stroke="#C04060" stroke-width="0.6" opacity="0.6"/>
+  <line x1="50" y1="50" x2="84.64" y2="30"   stroke="#C04060" stroke-width="0.6" opacity="0.6"/>
+  <line x1="50" y1="50" x2="90"   y2="50"    stroke="#C04060" stroke-width="0.6" opacity="0.6"/>
+  <line x1="50" y1="50" x2="84.64" y2="70"   stroke="#C04060" stroke-width="0.6" opacity="0.6"/>
+  <line x1="50" y1="50" x2="70"   y2="84.64" stroke="#C04060" stroke-width="0.6" opacity="0.6"/>
+  <line x1="50" y1="50" x2="50"   y2="90"    stroke="#C04060" stroke-width="0.6" opacity="0.6"/>
+  <line x1="50" y1="50" x2="30"   y2="84.64" stroke="#C04060" stroke-width="0.6" opacity="0.6"/>
+  <line x1="50" y1="50" x2="15.36" y2="70"   stroke="#C04060" stroke-width="0.6" opacity="0.6"/>
+  <line x1="50" y1="50" x2="10"   y2="50"    stroke="#C04060" stroke-width="0.6" opacity="0.6"/>
+  <line x1="50" y1="50" x2="15.36" y2="30"   stroke="#C04060" stroke-width="0.6" opacity="0.6"/>
+  <line x1="50" y1="50" x2="30"   y2="15.36" stroke="#C04060" stroke-width="0.6" opacity="0.6"/>
+
+  <!-- Outer petals (12 × 30°) -->
+  <use href="#op" fill="#F9A8C9" stroke="#E8526A" stroke-width="0.5" opacity="0.9"/>
+  <use href="#op" fill="#F9A8C9" stroke="#E8526A" stroke-width="0.5" opacity="0.9" transform="rotate(30 50 50)"/>
+  <use href="#op" fill="#F9A8C9" stroke="#E8526A" stroke-width="0.5" opacity="0.9" transform="rotate(60 50 50)"/>
+  <use href="#op" fill="#F9A8C9" stroke="#E8526A" stroke-width="0.5" opacity="0.9" transform="rotate(90 50 50)"/>
+  <use href="#op" fill="#F9A8C9" stroke="#E8526A" stroke-width="0.5" opacity="0.9" transform="rotate(120 50 50)"/>
+  <use href="#op" fill="#F9A8C9" stroke="#E8526A" stroke-width="0.5" opacity="0.9" transform="rotate(150 50 50)"/>
+  <use href="#op" fill="#F9A8C9" stroke="#E8526A" stroke-width="0.5" opacity="0.9" transform="rotate(180 50 50)"/>
+  <use href="#op" fill="#F9A8C9" stroke="#E8526A" stroke-width="0.5" opacity="0.9" transform="rotate(210 50 50)"/>
+  <use href="#op" fill="#F9A8C9" stroke="#E8526A" stroke-width="0.5" opacity="0.9" transform="rotate(240 50 50)"/>
+  <use href="#op" fill="#F9A8C9" stroke="#E8526A" stroke-width="0.5" opacity="0.9" transform="rotate(270 50 50)"/>
+  <use href="#op" fill="#F9A8C9" stroke="#E8526A" stroke-width="0.5" opacity="0.9" transform="rotate(300 50 50)"/>
+  <use href="#op" fill="#F9A8C9" stroke="#E8526A" stroke-width="0.5" opacity="0.9" transform="rotate(330 50 50)"/>
+
+  <!-- Mid petals (8 × 45°) -->
+  <use href="#mp" fill="#F08090" stroke="#D04060" stroke-width="0.5" opacity="0.92"/>
+  <use href="#mp" fill="#F08090" stroke="#D04060" stroke-width="0.5" opacity="0.92" transform="rotate(45 50 50)"/>
+  <use href="#mp" fill="#F08090" stroke="#D04060" stroke-width="0.5" opacity="0.92" transform="rotate(90 50 50)"/>
+  <use href="#mp" fill="#F08090" stroke="#D04060" stroke-width="0.5" opacity="0.92" transform="rotate(135 50 50)"/>
+  <use href="#mp" fill="#F08090" stroke="#D04060" stroke-width="0.5" opacity="0.92" transform="rotate(180 50 50)"/>
+  <use href="#mp" fill="#F08090" stroke="#D04060" stroke-width="0.5" opacity="0.92" transform="rotate(225 50 50)"/>
+  <use href="#mp" fill="#F08090" stroke="#D04060" stroke-width="0.5" opacity="0.92" transform="rotate(270 50 50)"/>
+  <use href="#mp" fill="#F08090" stroke="#D04060" stroke-width="0.5" opacity="0.92" transform="rotate(315 50 50)"/>
+
+  <!-- Core petals (6 × 60°) -->
+  <use href="#cp" fill="#E8526A" stroke="#C03050" stroke-width="0.5" opacity="0.95"/>
+  <use href="#cp" fill="#E8526A" stroke="#C03050" stroke-width="0.5" opacity="0.95" transform="rotate(60 50 50)"/>
+  <use href="#cp" fill="#E8526A" stroke="#C03050" stroke-width="0.5" opacity="0.95" transform="rotate(120 50 50)"/>
+  <use href="#cp" fill="#E8526A" stroke="#C03050" stroke-width="0.5" opacity="0.95" transform="rotate(180 50 50)"/>
+  <use href="#cp" fill="#E8526A" stroke="#C03050" stroke-width="0.5" opacity="0.95" transform="rotate(240 50 50)"/>
+  <use href="#cp" fill="#E8526A" stroke="#C03050" stroke-width="0.5" opacity="0.95" transform="rotate(300 50 50)"/>
+
+  <!-- Glowing center: orange → golden → cream -->
+  <circle cx="50" cy="50" r="6.5" fill="#FF6030" opacity="0.95"/>
+  <circle cx="50" cy="50" r="4.5" fill="#FFB830"/>
+  <circle cx="50" cy="50" r="2"   fill="#FFF0A0"/>
 </svg>
