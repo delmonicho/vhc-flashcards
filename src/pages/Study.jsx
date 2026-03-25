@@ -204,7 +204,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
         <div key={String(flipped)} className="flip-in p-8">
           {flipped ? (
             /* Back face */
-            <div>
+            <div className="flex flex-col items-center justify-center min-h-[10rem]">
               {card.breakdown ? (
                 <>
                   <InlineChunks
