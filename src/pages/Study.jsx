@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import ThemeToggle from '../components/ThemeToggle'
-import BreakdownDisplay from '../components/BreakdownDisplay'
+import { CHUNK_COLORS } from '../lib/colors'
 import { speakVietnamese, cancelSpeech, isVietnameseVoiceAvailable } from '../lib/speak'
 
 const BANNER_KEY = 'viVoiceBannerDismissed'
@@ -27,6 +27,46 @@ function LoadingDots() {
       <span className="loading-dot" />
       <span className="loading-dot" />
       <span className="loading-dot" />
+    </div>
+  )
+}
+
+function InlineChunks({ breakdown, field, onSpeak, speakingKey }) {
+  const interactive = field === 'vi' && !!onSpeak
+  return (
+    <div className="text-center leading-relaxed">
+      {breakdown.map((seg, i) => {
+        const colorClass = CHUNK_COLORS[i % CHUNK_COLORS.length].pill
+        const active = speakingKey === `chunk-${i}`
+        if (interactive) {
+          return (
+            <button
+              key={i}
+              onClick={() => onSpeak(i, seg.vi)}
+              className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 mx-0.5 my-0.5 text-sm font-medium min-h-[2.75rem] active:opacity-70 transition-opacity ${colorClass}`}
+            >
+              {seg[field]}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className={`w-3 h-3 shrink-0 ${active ? 'animate-pulse' : ''}`}
+                aria-hidden="true"
+              >
+                <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 001.5 12c0 .898.121 1.768.35 2.595.341 1.241 1.518 1.905 2.659 1.905H6.44l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06zM18.584 5.106a.75.75 0 011.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 11-1.06-1.06 8.25 8.25 0 000-11.668.75.75 0 010-1.06z" />
+              </svg>
+            </button>
+          )
+        }
+        return (
+          <span
+            key={i}
+            className={`inline-block rounded-lg px-2.5 py-1 mx-0.5 my-0.5 text-sm font-medium ${colorClass}`}
+          >
+            {seg[field]}
+          </span>
+        )
+      })}
     </div>
   )
 }
@@ -164,23 +204,38 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
         <div key={String(flipped)} className="flip-in p-8">
           {flipped ? (
             /* Back face */
-            <div>
-              <div className="text-xs text-white/40 text-center mb-3 font-medium uppercase tracking-widest">
-                {card.vietnamese}
-              </div>
-              <div className="text-xl text-white/95 text-center border-t border-white/15 pt-4">
-                {card.english}
-              </div>
-              {card.breakdown && (
-                <div onClick={e => e.stopPropagation()}>
-                  <BreakdownDisplay
+            <div onClick={e => e.stopPropagation()}>
+              {card.breakdown ? (
+                <>
+                  <InlineChunks
                     breakdown={card.breakdown}
-                    inverted
+                    field="vi"
+                    onSpeak={(i, text) => handleSpeak(`chunk-${i}`, text)}
                     speakingKey={speakingKey}
-                    onSpeakChunk={(i, text) => handleSpeak(`chunk-${i}`, text)}
-                    onSpeakFull={() => handleSpeak('full', card.vietnamese, 1)}
                   />
-                </div>
+                  <div className="border-t border-white/15 my-4" />
+                  <InlineChunks
+                    breakdown={card.breakdown}
+                    field="en"
+                    speakingKey={speakingKey}
+                  />
+                  <button
+                    onClick={() => handleSpeak('full', card.vietnamese, 1)}
+                    className="mt-4 flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors mx-auto"
+                  >
+                    <SpeakerIcon active={speakingKey === 'full'} />
+                    Hear full phrase
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="text-xs text-white/40 text-center mb-3 font-medium uppercase tracking-widest">
+                    {card.vietnamese}
+                  </div>
+                  <div className="text-xl text-white/95 text-center border-t border-white/15 pt-4">
+                    {card.english}
+                  </div>
+                </>
               )}
             </div>
           ) : (
