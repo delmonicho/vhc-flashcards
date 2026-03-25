@@ -196,7 +196,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
         onClick={() => setFlipped(f => !f)}
         className={`relative w-full rounded-3xl cursor-pointer shadow-lg transition-colors duration-300 overflow-hidden ${
           flipped
-            ? 'bg-co-navy dark:bg-co-navy'
+            ? 'bg-co-surface dark:bg-co-navy'
             : 'bg-co-surface dark:bg-gray-800'
         }`}
         style={{ minHeight: '14rem' }}
@@ -213,7 +213,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
                     onSpeak={(i, text) => handleSpeak(`chunk-${i}`, text)}
                     speakingKey={speakingKey}
                   />
-                  <div className="w-full border-t border-white/15 my-4" />
+                  <div className="w-full border-t border-co-border dark:border-white/15 my-4" />
                   <InlineChunks
                     breakdown={card.breakdown}
                     field="en"
@@ -222,10 +222,10 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
                 </>
               ) : (
                 <>
-                  <div className="text-xs text-white/40 text-center mb-3 font-medium uppercase tracking-widest">
+                  <div className="text-xs text-co-muted dark:text-white/40 text-center mb-3 font-medium uppercase tracking-widest">
                     {card.vietnamese}
                   </div>
-                  <div className="text-xl text-white/95 text-center border-t border-white/15 pt-4">
+                  <div className="text-xl text-co-ink dark:text-white/95 text-center border-t border-co-border dark:border-white/15 pt-4">
                     {card.english}
                   </div>
                 </>
@@ -252,7 +252,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
           }}
           className={`absolute bottom-4 right-4 w-11 h-11 flex items-center justify-center rounded-full transition-all ${
             flipped
-              ? 'text-white/50 hover:text-white/90 hover:bg-white/10'
+              ? 'text-co-primary/60 hover:text-co-primary hover:bg-co-primary/10 dark:text-white/50 dark:hover:text-white/90 dark:hover:bg-white/10'
               : 'text-co-primary/60 hover:text-co-primary hover:bg-co-primary/10'
           }`}
           aria-label="Pronounce Vietnamese"
