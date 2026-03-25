@@ -219,13 +219,6 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
                     field="en"
                     speakingKey={speakingKey}
                   />
-                  <button
-                    onClick={() => handleSpeak('full', card.vietnamese, 1)}
-                    className="mt-4 flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors mx-auto"
-                  >
-                    <SpeakerIcon active={speakingKey === 'full'} />
-                    Hear full phrase
-                  </button>
                 </>
               ) : (
                 <>
