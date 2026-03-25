@@ -43,7 +43,7 @@ function InlineChunks({ breakdown, field, onSpeak, speakingKey }) {
             <button
               key={i}
               onClick={e => { e.stopPropagation(); onSpeak(i, seg.vi) }}
-              className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 mx-0.5 my-0.5 text-sm font-medium min-h-[2.75rem] active:opacity-70 transition-opacity ${colorClass}`}
+              className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 mx-0.5 my-0.5 text-base font-semibold active:opacity-70 transition-opacity ${colorClass}`}
             >
               {seg[field]}
               <svg
@@ -61,7 +61,7 @@ function InlineChunks({ breakdown, field, onSpeak, speakingKey }) {
         return (
           <span
             key={i}
-            className={`inline-block rounded-lg px-2.5 py-1 mx-0.5 my-0.5 text-sm font-medium ${colorClass}`}
+            className={`inline-block rounded-md px-1.5 py-0.5 mx-0.5 my-0.5 text-base font-semibold ${colorClass}`}
           >
             {seg[field]}
           </span>
