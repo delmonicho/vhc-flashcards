@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import Logo from '../components/Logo'
 import ThemeToggle from '../components/ThemeToggle'
@@ -13,16 +13,62 @@ function LoadingDots() {
   )
 }
 
+function DeleteSheet({ week, cardCount, onConfirm, onCancel, deleting }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col justify-end"
+      onClick={e => e.target === e.currentTarget && onCancel()}
+    >
+      <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
+      <div className="relative bg-white dark:bg-gray-900 rounded-t-3xl px-6 pt-6 pb-10 shadow-2xl">
+        <div className="w-10 h-1 bg-co-border dark:bg-gray-700 rounded-full mx-auto mb-6" />
+        <p className="font-display text-lg font-semibold text-co-ink dark:text-gray-100 mb-1">
+          Delete "{week.title}"?
+        </p>
+        <p className="text-sm text-co-muted dark:text-gray-400 mb-6">
+          This will permanently delete the week and all {cardCount || 0}{' '}
+          {(cardCount || 0) === 1 ? 'card' : 'cards'} inside it.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onConfirm}
+            disabled={deleting}
+            className="flex-1 bg-red-500 text-white py-3.5 rounded-2xl font-semibold disabled:opacity-50 hover:bg-red-600 active:scale-95 transition-all"
+          >
+            {deleting ? 'Deleting…' : 'Delete week'}
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={deleting}
+            className="flex-1 bg-co-surface dark:bg-gray-800 text-co-ink dark:text-gray-200 py-3.5 rounded-2xl font-semibold"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Home({ onNavigate, dark, onToggleDark }) {
   const [weeks, setWeeks] = useState([])
   const [cardCounts, setCardCounts] = useState({})
   const [title, setTitle] = useState('')
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [editingWeekId, setEditingWeekId] = useState(null)
+  const [editingTitle, setEditingTitle] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+  const editInputRef = useRef(null)
 
   useEffect(() => {
     fetchData()
   }, [])
+
+  useEffect(() => {
+    if (editingWeekId) editInputRef.current?.focus()
+  }, [editingWeekId])
 
   async function fetchData() {
     setLoading(true)
@@ -54,6 +100,50 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       setTitle('')
     }
     setCreating(false)
+  }
+
+  function startEditing(week, e) {
+    e.stopPropagation()
+    setEditingWeekId(week.id)
+    setEditingTitle(week.title)
+  }
+
+  async function saveEdit(weekId) {
+    const trimmed = editingTitle.trim()
+    if (!trimmed) {
+      cancelEdit()
+      return
+    }
+    const original = weeks.find(w => w.id === weekId)?.title
+    if (trimmed === original) {
+      cancelEdit()
+      return
+    }
+    setWeeks(prev => prev.map(w => (w.id === weekId ? { ...w, title: trimmed } : w)))
+    setEditingWeekId(null)
+    await supabase.from('weeks').update({ title: trimmed }).eq('id', weekId)
+  }
+
+  function cancelEdit() {
+    setEditingWeekId(null)
+    setEditingTitle('')
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    await Promise.all([
+      supabase.from('flashcards').delete().eq('week_id', deleteTarget.id),
+      supabase.from('weeks').delete().eq('id', deleteTarget.id),
+    ])
+    setWeeks(prev => prev.filter(w => w.id !== deleteTarget.id))
+    setCardCounts(prev => {
+      const next = { ...prev }
+      delete next[deleteTarget.id]
+      return next
+    })
+    setDeleting(false)
+    setDeleteTarget(null)
   }
 
   return (
@@ -108,21 +198,74 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       ) : (
         <div className="space-y-3">
           {weeks.map(week => (
-            <button
+            <div
               key={week.id}
-              onClick={() => onNavigate('week', week.id)}
-              className="w-full text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl px-5 py-4 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.99]"
+              className="flex items-center bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 overflow-hidden"
             >
-              <div className="font-display font-semibold text-co-ink dark:text-gray-100 text-lg leading-snug">
-                {week.title}
-              </div>
-              <div className="text-sm text-co-muted dark:text-gray-400 mt-1">
-                {cardCounts[week.id] || 0}{' '}
-                {(cardCounts[week.id] || 0) === 1 ? 'card' : 'cards'}
-              </div>
-            </button>
+              {/* Main navigate area */}
+              <button
+                onClick={() => editingWeekId !== week.id && onNavigate('week', week.id)}
+                className="flex-1 text-left px-5 py-4 min-w-0"
+              >
+                {editingWeekId === week.id ? (
+                  <input
+                    ref={editInputRef}
+                    className="w-full font-display font-semibold text-lg text-co-ink dark:text-gray-100 bg-transparent border-b-2 border-co-primary outline-none"
+                    value={editingTitle}
+                    onChange={e => setEditingTitle(e.target.value)}
+                    onBlur={() => saveEdit(week.id)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') saveEdit(week.id)
+                      if (e.key === 'Escape') cancelEdit()
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  />
+                ) : (
+                  <div className="font-display font-semibold text-co-ink dark:text-gray-100 text-lg leading-snug truncate">
+                    {week.title}
+                  </div>
+                )}
+                <div className="text-sm text-co-muted dark:text-gray-400 mt-0.5">
+                  {cardCounts[week.id] || 0}{' '}
+                  {(cardCounts[week.id] || 0) === 1 ? 'card' : 'cards'}
+                </div>
+              </button>
+
+              {/* Edit button */}
+              <button
+                onClick={e => startEditing(week, e)}
+                className="w-11 h-11 flex items-center justify-center text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary transition-colors flex-shrink-0"
+                aria-label="Edit week title"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                </svg>
+              </button>
+
+              {/* Delete button */}
+              <button
+                onClick={e => { e.stopPropagation(); setDeleteTarget(week) }}
+                className="w-11 h-11 flex items-center justify-center text-co-muted dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-shrink-0 mr-1"
+                aria-label="Delete week"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
           ))}
         </div>
+      )}
+
+      {/* Delete confirmation bottom sheet */}
+      {deleteTarget && (
+        <DeleteSheet
+          week={deleteTarget}
+          cardCount={cardCounts[deleteTarget.id]}
+          onConfirm={handleDelete}
+          onCancel={() => !deleting && setDeleteTarget(null)}
+          deleting={deleting}
+        />
       )}
     </div>
   )
