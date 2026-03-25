@@ -213,7 +213,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
                     onSpeak={(i, text) => handleSpeak(`chunk-${i}`, text)}
                     speakingKey={speakingKey}
                   />
-                  <div className="border-t border-white/15 my-4" />
+                  <div className="w-full border-t border-white/15 my-4" />
                   <InlineChunks
                     breakdown={card.breakdown}
                     field="en"
