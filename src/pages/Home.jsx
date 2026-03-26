@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { backfillBreakdownCache } from '../lib/breakdown'
 import Logo from '../components/Logo.old'
 import ThemeToggle from '../components/ThemeToggle'
 
@@ -60,6 +61,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
   const [editingTitle, setEditingTitle] = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [backfilling, setBackfilling] = useState(false)
   const editInputRef = useRef(null)
 
   useEffect(() => {
@@ -248,6 +250,29 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Dev-only: backfill breakdown cache */}
+      {import.meta.env.DEV && (
+        <div className="mt-10 pt-6 border-t border-co-border dark:border-gray-700 text-center">
+          <button
+            onClick={async () => {
+              setBackfilling(true)
+              try {
+                const count = await backfillBreakdownCache()
+                alert(`Backfilled ${count} breakdown(s) into cache.`)
+              } catch (e) {
+                alert(`Backfill failed: ${e.message}`)
+              } finally {
+                setBackfilling(false)
+              }
+            }}
+            disabled={backfilling}
+            className="text-xs text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary disabled:opacity-50 transition-colors"
+          >
+            {backfilling ? 'Backfilling…' : 'Backfill breakdown cache'}
+          </button>
         </div>
       )}
 

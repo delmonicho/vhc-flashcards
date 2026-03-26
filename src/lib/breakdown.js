@@ -50,3 +50,28 @@ export async function getOrCreateBreakdown(vietnameseText, cardId) {
 
   return breakdown
 }
+
+export async function backfillBreakdownCache() {
+  const { data: cards, error } = await supabase
+    .from('flashcards')
+    .select('vietnamese, breakdown')
+    .not('breakdown', 'is', null)
+
+  if (error) throw new Error(`Failed to fetch flashcards: ${error.message}`)
+
+  const rows = cards.map(c => ({
+    vi_key: normalizeVietnamese(c.vietnamese),
+    breakdown: c.breakdown,
+  }))
+
+  // Deduplicate by vi_key (last write wins for duplicate phrases)
+  const unique = Object.values(Object.fromEntries(rows.map(r => [r.vi_key, r])))
+
+  const { error: upsertError } = await supabase
+    .from('breakdowns')
+    .upsert(unique, { onConflict: 'vi_key' })
+
+  if (upsertError) throw new Error(`Backfill upsert failed: ${upsertError.message}`)
+
+  return unique.length
+}

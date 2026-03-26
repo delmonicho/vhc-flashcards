@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { loadCategories, saveCategories, getCategoryColor } from '../lib/categories'
 import VocabInput from '../components/VocabInput'
 import ThemeToggle from '../components/ThemeToggle'
 import CardEditModal from '../components/CardEditModal'
@@ -21,6 +22,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
   const [editingCard, setEditingCard] = useState(null)
   const [search, setSearch] = useState('')
   const [sourceFilter, setSourceFilter] = useState('all')
+  const [categories, setCategories] = useState(() => loadCategories())
 
   useEffect(() => {
     fetchData()
@@ -57,6 +59,11 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
   function handleModalDelete(cardId) {
     setCards(prev => prev.filter(c => c.id !== cardId))
     setEditingCard(null)
+  }
+
+  function handleCategoriesChange(updated) {
+    saveCategories(updated)
+    setCategories(updated)
   }
 
   const filteredCards = cards.filter(card => {
@@ -96,7 +103,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
         <ThemeToggle dark={dark} onToggle={onToggleDark} />
       </div>
 
-      <VocabInput weekId={weekId} onCardCreated={handleCardCreated} onCardBreakdownReady={handleBreakdownReady} />
+      <VocabInput weekId={weekId} onCardCreated={handleCardCreated} onCardBreakdownReady={handleBreakdownReady} categories={categories} onCategoriesChange={handleCategoriesChange} />
 
       {cards.length > 0 && (
         <div className="mt-6 space-y-3">
@@ -107,18 +114,29 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
             onChange={e => setSearch(e.target.value)}
             className="w-full border border-co-border dark:border-gray-600 rounded-xl px-4 py-2.5 text-sm bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary"
           />
-          <div className="flex gap-2">
-            {['all', 'class', 'homework'].map(opt => (
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setSourceFilter('all')}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                sourceFilter === 'all'
+                  ? 'bg-co-primary text-white'
+                  : 'bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
+              }`}
+            >
+              All
+            </button>
+            {categories.map(cat => (
               <button
-                key={opt}
-                onClick={() => setSourceFilter(opt)}
+                key={cat.id}
+                onClick={() => setSourceFilter(cat.id)}
+                style={sourceFilter === cat.id ? { backgroundColor: cat.color, color: '#2D1B12' } : {}}
                 className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
-                  sourceFilter === opt
-                    ? 'bg-co-primary text-white'
+                  sourceFilter === cat.id
+                    ? 'shadow-sm'
                     : 'bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
                 }`}
               >
-                {opt === 'all' ? 'All' : opt.charAt(0).toUpperCase() + opt.slice(1)}
+                {cat.label}
               </button>
             ))}
           </div>
@@ -145,14 +163,9 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
                   {card.english}
                 </div>
                 <div
-                  className={`absolute bottom-0 right-0 w-9 h-9 rounded-tl-full flex items-end justify-end pb-1.5 pr-1.5 text-xs font-bold ${
-                    card.source === 'class'
-                      ? 'bg-co-blush text-co-primary'
-                      : 'bg-co-cream text-co-gold'
-                  }`}
-                >
-                  {card.source[0].toUpperCase()}
-                </div>
+                  className="absolute bottom-0 right-0 w-9 h-9 rounded-tl-full"
+                  style={{ backgroundColor: getCategoryColor(categories, card.source) }}
+                />
               </button>
             ))}
           </div>

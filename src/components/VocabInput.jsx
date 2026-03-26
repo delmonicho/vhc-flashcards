@@ -2,14 +2,17 @@ import { useState } from 'react'
 import { translateToEnglish } from '../lib/translate'
 import { supabase } from '../lib/supabase'
 import { getOrCreateBreakdown } from '../lib/breakdown'
+import { addCategory, getCategoryColor } from '../lib/categories'
 
-export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady }) {
+export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady, categories = [], onCategoriesChange }) {
   const [source, setSource] = useState('class')
   const [input, setInput] = useState('')
   const [state, setState] = useState('idle') // idle | loading | preview | error
   const [preview, setPreview] = useState(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [addingCategory, setAddingCategory] = useState(false)
+  const [newCategoryLabel, setNewCategoryLabel] = useState('')
 
   async function handleAdd() {
     const text = input.trim()
@@ -61,28 +64,67 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
     setState('idle')
   }
 
+  function handleAddCategory() {
+    const label = newCategoryLabel.trim()
+    if (!label) return
+    const updated = addCategory(categories, label)
+    onCategoriesChange?.(updated)
+    setSource(updated[updated.length - 1].id)
+    setAddingCategory(false)
+    setNewCategoryLabel('')
+  }
+
   return (
     <div className="bg-co-surface dark:bg-gray-800/50 border border-co-border dark:border-gray-700 rounded-2xl p-4 space-y-4">
       {/* Source toggle */}
-      <div className="flex gap-2">
-        {[
-          { id: 'class', label: 'Class' },
-          { id: 'homework', label: 'Homework' },
-        ].map(({ id, label }) => (
+      <div className="flex gap-2 flex-wrap items-center">
+        {categories.map(cat => {
+          const isActive = source === cat.id
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setSource(cat.id)}
+              style={isActive ? { backgroundColor: cat.color, color: '#2D1B12' } : {}}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-150 ${
+                isActive
+                  ? 'shadow-sm'
+                  : 'bg-white dark:bg-gray-700 border border-co-border dark:border-gray-600 text-co-muted dark:text-gray-400'
+              }`}
+            >
+              {cat.label}
+            </button>
+          )
+        })}
+        {!addingCategory ? (
           <button
-            key={id}
-            onClick={() => setSource(id)}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-150 ${
-              source === id
-                ? id === 'class'
-                  ? 'bg-co-primary text-white shadow-sm'
-                  : 'bg-co-gold text-white shadow-sm'
-                : 'bg-white dark:bg-gray-700 border border-co-border dark:border-gray-600 text-co-muted dark:text-gray-400'
-            }`}
+            onClick={() => setAddingCategory(true)}
+            className="w-7 h-7 rounded-full bg-white dark:bg-gray-700 border border-co-border dark:border-gray-600 text-co-muted dark:text-gray-400 hover:text-co-primary flex items-center justify-center text-lg leading-none transition-colors"
+            aria-label="Add category"
           >
-            {label}
+            +
           </button>
-        ))}
+        ) : (
+          <div className="flex items-center gap-1">
+            <input
+              autoFocus
+              className="border border-co-border dark:border-gray-500 rounded-full px-3 py-1 text-sm bg-white dark:bg-gray-700 text-co-ink dark:text-gray-100 focus:outline-none focus:border-co-primary w-28"
+              placeholder="Name…"
+              value={newCategoryLabel}
+              onChange={e => setNewCategoryLabel(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleAddCategory()
+                if (e.key === 'Escape') { setAddingCategory(false); setNewCategoryLabel('') }
+              }}
+            />
+            <button
+              onClick={handleAddCategory}
+              disabled={!newCategoryLabel.trim()}
+              className="text-sm font-semibold text-co-primary disabled:opacity-40 hover:underline"
+            >
+              Save
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Input row */}
@@ -127,11 +169,8 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
               onChange={e => setPreview({ ...preview, english: e.target.value })}
             />
             <span
-              className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                source === 'class'
-                  ? 'bg-co-blush text-co-primary'
-                  : 'bg-co-cream text-co-gold'
-              }`}
+              className="inline-block text-xs px-2.5 py-0.5 rounded-full font-medium text-co-ink"
+              style={{ backgroundColor: getCategoryColor(categories, source) }}
             >
               {source}
             </span>
