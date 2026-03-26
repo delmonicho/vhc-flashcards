@@ -153,7 +153,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
                 role="listbox"
                 aria-label="Select tags"
                 aria-multiselectable="true"
-                className="absolute right-0 bottom-full mb-2 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-co-border dark:border-gray-700 p-1.5 min-w-40 z-20"
+                className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-co-border dark:border-gray-700 p-1.5 min-w-40 z-20"
               >
                 {categories.map(cat => {
                   const selected = tags.includes(cat.id)

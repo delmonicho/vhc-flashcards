@@ -81,7 +81,7 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl">
