@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { translateToEnglish } from '../lib/translate'
 import { supabase } from '../lib/supabase'
+import { getOrCreateBreakdown } from '../lib/breakdown'
 
-export default function VocabInput({ weekId, onCardCreated }) {
+export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady }) {
   const [source, setSource] = useState('class')
   const [input, setInput] = useState('')
   const [state, setState] = useState('idle') // idle | loading | preview | error
@@ -45,6 +46,10 @@ export default function VocabInput({ weekId, onCardCreated }) {
       setInput('')
       setPreview(null)
       setState('idle')
+      // Generate breakdown in background — card appears immediately
+      getOrCreateBreakdown(data.vietnamese, data.id)
+        .then(breakdown => onCardBreakdownReady?.(data.id, breakdown))
+        .catch(err => console.error('Breakdown generation failed:', err))
     } else {
       setError(error?.message || 'Failed to save card')
       setState('error')

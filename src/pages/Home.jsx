@@ -150,12 +150,6 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
     <div className="page-fade-in max-w-2xl mx-auto px-4 py-6 md:px-8">
       {/* Top bar */}
       <div className="flex items-center justify-end gap-3 mb-2">
-        <button
-          onClick={() => onNavigate('import')}
-          className="text-sm text-co-muted dark:text-gray-400 hover:text-co-primary dark:hover:text-co-primary transition-colors"
-        >
-          Import Breakdowns
-        </button>
         <ThemeToggle dark={dark} onToggle={onToggleDark} />
       </div>
 

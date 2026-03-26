@@ -45,6 +45,10 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
     setCards(prev => [newCard, ...prev])
   }
 
+  function handleBreakdownReady(cardId, breakdown) {
+    setCards(prev => prev.map(c => c.id === cardId ? { ...c, breakdown } : c))
+  }
+
   function handleModalSave(updatedCard) {
     setCards(prev => prev.map(c => (c.id === updatedCard.id ? updatedCard : c)))
     setEditingCard(null)
@@ -92,7 +96,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
         <ThemeToggle dark={dark} onToggle={onToggleDark} />
       </div>
 
-      <VocabInput weekId={weekId} onCardCreated={handleCardCreated} />
+      <VocabInput weekId={weekId} onCardCreated={handleCardCreated} onCardBreakdownReady={handleBreakdownReady} />
 
       {cards.length > 0 && (
         <div className="mt-6 space-y-3">
@@ -166,6 +170,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
           onSave={handleModalSave}
           onDelete={handleModalDelete}
           onClose={() => setEditingCard(null)}
+          onBreakdownReady={handleBreakdownReady}
         />
       )}
     </div>

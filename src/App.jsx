@@ -2,7 +2,6 @@ import { useState } from 'react'
 import Home from './pages/Home'
 import Week from './pages/Week'
 import Study from './pages/Study'
-import BreakdownImport from './pages/BreakdownImport'
 
 export default function App() {
   const [view, setView] = useState({ page: 'home', weekId: null })
@@ -32,8 +31,6 @@ export default function App() {
         <Week weekId={view.weekId} onNavigate={navigate} {...themeProps} />
       ) : view.page === 'study' ? (
         <Study weekId={view.weekId} onNavigate={navigate} {...themeProps} />
-      ) : view.page === 'import' ? (
-        <BreakdownImport onNavigate={navigate} {...themeProps} />
       ) : (
         <Home onNavigate={navigate} {...themeProps} />
       )}

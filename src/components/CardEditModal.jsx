@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { CHUNK_COLORS } from '../lib/colors'
+import { getOrCreateBreakdown } from '../lib/breakdown'
 
-export default function CardEditModal({ card, onSave, onDelete, onClose }) {
+export default function CardEditModal({ card, onSave, onDelete, onClose, onBreakdownReady }) {
   const [vietnamese, setVietnamese] = useState(card.vietnamese)
   const [english, setEnglish] = useState(card.english)
   const [segments, setSegments] = useState(card.breakdown || [])
@@ -12,13 +13,20 @@ export default function CardEditModal({ card, onSave, onDelete, onClose }) {
 
   async function handleSave() {
     setSaving(true)
-    const breakdown = segments.length > 0 ? segments : null
+    const vietnameseChanged = vietnamese !== card.vietnamese
+    const breakdown = vietnameseChanged ? null : (segments.length > 0 ? segments : null)
     const { error } = await supabase
       .from('flashcards')
       .update({ vietnamese, english, breakdown })
       .eq('id', card.id)
     if (!error) {
       onSave({ ...card, vietnamese, english, breakdown })
+      if (vietnameseChanged) {
+        // Regenerate breakdown in background for new Vietnamese text
+        getOrCreateBreakdown(vietnamese, card.id)
+          .then(newBreakdown => onBreakdownReady?.(card.id, newBreakdown))
+          .catch(err => console.error('Breakdown regeneration failed:', err))
+      }
     }
     setSaving(false)
   }
