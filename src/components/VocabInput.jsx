@@ -78,14 +78,16 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
     <div className="bg-co-surface dark:bg-gray-800/50 border border-co-border dark:border-gray-700 rounded-2xl p-4 space-y-4">
       {/* Source toggle */}
       <div className="flex gap-2 flex-wrap items-center">
+        <span className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest">Save to:</span>
         {categories.map(cat => {
           const isActive = source === cat.id
           return (
             <button
               key={cat.id}
               onClick={() => setSource(cat.id)}
+              aria-pressed={isActive}
               style={isActive ? { backgroundColor: cat.color, color: '#2D1B12' } : {}}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-150 ${
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-150 ${
                 isActive
                   ? 'shadow-sm'
                   : 'bg-white dark:bg-gray-700 border border-co-border dark:border-gray-600 text-co-muted dark:text-gray-400'
@@ -130,7 +132,11 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
       {/* Input row */}
       {state !== 'preview' && (
         <div className="flex gap-2">
+          <label htmlFor="vocab-input" className="sr-only">Type Vietnamese word or phrase</label>
           <input
+            id="vocab-input"
+            lang="vi"
+            spellCheck="false"
             className="flex-1 border border-co-border dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary transition-shadow"
             placeholder="Type Vietnamese word or phrase…"
             value={input}

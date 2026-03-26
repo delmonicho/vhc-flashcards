@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { loadCategories, saveCategories, getCategoryColor } from '../lib/categories'
 import VocabInput from '../components/VocabInput'
@@ -23,6 +23,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
   const [search, setSearch] = useState('')
   const [sourceFilter, setSourceFilter] = useState('all')
   const [categories, setCategories] = useState(() => loadCategories())
+  const lastClickedRef = useRef(null)
 
   useEffect(() => {
     fetchData()
@@ -66,6 +67,9 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
     setCategories(updated)
   }
 
+  const learnedCount = cards.filter(c => c.status === 'learned').length
+  const learnedPct = cards.length > 0 ? Math.round((learnedCount / cards.length) * 100) : 0
+
   const filteredCards = cards.filter(card => {
     if (sourceFilter !== 'all' && card.source !== sourceFilter) return false
     if (search.trim()) {
@@ -81,11 +85,19 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
 
   return (
     <div className="page-fade-in max-w-2xl mx-auto px-4 py-6 md:px-8">
+      {/* Skip link */}
+      <a
+        href="#cards-grid"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-co-primary focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold"
+      >
+        Skip to cards
+      </a>
+
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => onNavigate('home')}
-          className="w-9 h-9 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none"
+          className="w-11 h-11 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
           aria-label="Back"
         >
           ←
@@ -96,7 +108,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
         <button
           onClick={() => onNavigate('study', weekId)}
           disabled={cards.length === 0}
-          className="bg-co-fern text-white px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150"
+          className="bg-co-fern text-white px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-fern focus:ring-offset-2"
         >
           Study
         </button>
@@ -106,21 +118,25 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
       <VocabInput weekId={weekId} onCardCreated={handleCardCreated} onCardBreakdownReady={handleBreakdownReady} categories={categories} onCategoriesChange={handleCategoriesChange} />
 
       {cards.length > 0 && (
-        <div className="mt-6 space-y-3">
+        <div className="mt-4 bg-co-surface dark:bg-gray-800/50 border border-co-border dark:border-gray-700 rounded-2xl p-4 space-y-3">
+          <label htmlFor="search-cards" className="sr-only">Search cards</label>
           <input
+            id="search-cards"
             type="search"
             placeholder="Search cards…"
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full border border-co-border dark:border-gray-600 rounded-xl px-4 py-2.5 text-sm bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary"
           />
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
+            <span className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest">Filter:</span>
             <button
               onClick={() => setSourceFilter('all')}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+              aria-pressed={sourceFilter === 'all'}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
                 sourceFilter === 'all'
-                  ? 'bg-co-primary text-white'
-                  : 'bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
+                  ? 'bg-co-primary text-white shadow-sm'
+                  : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
               }`}
             >
               All
@@ -129,11 +145,12 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
               <button
                 key={cat.id}
                 onClick={() => setSourceFilter(cat.id)}
+                aria-pressed={sourceFilter === cat.id}
                 style={sourceFilter === cat.id ? { backgroundColor: cat.color, color: '#2D1B12' } : {}}
-                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
                   sourceFilter === cat.id
                     ? 'shadow-sm'
-                    : 'bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
+                    : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
                 }`}
               >
                 {cat.label}
@@ -144,28 +161,65 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
       )}
 
       {cards.length > 0 && (
-        <div className="mt-4">
-          <h2 className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-3">
-            {filteredCards.length} {filteredCards.length === 1 ? 'card' : 'cards'}
-            {filteredCards.length !== cards.length && ` of ${cards.length}`}
-          </h2>
+        <div className="mt-5" id="cards-grid">
+          {/* Progress + count */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <h2
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest"
+              >
+                {learnedCount > 0
+                  ? `${learnedCount} / ${cards.length} learned`
+                  : `${filteredCards.length}${filteredCards.length !== cards.length ? ` of ${cards.length}` : ''} ${filteredCards.length === 1 ? 'card' : 'cards'}`}
+              </h2>
+              {learnedCount > 0 && filteredCards.length !== cards.length && (
+                <span className="text-xs text-co-muted dark:text-gray-500">
+                  showing {filteredCards.length}
+                </span>
+              )}
+            </div>
+            {learnedCount > 0 && (
+              <div className="w-full bg-co-border dark:bg-gray-700 rounded-full h-1.5">
+                <div
+                  className="bg-co-fern rounded-full h-1.5 transition-all duration-500"
+                  style={{ width: `${learnedPct}%` }}
+                  role="progressbar"
+                  aria-valuenow={learnedCount}
+                  aria-valuemin={0}
+                  aria-valuemax={cards.length}
+                  aria-label={`${learnedCount} of ${cards.length} cards learned`}
+                />
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {filteredCards.map(card => (
               <button
                 key={card.id}
-                className="relative overflow-hidden w-full text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-5 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98]"
-                onClick={() => setEditingCard(card)}
+                aria-label={`${card.vietnamese} — ${card.english}, ${card.source}`}
+                className={`relative w-full min-h-28 text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 ${
+                  card.status === 'learned' ? 'border-l-4 border-l-co-fern' :
+                  card.status === 'learning' ? 'border-l-4 border-l-co-gold' : ''
+                }`}
+                onClick={e => { lastClickedRef.current = e.currentTarget; setEditingCard(card) }}
               >
-                <div className="font-display font-semibold text-co-ink dark:text-gray-100 mb-1.5 line-clamp-3 text-base leading-snug">
+                <div lang="vi" className="font-display font-semibold text-co-ink dark:text-gray-100 mb-1.5 line-clamp-3 text-base leading-snug">
                   {card.vietnamese}
                 </div>
-                <div className="text-co-muted dark:text-gray-400 text-sm line-clamp-2">
+                <div className="text-co-muted dark:text-gray-300 text-sm line-clamp-2">
                   {card.english}
                 </div>
-                <div
-                  className="absolute bottom-0 right-0 w-9 h-9 rounded-tl-full"
-                  style={{ backgroundColor: getCategoryColor(categories, card.source) }}
-                />
+                <span
+                  aria-hidden="true"
+                  className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full font-semibold leading-tight"
+                  style={{ backgroundColor: getCategoryColor(categories, card.source), color: '#2D1B12' }}
+                >
+                  {card.source}
+                </span>
               </button>
             ))}
           </div>
@@ -184,6 +238,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
           onDelete={handleModalDelete}
           onClose={() => setEditingCard(null)}
           onBreakdownReady={handleBreakdownReady}
+          triggerRef={lastClickedRef}
         />
       )}
     </div>

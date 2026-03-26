@@ -1,15 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { CHUNK_COLORS } from '../lib/colors'
 import { getOrCreateBreakdown } from '../lib/breakdown'
 
-export default function CardEditModal({ card, onSave, onDelete, onClose, onBreakdownReady }) {
+export default function CardEditModal({ card, onSave, onDelete, onClose, onBreakdownReady, triggerRef }) {
   const [vietnamese, setVietnamese] = useState(card.vietnamese)
   const [english, setEnglish] = useState(card.english)
   const [segments, setSegments] = useState(card.breakdown || [])
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const modalRef = useRef(null)
+
+  useEffect(() => {
+    const modal = modalRef.current
+    if (!modal) return
+    const focusableSelectors = 'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    function getFocusable() { return Array.from(modal.querySelectorAll(focusableSelectors)) }
+    function handleKeyDown(e) {
+      if (e.key !== 'Tab') return
+      const focusable = getFocusable()
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    modal.addEventListener('keydown', handleKeyDown)
+    return () => {
+      modal.removeEventListener('keydown', handleKeyDown)
+      triggerRef?.current?.focus()
+    }
+  }, [])
 
   async function handleSave() {
     setSaving(true)
@@ -52,16 +76,21 @@ export default function CardEditModal({ card, onSave, onDelete, onClose, onBreak
 
   return (
     <div
+      ref={modalRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
       className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl">
         {/* Header */}
         <div className="px-5 py-4 border-b border-co-border dark:border-gray-700 flex items-center justify-between">
-          <h2 className="font-display font-semibold text-co-ink dark:text-gray-100">Edit card</h2>
+          <h2 id="modal-title" className="font-display font-semibold text-co-ink dark:text-gray-100">Edit card</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-co-muted hover:text-co-ink hover:bg-co-surface dark:hover:bg-gray-800 text-xl leading-none transition-colors"
+            aria-label="Close"
+            className="w-11 h-11 flex items-center justify-center rounded-full text-co-muted hover:text-co-ink hover:bg-co-surface dark:hover:bg-gray-800 text-xl leading-none transition-colors"
           >
             ×
           </button>
@@ -74,6 +103,8 @@ export default function CardEditModal({ card, onSave, onDelete, onClose, onBreak
               Vietnamese
             </label>
             <input
+              lang="vi"
+              spellCheck="false"
               className="w-full border border-co-border dark:border-gray-700 rounded-xl px-3 py-2 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-co-primary"
               value={vietnamese}
               onChange={e => setVietnamese(e.target.value)}
