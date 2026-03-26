@@ -32,7 +32,7 @@ Fonts: `font-display` = Baloo 2 (headings), `font-sans` = Nunito (body).
 
 ```
 weeks         id, title, created_at
-flashcards    id, week_id, vietnamese, english, source ('class'|'homework'), status, breakdown (JSONB nullable), created_at
+flashcards    id, week_id, vietnamese, english, source (any string), status, breakdown (JSONB nullable), created_at
 breakdowns    vi_key (PK), breakdown (JSONB)   ← cache table
 ```
 
@@ -73,3 +73,12 @@ Local Supabase stack is not used. Available inspect subcommands: `bloat`, `calls
 - **Tailwind v4**: No config file. Customize via `@theme` and `@custom-variant` in `src/index.css`. Don't create a `tailwind.config.js`.
 - **Search/filter is client-side**: All cards for a week are loaded at once. No pagination needed for current scale.
 - **`VITE_ANTHROPIC_API_KEY`** in `.env` is unused at runtime — it's a leftover. The key lives in Supabase secrets and is only read by the Edge Function.
+- **`source` column has no enum constraint** — the old `('class'|'homework')` check was dropped in migration `20260326044509`. Any string is valid; the category system in localStorage is the source of truth for valid values.
+
+## localStorage Keys
+
+| Key | Owner | Value |
+|-----|-------|-------|
+| `'theme'` | `src/App.jsx` | `'dark'` or `'light'` |
+| `'viet-categories'` | `src/lib/categories.js` | JSON array of category objects |
+| `'viVoiceBannerDismissed'` | `src/pages/Study.jsx` | `'1'` when dismissed |

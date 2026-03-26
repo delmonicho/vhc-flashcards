@@ -3,9 +3,10 @@ import { supabase } from '../lib/supabase'
 import { CHUNK_COLORS } from '../lib/colors'
 import { getOrCreateBreakdown } from '../lib/breakdown'
 
-export default function CardEditModal({ card, onSave, onDelete, onClose, onBreakdownReady, triggerRef }) {
+export default function CardEditModal({ card, categories = [], onSave, onDelete, onClose, onBreakdownReady, triggerRef }) {
   const [vietnamese, setVietnamese] = useState(card.vietnamese)
   const [english, setEnglish] = useState(card.english)
+  const [tags, setTags] = useState(card.source || [])
   const [segments, setSegments] = useState(card.breakdown || [])
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -41,10 +42,10 @@ export default function CardEditModal({ card, onSave, onDelete, onClose, onBreak
     const breakdown = vietnameseChanged ? null : (segments.length > 0 ? segments : null)
     const { error } = await supabase
       .from('flashcards')
-      .update({ vietnamese, english, breakdown })
+      .update({ vietnamese, english, breakdown, source: tags })
       .eq('id', card.id)
     if (!error) {
-      onSave({ ...card, vietnamese, english, breakdown })
+      onSave({ ...card, vietnamese, english, breakdown, source: tags })
       if (vietnameseChanged) {
         // Regenerate breakdown in background for new Vietnamese text
         getOrCreateBreakdown(vietnamese, card.id)
@@ -121,6 +122,37 @@ export default function CardEditModal({ card, onSave, onDelete, onClose, onBreak
               onChange={e => setEnglish(e.target.value)}
             />
           </div>
+
+          {/* Tags */}
+          {categories.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest">
+                Tags
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {categories.map(cat => {
+                  const isSelected = tags.includes(cat.id)
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setTags(prev =>
+                        isSelected ? prev.filter(t => t !== cat.id) : [...prev, cat.id]
+                      )}
+                      style={isSelected ? { backgroundColor: cat.color, color: '#2D1B12' } : {}}
+                      className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all border focus:outline-none focus:ring-2 focus:ring-co-primary ${
+                        isSelected
+                          ? 'border-transparent shadow-sm'
+                          : 'border-co-border dark:border-gray-600 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Breakdown segments */}
           <div className="space-y-2">

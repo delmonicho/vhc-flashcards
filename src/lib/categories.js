@@ -31,6 +31,10 @@ export function nextColor(categories) {
   return PALETTE.find(c => !used.has(c)) ?? PALETTE[categories.length % PALETTE.length]
 }
 
+export function deleteCategory(categories, categoryId) {
+  return categories.filter(c => c.id !== categoryId)
+}
+
 export function addCategory(categories, label) {
   const trimmed = label.trim()
   let id = trimmed.toLowerCase().replace(/\s+/g, '-')

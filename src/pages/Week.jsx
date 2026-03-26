@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import { loadCategories, saveCategories, getCategoryColor } from '../lib/categories'
+import { loadCategories, saveCategories, getCategoryColor, deleteCategory } from '../lib/categories'
 import VocabInput from '../components/VocabInput'
 import ThemeToggle from '../components/ThemeToggle'
 import CardEditModal from '../components/CardEditModal'
@@ -67,11 +67,32 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
     setCategories(updated)
   }
 
+  async function handleDeleteCategory(catId) {
+    // 1. Remove from localStorage
+    handleCategoriesChange(deleteCategory(categories, catId))
+    // 2. Optimistic UI: strip the deleted tag from all local cards
+    setCards(prev => prev.map(c => ({
+      ...c,
+      source: (c.source || []).filter(s => s !== catId),
+    })))
+    // 3. Persist to DB for affected cards
+    const affected = cards.filter(c => (c.source || []).includes(catId))
+    await Promise.all(affected.map(card =>
+      supabase.from('flashcards')
+        .update({ source: (card.source || []).filter(s => s !== catId) })
+        .eq('id', card.id)
+    ))
+    // 4. Reset filter if it pointed at the deleted category
+    if (sourceFilter === catId) setSourceFilter('all')
+  }
+
   const learnedCount = cards.filter(c => c.status === 'learned').length
   const learnedPct = cards.length > 0 ? Math.round((learnedCount / cards.length) * 100) : 0
 
   const filteredCards = cards.filter(card => {
-    if (sourceFilter !== 'all' && card.source !== sourceFilter) return false
+    const tags = card.source || []
+    if (sourceFilter === 'uncategorized') return tags.length === 0
+    if (sourceFilter !== 'all' && !tags.includes(sourceFilter)) return false
     if (search.trim()) {
       const q = search.toLowerCase()
       return card.vietnamese.toLowerCase().includes(q) || card.english.toLowerCase().includes(q)
@@ -115,7 +136,13 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
         <ThemeToggle dark={dark} onToggle={onToggleDark} />
       </div>
 
-      <VocabInput weekId={weekId} onCardCreated={handleCardCreated} onCardBreakdownReady={handleBreakdownReady} categories={categories} onCategoriesChange={handleCategoriesChange} />
+      <VocabInput
+        weekId={weekId}
+        onCardCreated={handleCardCreated}
+        onCardBreakdownReady={handleBreakdownReady}
+        categories={categories}
+        onCategoriesChange={handleCategoriesChange}
+      />
 
       {cards.length > 0 && (
         <div className="mt-4 bg-co-surface dark:bg-gray-800/50 border border-co-border dark:border-gray-700 rounded-2xl p-4 space-y-3">
@@ -130,6 +157,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
           />
           <div className="flex gap-2 flex-wrap items-center">
             <span className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest">Filter:</span>
+            {/* All */}
             <button
               onClick={() => setSourceFilter('all')}
               aria-pressed={sourceFilter === 'all'}
@@ -141,21 +169,42 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
             >
               All
             </button>
+            {/* Named categories with × delete */}
             {categories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setSourceFilter(cat.id)}
-                aria-pressed={sourceFilter === cat.id}
-                style={sourceFilter === cat.id ? { backgroundColor: cat.color, color: '#2D1B12' } : {}}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
-                  sourceFilter === cat.id
-                    ? 'shadow-sm'
-                    : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
-                }`}
-              >
-                {cat.label}
-              </button>
+              <div key={cat.id} className="group relative flex items-center">
+                <button
+                  onClick={() => setSourceFilter(cat.id)}
+                  aria-pressed={sourceFilter === cat.id}
+                  style={sourceFilter === cat.id ? { backgroundColor: cat.color, color: '#2D1B12' } : {}}
+                  className={`pl-4 pr-7 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
+                    sourceFilter === cat.id
+                      ? 'shadow-sm'
+                      : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+                <button
+                  onClick={e => { e.stopPropagation(); handleDeleteCategory(cat.id) }}
+                  aria-label={`Delete ${cat.label} category`}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-co-muted hover:text-red-500 text-sm leading-none focus:opacity-100 focus:outline-none"
+                >
+                  ×
+                </button>
+              </div>
             ))}
+            {/* Uncategorized */}
+            <button
+              onClick={() => setSourceFilter('uncategorized')}
+              aria-pressed={sourceFilter === 'uncategorized'}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
+                sourceFilter === 'uncategorized'
+                  ? 'bg-co-ink text-white shadow-sm dark:bg-gray-200 dark:text-gray-900'
+                  : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
+              }`}
+            >
+              Untagged
+            </button>
           </div>
         </div>
       )}
@@ -197,31 +246,40 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {filteredCards.map(card => (
-              <button
-                key={card.id}
-                aria-label={`${card.vietnamese} — ${card.english}, ${card.source}`}
-                className={`relative w-full min-h-28 text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 ${
-                  card.status === 'learned' ? 'border-l-4 border-l-co-fern' :
-                  card.status === 'learning' ? 'border-l-4 border-l-co-gold' : ''
-                }`}
-                onClick={e => { lastClickedRef.current = e.currentTarget; setEditingCard(card) }}
-              >
-                <div lang="vi" className="font-display font-semibold text-co-ink dark:text-gray-100 mb-1.5 line-clamp-3 text-base leading-snug">
-                  {card.vietnamese}
-                </div>
-                <div className="text-co-muted dark:text-gray-300 text-sm line-clamp-2">
-                  {card.english}
-                </div>
-                <span
-                  aria-hidden="true"
-                  className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full font-semibold leading-tight"
-                  style={{ backgroundColor: getCategoryColor(categories, card.source), color: '#2D1B12' }}
+            {filteredCards.map(card => {
+              const cardTags = card.source || []
+              return (
+                <button
+                  key={card.id}
+                  aria-label={`${card.vietnamese} — ${card.english}${cardTags.length ? `, ${cardTags.join(', ')}` : ''}`}
+                  className={`relative flex flex-col w-full min-h-28 text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 ${
+                    card.status === 'learned' ? 'border-l-4 border-l-co-fern' :
+                    card.status === 'learning' ? 'border-l-4 border-l-co-gold' : ''
+                  }`}
+                  onClick={e => { lastClickedRef.current = e.currentTarget; setEditingCard(card) }}
                 >
-                  {card.source}
-                </span>
-              </button>
-            ))}
+                  <div lang="vi" className="flex-1 font-display font-semibold text-co-ink dark:text-gray-100 mb-1.5 line-clamp-3 text-base leading-snug">
+                    {card.vietnamese}
+                  </div>
+                  <div className="text-co-muted dark:text-gray-300 text-sm line-clamp-2 mb-2">
+                    {card.english}
+                  </div>
+                  {cardTags.length > 0 && (
+                    <div aria-hidden="true" className="mt-auto flex flex-wrap gap-1">
+                      {cardTags.map(tagId => (
+                        <span
+                          key={tagId}
+                          className="text-xs px-2 py-0.5 rounded-full font-semibold leading-tight"
+                          style={{ backgroundColor: getCategoryColor(categories, tagId), color: '#2D1B12' }}
+                        >
+                          {categories.find(c => c.id === tagId)?.label ?? tagId}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </button>
+              )
+            })}
           </div>
           {filteredCards.length === 0 && (
             <p className="text-center text-co-muted dark:text-gray-500 py-10 text-sm">
@@ -234,6 +292,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
       {editingCard && (
         <CardEditModal
           card={editingCard}
+          categories={categories}
           onSave={handleModalSave}
           onDelete={handleModalDelete}
           onClose={() => setEditingCard(null)}
