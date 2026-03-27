@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Home from './pages/Home'
 import Week from './pages/Week'
 import Study from './pages/Study'
+import Quiz from './pages/Quiz'
 
 export default function App() {
   const [view, setView] = useState({ page: 'home', weekId: null })
@@ -31,6 +32,8 @@ export default function App() {
         <Week weekId={view.weekId} onNavigate={navigate} {...themeProps} />
       ) : view.page === 'study' ? (
         <Study weekId={view.weekId} onNavigate={navigate} {...themeProps} />
+      ) : view.page === 'quiz' ? (
+        <Quiz weekId={view.weekId} onNavigate={navigate} {...themeProps} />
       ) : (
         <Home onNavigate={navigate} {...themeProps} />
       )}

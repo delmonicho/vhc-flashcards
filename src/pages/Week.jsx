@@ -133,6 +133,13 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
         >
           Study
         </button>
+        <button
+          onClick={() => onNavigate('quiz', weekId)}
+          disabled={cards.length === 0}
+          className="bg-co-primary text-white px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+        >
+          Quiz
+        </button>
         <ThemeToggle dark={dark} onToggle={onToggleDark} />
       </div>
 

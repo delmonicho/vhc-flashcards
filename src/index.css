@@ -78,3 +78,39 @@ body {
     opacity: 0.5;
   }
 }
+
+/* Quiz animations */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+.shake { animation: shake 0.35s ease-in-out forwards; }
+
+@keyframes pop-in {
+  0%   { transform: scale(0.8); opacity: 0.6; }
+  60%  { transform: scale(1.05); }
+  100% { transform: scale(1);    opacity: 1; }
+}
+.pop-in { animation: pop-in 0.2s ease-out forwards; }
+
+@keyframes tile-correct {
+  0%, 100% { transform: scale(1); }
+  40%       { transform: scale(1.08); }
+}
+.tile-correct { animation: tile-correct 0.25s ease-out forwards; }
+
+@keyframes timer-drain {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+.timer-bar { animation: timer-drain 60s linear forwards; }
+.timer-bar.paused { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .shake, .pop-in, .tile-correct, .timer-bar {
+    animation: none; opacity: 1; transform: none;
+  }
+}
