@@ -3,6 +3,7 @@ import Home from './pages/Home'
 import Week from './pages/Week'
 import Study from './pages/Study'
 import Quiz from './pages/Quiz'
+import LotusQuest from './pages/LotusQuest'
 
 export default function App() {
   const [view, setView] = useState({ page: 'home', weekId: null })
@@ -34,6 +35,8 @@ export default function App() {
         <Study weekId={view.weekId} onNavigate={navigate} {...themeProps} />
       ) : view.page === 'quiz' ? (
         <Quiz weekId={view.weekId} onNavigate={navigate} {...themeProps} />
+      ) : view.page === 'lotus-quest' ? (
+        <LotusQuest weekId={view.weekId} onNavigate={navigate} />
       ) : (
         <Home onNavigate={navigate} {...themeProps} />
       )}

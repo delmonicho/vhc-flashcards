@@ -114,3 +114,76 @@ body {
     animation: none; opacity: 1; transform: none;
   }
 }
+
+/* Lotus Quest — pixel game mode */
+.pixel-mode {
+  --font-pixel-viet: 'VT323', monospace;
+  --font-pixel-ui: 'Pixelify Sans', monospace;
+  --font-pixel-score: 'Silkscreen', monospace;
+  background: #0d1018;
+  color: #e0e0e0;
+  image-rendering: pixelated;
+}
+
+/* pixel font helpers — used inside .pixel-mode only */
+.pixel-mode .font-pixel-ui    { font-family: var(--font-pixel-ui); }
+.pixel-mode .font-pixel-score { font-family: var(--font-pixel-score); }
+
+.pixel-border {
+  border: 3px solid #444;
+  box-shadow: 3px 3px 0 #000;
+}
+
+.pixel-border-green {
+  border: 3px solid #5BAF7A;
+  box-shadow: 3px 3px 0 #000;
+}
+
+.pixel-border-red {
+  border: 3px solid #E8526A;
+  box-shadow: 3px 3px 0 #000;
+}
+
+@keyframes lotus-float {
+  0%, 100% { transform: translateY(-4px); }
+  50%       { transform: translateY(4px); }
+}
+.lotus-float { animation: lotus-float 2s ease-in-out infinite; }
+
+@keyframes lotus-flash {
+  0%, 100% { filter: none; }
+  50%       { filter: brightness(0.4) sepia(1) hue-rotate(-20deg) saturate(8); }
+}
+.lotus-flash { animation: lotus-flash 0.3s ease-in-out; }
+
+@keyframes sword-slash {
+  0%   { transform: scale(1.2) rotate(-5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.sword-slash { animation: sword-slash 0.3s ease-out forwards; }
+
+@keyframes shield-block {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-4px); }
+  75%       { transform: translateX(4px); }
+}
+.shield-block { animation: shield-block 0.3s ease-in-out; }
+
+@keyframes enemy-defeat {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0); opacity: 0; }
+}
+.enemy-defeat { animation: enemy-defeat 0.4s ease-in forwards; }
+
+@keyframes pixel-firework {
+  0%   { transform: scale(0); opacity: 1; }
+  60%  { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(0); opacity: 0; }
+}
+.pixel-firework { animation: pixel-firework 0.6s ease-out forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lotus-float, .lotus-flash, .sword-slash, .shield-block, .enemy-defeat, .pixel-firework {
+    animation: none; opacity: 1; transform: none; filter: none;
+  }
+}
