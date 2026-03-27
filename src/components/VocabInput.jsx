@@ -98,13 +98,12 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
     setState('idle')
   }
 
-  function handleAddCategory() {
+  async function handleAddCategory() {
     const label = newCategoryLabel.trim()
     if (!label) return
-    const updated = addCategory(categories, label)
-    onCategoriesChange?.(updated)
-    const newId = updated[updated.length - 1].id
-    setTags(prev => [...prev, newId])
+    const newCat = await addCategory(categories, label)
+    onCategoriesChange?.([...categories, newCat])
+    setTags(prev => [...prev, newCat.id])
     setAddingCategory(false)
     setNewCategoryLabel('')
   }

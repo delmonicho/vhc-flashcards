@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Home from './pages/Home'
 import Week from './pages/Week'
 import Study from './pages/Study'
 import Quiz from './pages/Quiz'
 import LotusQuest from './pages/LotusQuest'
+import { loadCategories } from './lib/categories'
 
 export default function App() {
   const [view, setView] = useState({ page: 'home', weekId: null })
@@ -12,6 +13,11 @@ export default function App() {
     if (saved) return saved === 'dark'
     return window.matchMedia('(prefers-color-scheme: dark)').matches
   })
+  const [categories, setCategories] = useState([])
+
+  useEffect(() => {
+    loadCategories().then(setCategories)
+  }, [])
 
   function navigate(page, weekId = null) {
     setView({ page, weekId })
@@ -30,7 +36,7 @@ export default function App() {
   return (
     <div className={`${dark ? 'dark' : ''} min-h-screen bg-co-warm dark:bg-gray-950 transition-colors duration-200`}>
       {view.page === 'week' ? (
-        <Week weekId={view.weekId} onNavigate={navigate} {...themeProps} />
+        <Week weekId={view.weekId} onNavigate={navigate} {...themeProps} categories={categories} onCategoriesChange={setCategories} />
       ) : view.page === 'study' ? (
         <Study weekId={view.weekId} onNavigate={navigate} {...themeProps} />
       ) : view.page === 'quiz' ? (

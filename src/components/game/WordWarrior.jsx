@@ -66,7 +66,7 @@ export default function WordWarrior({ flashcards, onComplete }) {
     setQueue(q => [...q.slice(1), q[0]])
     setTimeout(() => {
       setAnimClass('')
-      setPhase('card')
+      setPhase(p => p === 'result' ? 'result' : 'card')
     }, 300)
   }
 

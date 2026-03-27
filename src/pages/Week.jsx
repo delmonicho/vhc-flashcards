@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import { loadCategories, saveCategories, getCategoryColor, deleteCategory } from '../lib/categories'
+import { getCategoryColor, deleteCategory, upsertCategories, nextColor } from '../lib/categories'
 import VocabInput from '../components/VocabInput'
 import ThemeToggle from '../components/ThemeToggle'
 import CardEditModal from '../components/CardEditModal'
@@ -15,14 +15,13 @@ function LoadingDots() {
   )
 }
 
-export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
+export default function Week({ weekId, onNavigate, dark, onToggleDark, categories, onCategoriesChange }) {
   const [week, setWeek] = useState(null)
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
   const [editingCard, setEditingCard] = useState(null)
   const [search, setSearch] = useState('')
   const [sourceFilter, setSourceFilter] = useState('all')
-  const [categories, setCategories] = useState(() => loadCategories())
   const lastClickedRef = useRef(null)
 
   useEffect(() => {
@@ -40,8 +39,26 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
         .order('created_at', { ascending: false }),
     ])
     setWeek(weekData)
-    setCards(cardsData || [])
+    const loaded = cardsData || []
+    setCards(loaded)
     setLoading(false)
+
+    // Reconcile: auto-recover any tag IDs on cards that aren't in the categories list
+    const allTagIds = [...new Set(loaded.flatMap(c => c.source || []))]
+    const knownIds = new Set(categories.map(c => c.id))
+    const orphanIds = allTagIds.filter(id => !knownIds.has(id))
+    if (orphanIds.length > 0) {
+      const running = [...categories]
+      const recovered = orphanIds.map(id => {
+        const label = id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+        const color = nextColor(running)
+        const cat = { id, label, color }
+        running.push(cat)
+        return cat
+      })
+      await upsertCategories(recovered)
+      onCategoriesChange([...categories, ...recovered])
+    }
   }
 
   function handleCardCreated(newCard) {
@@ -62,28 +79,24 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
     setEditingCard(null)
   }
 
-  function handleCategoriesChange(updated) {
-    saveCategories(updated)
-    setCategories(updated)
-  }
-
   async function handleDeleteCategory(catId) {
-    // 1. Remove from localStorage
-    handleCategoriesChange(deleteCategory(categories, catId))
-    // 2. Optimistic UI: strip the deleted tag from all local cards
+    // 1. Optimistic UI: update state immediately
+    onCategoriesChange(categories.filter(c => c.id !== catId))
     setCards(prev => prev.map(c => ({
       ...c,
       source: (c.source || []).filter(s => s !== catId),
     })))
-    // 3. Persist to DB for affected cards
-    const affected = cards.filter(c => (c.source || []).includes(catId))
-    await Promise.all(affected.map(card =>
-      supabase.from('flashcards')
-        .update({ source: (card.source || []).filter(s => s !== catId) })
-        .eq('id', card.id)
-    ))
-    // 4. Reset filter if it pointed at the deleted category
     if (sourceFilter === catId) setSourceFilter('all')
+    // 2. Persist to Supabase in background
+    const affected = cards.filter(c => (c.source || []).includes(catId))
+    await Promise.all([
+      deleteCategory(categories, catId),
+      ...affected.map(card =>
+        supabase.from('flashcards')
+          .update({ source: (card.source || []).filter(s => s !== catId) })
+          .eq('id', card.id)
+      ),
+    ])
   }
 
   const learnedCount = cards.filter(c => c.status === 'learned').length
@@ -91,7 +104,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
 
   const filteredCards = cards.filter(card => {
     const tags = card.source || []
-    if (sourceFilter === 'uncategorized') return tags.length === 0
+    if (sourceFilter === 'untagged') return tags.length === 0
     if (sourceFilter !== 'all' && !tags.includes(sourceFilter)) return false
     if (search.trim()) {
       const q = search.toLowerCase()
@@ -156,7 +169,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
         onCardCreated={handleCardCreated}
         onCardBreakdownReady={handleBreakdownReady}
         categories={categories}
-        onCategoriesChange={handleCategoriesChange}
+        onCategoriesChange={onCategoriesChange}
       />
 
       {cards.length > 0 && (
@@ -174,15 +187,15 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
             <span className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest">Filter:</span>
             {/* All */}
             <button
-              onClick={() => setSourceFilter('all')}
-              aria-pressed={sourceFilter === 'all'}
+              onClick={() => setSourceFilter(sourceFilter === 'all' ? 'untagged' : 'all')}
+              aria-pressed={sourceFilter === 'all' || sourceFilter === 'untagged'}
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
-                sourceFilter === 'all'
+                sourceFilter === 'all' || sourceFilter === 'untagged'
                   ? 'bg-co-primary text-white shadow-sm'
                   : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
               }`}
             >
-              All
+              {sourceFilter === 'untagged' ? 'Untagged' : 'All'}
             </button>
             {/* Named categories with × delete */}
             {categories.map(cat => (
@@ -208,18 +221,6 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark }) {
                 </button>
               </div>
             ))}
-            {/* Uncategorized */}
-            <button
-              onClick={() => setSourceFilter('uncategorized')}
-              aria-pressed={sourceFilter === 'uncategorized'}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
-                sourceFilter === 'uncategorized'
-                  ? 'bg-co-ink text-white shadow-sm dark:bg-gray-200 dark:text-gray-900'
-                  : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
-              }`}
-            >
-              Untagged
-            </button>
           </div>
         </div>
       )}
