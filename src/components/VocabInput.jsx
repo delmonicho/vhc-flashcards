@@ -84,7 +84,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
       setInput('')
       setPreview(null)
       setState('idle')
-      getOrCreateBreakdown(data.vietnamese, data.id)
+      getOrCreateBreakdown(data.vietnamese, data.id, data.english)
         .then(breakdown => onCardBreakdownReady?.(data.id, breakdown))
         .catch(err => console.error('Breakdown generation failed:', err))
     } else {

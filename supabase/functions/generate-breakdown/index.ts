@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { vietnamese } = await req.json()
+    const { vietnamese, english } = await req.json()
     if (!vietnamese) {
       return new Response(JSON.stringify({ error: 'Missing vietnamese field' }), {
         status: 400,
@@ -20,8 +20,9 @@ serve(async (req) => {
       })
     }
 
+    const contextLine = english ? `\nEnglish translation: ${english}` : ''
     const prompt =
-      `You are a Vietnamese language tutor. Generate a word-by-word breakdown of the Vietnamese phrase below, aligned with its English meaning. Return ONLY a valid JSON array — no markdown fences, no explanation. Use this exact format:\n\n[{ "vi": "<Vietnamese chunk>", "en": "<English chunk>" }]\n\nKeep chunks to 1–3 words.\n\nPhrase: ${vietnamese}`
+      `You are a Vietnamese language tutor. Generate a word-by-word breakdown of the Vietnamese phrase below, aligned with its English meaning. Return ONLY a valid JSON array — no markdown fences, no explanation. Use this exact format:\n\n[{ "vi": "<Vietnamese chunk>", "en": "<English chunk>" }]\n\nKeep chunks to 1–3 words. Use the English translation as context to pick the right meaning for ambiguous words.${contextLine}\n\nPhrase: ${vietnamese}`
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

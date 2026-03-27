@@ -6,7 +6,7 @@ export function normalizeVietnamese(text) {
   return text.trim().replace(/\s+/g, ' ')
 }
 
-export async function getOrCreateBreakdown(vietnameseText, cardId) {
+export async function getOrCreateBreakdown(vietnameseText, cardId, englishText) {
   const viKey = normalizeVietnamese(vietnameseText)
 
   // 1. Cache lookup — reuse existing breakdown for this phrase
@@ -25,7 +25,7 @@ export async function getOrCreateBreakdown(vietnameseText, cardId) {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-breakdown`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ vietnamese: vietnameseText }),
+    body: JSON.stringify({ vietnamese: vietnameseText, ...(englishText && { english: englishText }) }),
   })
 
   if (!res.ok) {
@@ -49,6 +49,22 @@ export async function getOrCreateBreakdown(vietnameseText, cardId) {
   await supabase.from('flashcards').update({ breakdown }).eq('id', cardId)
 
   return breakdown
+}
+
+export async function triggerMissingBreakdowns() {
+  const { data: cards, error } = await supabase
+    .from('flashcards')
+    .select('id, vietnamese, english')
+    .is('breakdown', null)
+
+  if (error) throw new Error(`Failed to fetch cards: ${error.message}`)
+
+  const results = await Promise.allSettled(
+    cards.map(c => getOrCreateBreakdown(c.vietnamese, c.id, c.english))
+  )
+
+  const failed = results.filter(r => r.status === 'rejected')
+  return { total: cards.length, failed: failed.length }
 }
 
 export async function backfillBreakdownCache() {
