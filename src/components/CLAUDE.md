@@ -32,6 +32,14 @@ contracts with its parents.
 
 Both are pure presentational. ThemeToggle does NOT read localStorage — all persistence is in App.jsx. `Logo.old.jsx` is kept as reference; do not delete it.
 
-## Upcoming: Quiz components
+## Quiz components (`src/components/quiz/`)
 
-`QuizScore.jsx` will be added here. See `QUIZ.md` at the root for the full spec.
+All four components share the same `onDone({ score, total, results })` contract. `results` is a `Map<cardId, boolean>` — mutated in place via `useState(() => new Map())`, never replaced.
+
+**MultipleChoice** — receives `cards` (sampled) and `allCards` (full week list for distractor pool). Shows Vietnamese prompt, 4 English options. Distractors are random from `allCards` excluding the current card. Advances on answer, shows correct/incorrect colors before "Next" button appears.
+
+**QuickFire** — self-assessment flashcard. Tap to flip, then rate Missed/Got it. No timer.
+
+**PairMatch** — capped at 8 pairs (`cards.slice(0, 8)`). Two-column layout: Vietnamese left, English right (both shuffled independently). Tap one from each column; correct = green + remove, wrong = red shake + reset selection. Tracks `firstAttemptFailed` set — a card is `true` in results only if matched on first try with no prior wrong selection of that left item.
+
+**TileAssembly** — tiles are `{ id: originalIndex, word: string }` to handle duplicate words. Per-card 60s timer via `setInterval` with `[index]` dependency (resets on advance). Timer bar is a CSS `.timer-bar` animation, keyed on `index` to restart. Wrong answer: shake + reset bank to full shuffled set. After 2 wrong attempts, "Show answer" link appears. Correct on first attempt = `true`; any prior wrong = `false`. Timer expiry ends the whole quiz (marks remaining cards false).

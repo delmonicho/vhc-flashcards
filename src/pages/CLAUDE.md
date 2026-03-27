@@ -40,10 +40,14 @@ Any new card creation path (bulk import, etc.) must also wire `handleBreakdownRe
 
 **Grid view and card view share `index` state.** Grid click calls `goTo(i)` then `setGridView(false)`.
 
-## Upcoming: Quiz page
+## Quiz.jsx
 
-`Quiz.jsx` will be added here. App.jsx will need two new view branches:
-- `page: 'quiz'` → Quiz component
-- `page: 'quiz-score'` → QuizScore component
+Phase machine: `phase` state cycles `'pick' → 'playing' → 'score'`. Single page — no separate QuizScore route. Navigation: `Week → Quiz (pick) → Quiz (playing) → Quiz (score) → Week or pick`.
 
-Navigation flow: `Week → Quiz → QuizScore → Week`. See `QUIZ.md` at root for full spec.
+**`onDone` contract:** all child quiz components call `onDone({ score, total, results })` where `results` is a `Map<cardId, boolean>`. Quiz.jsx handles mastery writes and XP in `handleDone`.
+
+**Mastery state** (`masteryData`) is loaded once on mount from `loadMastery()` and updated in `handleDone` after each quiz. XP is written via `addXP()` (side-effect, not stored in component state).
+
+**Weighted sampling:** `weightedSample(cards, n, masteryData)` is called at play-phase entry. Missed cards (streak < 3 && incorrect > 0) get 2x weight. For `tiles` mode, cards are pre-filtered to multi-word only (`split(/\s+/).length >= 2`).
+
+**Score screen:** XP bar animates from 0 to `totalXP / 50 * 100`% via double-rAF trick after phase transitions to `'score'`. Missed-cards list scrolls within `max-h-64`. Breakdown toggle shows `<BreakdownDisplay>` inline — no navigation.
