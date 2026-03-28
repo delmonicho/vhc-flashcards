@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { logError } from './logger'
 
 const PALETTE = [
   '#FFCCD5', '#FFF0C0', '#D6F5E3', '#D6EEFF', '#EDE4FF',
@@ -23,7 +24,9 @@ export async function loadCategories() {
       }
       localStorage.removeItem(STORAGE_KEY)
     }
-  } catch {}
+  } catch (err) {
+    logError('Failed to migrate categories from localStorage', { action: 'loadCategories', err })
+  }
 
   const { data } = await supabase.from('categories').select('id, label, color').order('created_at')
   return data ?? []

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { backfillBreakdownCache } from '../lib/breakdown'
+import { logError } from '../lib/logger'
 import Logo from '../components/Logo.old'
 import ThemeToggle from '../components/ThemeToggle'
 
@@ -74,10 +75,12 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
 
   async function fetchData() {
     setLoading(true)
-    const [{ data: weeksData }, { data: cardsData }] = await Promise.all([
+    const [{ data: weeksData, error: weeksError }, { data: cardsData, error: cardsError }] = await Promise.all([
       supabase.from('weeks').select('*').order('created_at', { ascending: false }),
       supabase.from('flashcards').select('id, week_id'),
     ])
+    if (weeksError) logError('Failed to load weeks', { page: 'home', action: 'fetchData', err: weeksError })
+    if (cardsError) logError('Failed to load card counts', { page: 'home', action: 'fetchData', err: cardsError })
     setWeeks(weeksData || [])
     const counts = {}
     for (const card of cardsData || []) {
@@ -100,6 +103,8 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       setWeeks([data, ...weeks])
       setCardCounts({ ...cardCounts, [data.id]: 0 })
       setTitle('')
+    } else if (error) {
+      logError('Failed to create week', { page: 'home', action: 'createWeek', err: error, details: { title } })
     }
     setCreating(false)
   }
@@ -134,10 +139,12 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
   async function handleDelete() {
     if (!deleteTarget) return
     setDeleting(true)
-    await Promise.all([
+    const [flashcardsResult, weeksResult] = await Promise.all([
       supabase.from('flashcards').delete().eq('week_id', deleteTarget.id),
       supabase.from('weeks').delete().eq('id', deleteTarget.id),
     ])
+    if (flashcardsResult.error) logError('Failed to delete flashcards on week delete', { page: 'home', action: 'deleteWeek', err: flashcardsResult.error, details: { weekId: deleteTarget.id } })
+    if (weeksResult.error) logError('Failed to delete week', { page: 'home', action: 'deleteWeek', err: weeksResult.error, details: { weekId: deleteTarget.id } })
     setWeeks(prev => prev.filter(w => w.id !== deleteTarget.id))
     setCardCounts(prev => {
       const next = { ...prev }

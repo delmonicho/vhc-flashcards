@@ -1,7 +1,10 @@
+import { logError } from './logger'
+
 export function loadMastery() {
   try {
     return JSON.parse(localStorage.getItem('quiz-mastery') || '{}')
-  } catch {
+  } catch (err) {
+    logError('Failed to parse quiz-mastery from localStorage', { action: 'loadMastery', err })
     return {}
   }
 }
@@ -76,7 +79,8 @@ export function loadXP() {
       return { weekStart: currentWeekStart, xp: 0 }
     }
     return data
-  } catch {
+  } catch (err) {
+    logError('Failed to parse quiz-xp from localStorage', { action: 'loadXP', err })
     return { weekStart: getWeekStart(), xp: 0 }
   }
 }

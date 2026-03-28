@@ -3,6 +3,12 @@
 Shared UI components. Most are presentational; CardEditModal has complex lifecycle
 contracts with its parents.
 
+## ErrorBoundary
+
+Class component wrapping `<App />` in `main.jsx`. Catches uncaught React render errors via `componentDidCatch`, logs them with `logError` (including `componentStack`), and shows a minimal unstyled fallback with a "Try again" button that resets error state.
+
+**Intentionally unstyled** (plain HTML, no Tailwind). If the crash is in CSS/Tailwind, a styled fallback would also fail to render.
+
 ## CardEditModal
 
 **Props (all required except `onBreakdownReady`):**

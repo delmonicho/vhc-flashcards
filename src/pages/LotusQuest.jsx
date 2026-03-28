@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { loadMastery, saveMastery, recordResult, loadXP, addXP } from '../lib/mastery'
+import { logError } from '../lib/logger'
 import WordWarrior from '../components/game/WordWarrior'
 import ChunkBuilder from '../components/game/ChunkBuilder'
 
@@ -22,11 +23,18 @@ export default function LotusQuest({ weekId, onNavigate }) {
 
   useEffect(() => {
     async function load() {
-      const [{ data: weekData }, { data: cardsData }, { data: statsData }] = await Promise.all([
+      const [
+        { data: weekData,  error: weekError  },
+        { data: cardsData, error: cardsError  },
+        { data: statsData, error: statsError  },
+      ] = await Promise.all([
         supabase.from('weeks').select('*').eq('id', weekId).single(),
         supabase.from('flashcards').select('*').eq('week_id', weekId).order('created_at', { ascending: false }),
         supabase.from('game_stats').select('*').eq('week_id', weekId).maybeSingle(),
       ])
+      if (weekError)  logError('Failed to load week for lotus quest', { page: 'lotus-quest', action: 'fetchData', err: weekError, details: { weekId } })
+      if (cardsError) logError('Failed to load cards for lotus quest', { page: 'lotus-quest', action: 'fetchData', err: cardsError, details: { weekId } })
+      if (statsError) logError('Failed to load game stats', { page: 'lotus-quest', action: 'fetchData', err: statsError, details: { weekId } })
       setWeek(weekData)
       setCards(cardsData || [])
       setGameStats(statsData)
@@ -57,7 +65,7 @@ export default function LotusQuest({ weekId, onNavigate }) {
     const masteredCount = Object.values(updated).filter(e => e.streak >= 3).length
     const currentXP = loadXP().xp
 
-    const { data: newStats } = await supabase.from('game_stats').upsert({
+    const { data: newStats, error: statsUpsertError } = await supabase.from('game_stats').upsert({
       week_id: weekId,
       xp: currentXP,
       cards_mastered: masteredCount,
@@ -65,6 +73,7 @@ export default function LotusQuest({ weekId, onNavigate }) {
       last_played: today,
     }, { onConflict: 'week_id' }).select().maybeSingle()
 
+    if (statsUpsertError) logError('Failed to upsert game stats', { page: 'lotus-quest', action: 'handleModeComplete', err: statsUpsertError, details: { weekId } })
     if (newStats) setGameStats(newStats)
 
     const correct = [...resultsMap.values()].filter(Boolean).length

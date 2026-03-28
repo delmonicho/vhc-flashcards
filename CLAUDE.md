@@ -38,6 +38,7 @@ flashcards    id, week_id, vietnamese, english, source (any string), status, bre
 breakdowns    vi_key (PK), breakdown (JSONB)   ← cache table
 categories    id (text PK), label, color, created_at
 game_stats    id, week_id (unique), xp, cards_mastered, streak_days, last_played, created_at
+logs          id, type ('error'|'event'|'perf'), page, action, message, details (JSONB), created_at
 ```
 
 `breakdowns.vi_key` is the normalized Vietnamese phrase (`trim + collapse whitespace` via `normalizeVietnamese()` in `src/lib/breakdown.js`). Always use this function before any cache lookup or upsert.

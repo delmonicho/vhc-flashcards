@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { CHUNK_COLORS } from '../lib/colors'
 import { getOrCreateBreakdown } from '../lib/breakdown'
+import { logError } from '../lib/logger'
 
 export default function CardEditModal({ card, categories = [], onSave, onDelete, onClose, onBreakdownReady, triggerRef }) {
   const [vietnamese, setVietnamese] = useState(card.vietnamese)
@@ -50,7 +51,7 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
         // Regenerate breakdown in background for new Vietnamese text
         getOrCreateBreakdown(vietnamese, card.id, english)
           .then(newBreakdown => onBreakdownReady?.(card.id, newBreakdown))
-          .catch(err => console.error('Breakdown regeneration failed:', err))
+          .catch(err => logError('Breakdown regeneration failed', { page: 'week', action: 'breakdown', err, details: { cardId: card.id, vietnamese } }))
       }
     }
     setSaving(false)

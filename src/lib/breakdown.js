@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { logError } from './logger'
 
 export function normalizeVietnamese(text) {
   return text.trim().replace(/\s+/g, ' ')
@@ -40,7 +41,7 @@ export async function getOrCreateBreakdown(vietnameseText, cardId, englishText) 
   const { error: cacheError } = await supabase
     .from('breakdowns')
     .upsert({ vi_key: viKey, breakdown }, { onConflict: 'vi_key' })
-  if (cacheError) console.error('Failed to cache breakdown:', cacheError.message)
+  if (cacheError) logError('Failed to cache breakdown', { action: 'breakdown-cache-write', err: cacheError, details: { vi_key: viKey } })
 
   // 4. Write to flashcard
   await supabase.from('flashcards').update({ breakdown }).eq('id', cardId)

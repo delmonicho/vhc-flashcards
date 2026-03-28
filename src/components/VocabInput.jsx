@@ -3,6 +3,7 @@ import { translateToEnglish } from '../lib/translate'
 import { supabase } from '../lib/supabase'
 import { getOrCreateBreakdown } from '../lib/breakdown'
 import { addCategory, getCategoryColor } from '../lib/categories'
+import { logError } from '../lib/logger'
 
 export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady, categories = [], onCategoriesChange }) {
   const [tags, setTags] = useState([])           // array of category ids (optional)
@@ -59,6 +60,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
       setPreview({ vietnamese: text, english })
       setState('preview')
     } catch (err) {
+      logError('Google Translate failed', { page: 'week', action: 'translate', err, details: { text } })
       setError(err.message)
       setState('error')
     }
@@ -86,7 +88,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
       setState('idle')
       getOrCreateBreakdown(data.vietnamese, data.id, data.english)
         .then(breakdown => onCardBreakdownReady?.(data.id, breakdown))
-        .catch(err => console.error('Breakdown generation failed:', err))
+        .catch(err => logError('Breakdown generation failed', { page: 'week', action: 'breakdown', err, details: { cardId: data.id, vietnamese: data.vietnamese } }))
     } else {
       setError(error?.message || 'Failed to save card')
       setState('error')

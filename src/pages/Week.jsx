@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getCategoryColor, deleteCategory, upsertCategories, nextColor } from '../lib/categories'
+import { logError } from '../lib/logger'
 import { stripDiacritics } from '../lib/breakdown'
 import VocabInput from '../components/VocabInput'
 import ThemeToggle from '../components/ThemeToggle'
@@ -33,7 +34,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
 
   async function fetchData() {
     setLoading(true)
-    const [{ data: weekData }, { data: cardsData }] = await Promise.all([
+    const [{ data: weekData, error: weekError }, { data: cardsData, error: cardsError }] = await Promise.all([
       supabase.from('weeks').select('*').eq('id', weekId).single(),
       supabase
         .from('flashcards')
@@ -41,6 +42,8 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
         .eq('week_id', weekId)
         .order('created_at', { ascending: false }),
     ])
+    if (weekError) logError('Failed to load week', { page: 'week', action: 'fetchData', err: weekError, details: { weekId } })
+    if (cardsError) logError('Failed to load cards', { page: 'week', action: 'fetchData', err: cardsError, details: { weekId } })
     setWeek(weekData)
     const loaded = cardsData || []
     setCards(loaded)
@@ -59,7 +62,9 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
         running.push(cat)
         return cat
       })
-      await upsertCategories(recovered)
+      upsertCategories(recovered).catch(err =>
+        logError('Failed to upsert recovered categories', { page: 'week', action: 'fetchData', err })
+      )
       onCategoriesChange([...categories, ...recovered])
     }
   }

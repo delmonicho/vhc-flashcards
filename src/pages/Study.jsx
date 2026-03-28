@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import ThemeToggle from '../components/ThemeToggle'
+import { logError } from '../lib/logger'
 import { CHUNK_COLORS } from '../lib/colors'
 import { speakVietnamese, cancelSpeech, isVietnameseVoiceAvailable } from '../lib/speak'
 
@@ -97,7 +98,8 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
       .select('*')
       .eq('week_id', weekId)
       .order('created_at', { ascending: true })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) logError('Failed to load cards for study', { page: 'study', action: 'fetchData', err: error, details: { weekId } })
         setCards(data || [])
         setLoading(false)
       })
@@ -155,6 +157,8 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
     setSpeakingKey(key)
     try {
       await speakVietnamese(text, { rate })
+    } catch (err) {
+      logError('Speech synthesis failed', { page: 'study', action: 'speak', err, details: { text } })
     } finally {
       setSpeakingKey(null)
     }

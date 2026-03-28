@@ -2,6 +2,18 @@
 
 Utility and service modules. Each has sharp edges worth knowing before editing.
 
+## logger.js
+
+**Three exports:** `logError(message, meta?)`, `logEvent(message, meta?)`, `logPerf(message, meta?)`. All write to the Supabase `logs` table as fire-and-forget inserts (never awaited, never throws).
+
+**`meta` fields for `logError`:** `{ page?, action?, err?, details? }`. `err` accepts an `Error` object or Supabase error object — it is serialized to `{ message, name, stack }` inside `details.error`. `details` is merged in as additional JSONB context.
+
+**Instrumentation rule: log where you swallow.** If a function throws, the *caller* logs — not the function. If a function silently absorbs an error (e.g. a cache write that doesn't re-throw), log inside that function. This prevents double-logging.
+
+**`logEvent` and `logPerf` are stubs for future use.** Call sites for click events and perf measurements TBD.
+
+**Graceful degradation:** If Supabase is down, the logger silently no-ops in production. In dev (`import.meta.env.DEV`), it prints a `console.warn`.
+
 ## breakdown.js
 
 **4-step pipeline order is load-bearing:**

@@ -5,6 +5,7 @@ import Study from './pages/Study'
 import Quiz from './pages/Quiz'
 import LotusQuest from './pages/LotusQuest'
 import { loadCategories } from './lib/categories'
+import { logError } from './lib/logger'
 
 export default function App() {
   const [view, setView] = useState({ page: 'home', weekId: null })
@@ -16,7 +17,9 @@ export default function App() {
   const [categories, setCategories] = useState([])
 
   useEffect(() => {
-    loadCategories().then(setCategories)
+    loadCategories()
+      .then(setCategories)
+      .catch(err => logError('Failed to load categories on app init', { action: 'loadCategories', err }))
   }, [])
 
   function navigate(page, weekId = null) {

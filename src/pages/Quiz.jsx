@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { speakVietnamese, cancelSpeech } from '../lib/speak'
+import { logError } from '../lib/logger'
 import {
   loadMastery, saveMastery, recordResult,
   addXP, XP_RATES, weightedSample,
@@ -46,7 +47,8 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
       .select('*')
       .eq('week_id', weekId)
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) logError('Failed to load cards for quiz', { page: 'quiz', action: 'fetchData', err: error, details: { weekId } })
         setCards(data || [])
         setLoading(false)
       })
@@ -86,7 +88,9 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
 
   function handleSpeak(cardId, text) {
     setSpeakingKey(cardId)
-    speakVietnamese(text).finally(() => setSpeakingKey(null))
+    speakVietnamese(text)
+      .catch(err => logError('Speech synthesis failed', { page: 'quiz', action: 'speak', err, details: { text } }))
+      .finally(() => setSpeakingKey(null))
   }
 
   if (loading) {
