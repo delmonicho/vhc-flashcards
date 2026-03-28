@@ -34,14 +34,14 @@ function DeleteSheet({ week, cardCount, onConfirm, onCancel, deleting }) {
           <button
             onClick={onConfirm}
             disabled={deleting}
-            className="flex-1 bg-red-500 text-white py-3.5 rounded-2xl font-semibold disabled:opacity-50 hover:bg-red-600 active:scale-95 transition-all"
+            className="flex-1 bg-red-500 text-white py-3.5 rounded-2xl font-semibold disabled:opacity-50 hover:bg-red-600 active:scale-95 transition-all cursor-pointer"
           >
             {deleting ? 'Deleting…' : 'Delete week'}
           </button>
           <button
             onClick={onCancel}
             disabled={deleting}
-            className="flex-1 bg-co-surface dark:bg-gray-800 text-co-ink dark:text-gray-200 py-3.5 rounded-2xl font-semibold"
+            className="flex-1 bg-co-surface dark:bg-gray-800 text-co-ink dark:text-gray-200 py-3.5 rounded-2xl font-semibold cursor-pointer"
           >
             Cancel
           </button>
@@ -178,9 +178,9 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
         <button
           type="submit"
           disabled={creating || !title.trim()}
-          className="bg-co-primary text-white px-6 py-3 rounded-full font-semibold disabled:opacity-50 hover:scale-105 active:scale-95 transition-all duration-150 whitespace-nowrap"
+          className="bg-co-primary text-white px-6 py-3 rounded-full font-semibold disabled:opacity-50 hover:enabled:scale-105 active:enabled:scale-95 transition-all duration-150 whitespace-nowrap cursor-pointer disabled:cursor-default"
         >
-          {creating ? 'Creating…' : '+ Week'}
+          {creating ? 'Creating…' : '+ Deck'}
         </button>
       </form>
 
@@ -201,7 +201,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
               {/* Main navigate area */}
               <button
                 onClick={() => editingWeekId !== week.id && onNavigate('week', week.id)}
-                className="flex-1 text-left px-5 py-4 min-w-0"
+                className="flex-1 text-left px-5 py-4 min-w-0 cursor-pointer"
               >
                 {editingWeekId === week.id ? (
                   <input
@@ -230,7 +230,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
               {/* Edit button */}
               <button
                 onClick={e => startEditing(week, e)}
-                className="w-11 h-11 flex items-center justify-center text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary transition-colors flex-shrink-0"
+                className="w-11 h-11 flex items-center justify-center text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary transition-colors flex-shrink-0 cursor-pointer"
                 aria-label="Edit week title"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -241,7 +241,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
               {/* Delete button */}
               <button
                 onClick={e => { e.stopPropagation(); setDeleteTarget(week) }}
-                className="w-11 h-11 flex items-center justify-center text-co-muted dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-shrink-0 mr-1"
+                className="w-11 h-11 flex items-center justify-center text-co-muted dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-shrink-0 mr-1 cursor-pointer"
                 aria-label="Delete week"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -269,7 +269,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
               }
             }}
             disabled={backfilling}
-            className="text-xs text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary disabled:opacity-50 transition-colors"
+            className="text-xs text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary disabled:opacity-50 transition-colors cursor-pointer"
           >
             {backfilling ? 'Backfilling…' : 'Backfill breakdown cache'}
           </button>

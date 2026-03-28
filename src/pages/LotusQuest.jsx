@@ -137,13 +137,13 @@ export default function LotusQuest({ weekId, onNavigate }) {
         <div className="flex gap-4">
           <button
             onClick={() => setPhase('hub')}
-            className="font-pixel-ui pixel-border bg-[#1a2030] text-[#e0e0e0] px-6 py-3 text-xs hover:bg-[#243040] active:scale-95 transition-transform"
+            className="font-pixel-ui pixel-border bg-[#1a2030] text-[#e0e0e0] px-6 py-3 text-xs hover:bg-[#243040] active:scale-95 transition-transform cursor-pointer"
           >
             PLAY AGAIN
           </button>
           <button
             onClick={() => onNavigate('week', weekId)}
-            className="font-pixel-ui pixel-border bg-[#E8526A] text-white px-6 py-3 text-xs hover:bg-[#c43e56] active:scale-95 transition-transform"
+            className="font-pixel-ui pixel-border bg-[#E8526A] text-white px-6 py-3 text-xs hover:bg-[#c43e56] active:scale-95 transition-transform cursor-pointer"
           >
             BACK TO WEEK
           </button>
@@ -216,7 +216,7 @@ export default function LotusQuest({ weekId, onNavigate }) {
       {/* Back link */}
       <button
         onClick={() => onNavigate('week', weekId)}
-        className="font-pixel-ui block text-[10px] text-[#888] hover:text-[#e0e0e0] transition-colors"
+        className="font-pixel-ui block text-[10px] text-[#888] hover:text-[#e0e0e0] transition-colors cursor-pointer"
       >
         ← BACK TO WEEK
       </button>

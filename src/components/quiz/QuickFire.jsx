@@ -54,13 +54,13 @@ export default function QuickFire({ cards, onDone }) {
         <div className="flex gap-3">
           <button
             onClick={() => handleRate(false)}
-            className="flex-1 bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 py-3 rounded-2xl font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+            className="flex-1 bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 py-3 rounded-2xl font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 cursor-pointer"
           >
             Missed
           </button>
           <button
             onClick={() => handleRate(true)}
-            className="flex-1 bg-green-50 dark:bg-green-900/20 border-2 border-co-fern dark:border-green-600 text-co-fern dark:text-green-400 py-3 rounded-2xl font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-co-fern focus:ring-offset-2"
+            className="flex-1 bg-green-50 dark:bg-green-900/20 border-2 border-co-fern dark:border-green-600 text-co-fern dark:text-green-400 py-3 rounded-2xl font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-co-fern focus:ring-offset-2 cursor-pointer"
           >
             Got it
           </button>

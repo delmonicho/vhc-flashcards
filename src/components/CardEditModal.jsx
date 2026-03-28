@@ -91,7 +91,7 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
           <button
             onClick={onClose}
             aria-label="Close"
-            className="w-11 h-11 flex items-center justify-center rounded-full text-co-muted hover:text-co-ink hover:bg-co-surface dark:hover:bg-gray-800 text-xl leading-none transition-colors"
+            className="w-11 h-11 flex items-center justify-center rounded-full text-co-muted hover:text-co-ink hover:bg-co-surface dark:hover:bg-gray-800 text-xl leading-none transition-colors cursor-pointer"
           >
             ×
           </button>
@@ -140,7 +140,7 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
                         isSelected ? prev.filter(t => t !== cat.id) : [...prev, cat.id]
                       )}
                       style={isSelected ? { backgroundColor: cat.color, color: '#2D1B12' } : {}}
-                      className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all border focus:outline-none focus:ring-2 focus:ring-co-primary ${
+                      className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all border focus:outline-none focus:ring-2 focus:ring-co-primary cursor-pointer ${
                         isSelected
                           ? 'border-transparent shadow-sm'
                           : 'border-co-border dark:border-gray-600 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
@@ -181,7 +181,7 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
                   />
                   <button
                     onClick={() => deleteSegment(i)}
-                    className="w-6 h-6 flex items-center justify-center flex-shrink-0 text-co-muted hover:text-red-500 transition-colors text-lg leading-none"
+                    className="w-6 h-6 flex items-center justify-center flex-shrink-0 text-co-muted hover:text-red-500 transition-colors text-lg leading-none cursor-pointer"
                     aria-label="Delete segment"
                   >
                     ×
@@ -191,7 +191,7 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
             })}
             <button
               onClick={addSegment}
-              className="text-sm text-co-primary font-semibold hover:underline"
+              className="text-sm text-co-primary font-semibold hover:underline cursor-pointer"
             >
               + Add segment
             </button>
@@ -206,14 +206,14 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="px-4 py-2 bg-red-500 text-white rounded-full font-semibold text-sm disabled:opacity-50 hover:scale-105 active:scale-95 transition-all"
+                className="px-4 py-2 bg-red-500 text-white rounded-full font-semibold text-sm disabled:opacity-50 hover:scale-105 active:scale-95 transition-all cursor-pointer"
               >
                 {deleting ? 'Deleting…' : 'Delete'}
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
                 disabled={deleting}
-                className="px-4 py-2 text-co-muted font-semibold text-sm"
+                className="px-4 py-2 text-co-muted font-semibold text-sm cursor-pointer"
               >
                 Cancel
               </button>
@@ -222,7 +222,7 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="text-sm text-red-400 hover:text-red-600 font-semibold px-1 transition-colors"
+                className="text-sm text-red-400 hover:text-red-600 font-semibold px-1 transition-colors cursor-pointer"
               >
                 Delete
               </button>
@@ -230,14 +230,14 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
                 <button
                   onClick={onClose}
                   disabled={saving}
-                  className="px-5 py-2.5 text-co-muted dark:text-gray-400 font-semibold hover:text-co-ink dark:hover:text-gray-200 transition-colors"
+                  className="px-5 py-2.5 text-co-muted dark:text-gray-400 font-semibold hover:text-co-ink dark:hover:text-gray-200 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="px-6 py-2.5 bg-co-primary text-white rounded-full font-semibold disabled:opacity-50 hover:scale-105 active:scale-95 transition-all duration-150"
+                  className="px-6 py-2.5 bg-co-primary text-white rounded-full font-semibold disabled:opacity-50 hover:scale-105 active:scale-95 transition-all duration-150 cursor-pointer"
                 >
                   {saving ? 'Saving…' : 'Save'}
                 </button>

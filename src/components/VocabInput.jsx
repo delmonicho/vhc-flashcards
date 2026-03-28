@@ -134,7 +134,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
               aria-haspopup="listbox"
               aria-expanded={showCatMenu}
               aria-label={`Tags: ${catButtonLabel()}`}
-              className="h-full px-3 rounded-xl border text-sm font-semibold flex items-center gap-1.5 bg-white dark:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-co-primary"
+              className="h-full px-3 rounded-xl border text-sm font-semibold flex items-center gap-1.5 bg-white dark:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-co-primary cursor-pointer"
               style={
                 firstTagColor
                   ? { borderColor: '#d1d5db', borderLeftColor: firstTagColor, borderLeftWidth: 3, color: '#2D1B12' }
@@ -162,7 +162,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
                       role="option"
                       aria-selected={selected}
                       onClick={() => toggleTag(cat.id)}
-                      className="flex items-center gap-2 w-full text-left px-3 py-2 rounded-lg text-sm font-semibold hover:bg-co-surface dark:hover:bg-gray-800 transition-colors text-co-ink dark:text-gray-100"
+                      className="flex items-center gap-2 w-full text-left px-3 py-2 rounded-lg text-sm font-semibold hover:bg-co-surface dark:hover:bg-gray-800 transition-colors text-co-ink dark:text-gray-100 cursor-pointer"
                     >
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
                       {cat.label}
@@ -173,7 +173,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
                 <div className="border-t border-co-border dark:border-gray-700 my-1" />
                 <button
                   onClick={() => { setAddingCategory(true); setShowCatMenu(false) }}
-                  className="flex items-center gap-1.5 w-full text-left px-3 py-2 rounded-lg text-sm text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200 transition-colors"
+                  className="flex items-center gap-1.5 w-full text-left px-3 py-2 rounded-lg text-sm text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200 transition-colors cursor-pointer"
                 >
                   + New category
                 </button>
@@ -184,7 +184,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
           <button
             onClick={handleAdd}
             disabled={!input.trim() || state === 'loading'}
-            className="bg-co-primary text-white px-5 py-3 rounded-xl font-semibold disabled:opacity-50 hover:scale-105 active:scale-95 transition-all duration-150 min-w-16"
+            className="bg-co-primary text-white px-5 py-3 rounded-xl font-semibold disabled:opacity-50 hover:scale-105 active:scale-95 transition-all duration-150 min-w-16 cursor-pointer"
           >
             {state === 'loading' ? '…' : 'Add'}
           </button>
@@ -208,13 +208,13 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
           <button
             onClick={handleAddCategory}
             disabled={!newCategoryLabel.trim()}
-            className="px-4 py-2 text-sm font-semibold text-co-primary disabled:opacity-40 hover:underline"
+            className="px-4 py-2 text-sm font-semibold text-co-primary disabled:opacity-40 hover:underline cursor-pointer"
           >
             Save
           </button>
           <button
             onClick={() => { setAddingCategory(false); setNewCategoryLabel('') }}
-            className="px-2 py-2 text-sm text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200"
+            className="px-2 py-2 text-sm text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200 cursor-pointer"
           >
             Cancel
           </button>
@@ -262,14 +262,14 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
             <button
               onClick={handleConfirm}
               disabled={saving}
-              className="flex-1 bg-co-primary text-white py-3 rounded-full font-semibold disabled:opacity-50 hover:scale-105 active:scale-95 transition-all duration-150"
+              className="flex-1 bg-co-primary text-white py-3 rounded-full font-semibold disabled:opacity-50 hover:scale-105 active:scale-95 transition-all duration-150 cursor-pointer"
             >
               {saving ? 'Saving…' : 'Confirm ✓'}
             </button>
             <button
               onClick={handleCancel}
               disabled={saving}
-              className="px-6 py-3 text-co-muted dark:text-gray-400 font-semibold hover:text-co-ink dark:hover:text-gray-200 transition-colors"
+              className="px-6 py-3 text-co-muted dark:text-gray-400 font-semibold hover:text-co-ink dark:hover:text-gray-200 transition-colors cursor-pointer"
             >
               Cancel
             </button>

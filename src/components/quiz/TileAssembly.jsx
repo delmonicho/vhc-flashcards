@@ -163,7 +163,7 @@ export default function TileAssembly({ cards, onDone }) {
             key={tile.id}
             onClick={() => !flashing && !shaking && moveTileToBank(tile)}
             lang="vi"
-            className={`px-3 py-1.5 rounded-xl text-sm font-semibold bg-co-primary text-white transition-all active:scale-95 ${shaking ? 'shake' : ''} ${flashing ? 'tile-correct' : ''}`}
+            className={`px-3 py-1.5 rounded-xl text-sm font-semibold bg-co-primary text-white transition-all active:scale-95 cursor-pointer ${shaking ? 'shake' : ''} ${flashing ? 'tile-correct' : ''}`}
           >
             {tile.word}
           </button>
@@ -175,7 +175,7 @@ export default function TileAssembly({ cards, onDone }) {
         <div className="text-center">
           <button
             onClick={handleShowAnswer}
-            className="text-sm text-co-muted dark:text-gray-400 hover:text-co-primary dark:hover:text-co-primary underline transition-colors"
+            className="text-sm text-co-muted dark:text-gray-400 hover:text-co-primary dark:hover:text-co-primary underline transition-colors cursor-pointer"
           >
             Show answer
           </button>
@@ -189,7 +189,7 @@ export default function TileAssembly({ cards, onDone }) {
             key={tile.id}
             onClick={() => !flashing && !shaking && moveTileToAnswer(tile)}
             lang="vi"
-            className="px-3 py-1.5 rounded-xl text-sm font-semibold bg-white dark:bg-gray-700 text-co-ink dark:text-gray-100 border border-co-border dark:border-gray-600 transition-all hover:border-co-primary hover:shadow-sm active:scale-95"
+            className="px-3 py-1.5 rounded-xl text-sm font-semibold bg-white dark:bg-gray-700 text-co-ink dark:text-gray-100 border border-co-border dark:border-gray-600 transition-all hover:border-co-primary hover:shadow-sm active:scale-95 cursor-pointer"
           >
             {tile.word}
           </button>
@@ -200,7 +200,7 @@ export default function TileAssembly({ cards, onDone }) {
       {canCheck && (
         <button
           onClick={handleCheck}
-          className="w-full bg-co-primary text-white py-3 rounded-2xl font-semibold text-sm hover:scale-[1.01] active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+          className="w-full bg-co-primary text-white py-3 rounded-2xl font-semibold text-sm hover:scale-[1.01] active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
         >
           Check
         </button>

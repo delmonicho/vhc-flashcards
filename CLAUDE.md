@@ -66,6 +66,14 @@ supabase db dump --linked                  # schema dump
 
 Local Supabase stack is not used. Available inspect subcommands: `bloat`, `calls`, `index-stats`, `long-running-queries`, `outliers`.
 
+## UI Accessibility (a11y)
+
+- **Cursor pointer:** Every interactive element (`<button>`, `onClick` div, `role="button"`) must include `cursor-pointer` in its className. Use `cursor-default` or `cursor-not-allowed` for disabled states as appropriate.
+- **Focus rings:** Interactive elements should have `focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2` for keyboard accessibility.
+- **ARIA labels:** Buttons with only icon/symbol content must have `aria-label`. Decorative SVGs need `aria-hidden="true"`.
+- **Semantic HTML:** Use `<button>` for actions, `<a>` for navigation to URLs. Don't use `<div onClick>` when `<button>` is appropriate.
+- **Dark mode text:** Every dark-mode text color must be explicit (e.g. `text-co-ink dark:text-gray-100`). Never rely on inherited color in dark mode.
+
 ## Key Gotchas
 
 - **Speech API**: `speakVietnamese()` must be called from a user gesture (click handler). iOS requires this — don't call it in `useEffect` or async background tasks.

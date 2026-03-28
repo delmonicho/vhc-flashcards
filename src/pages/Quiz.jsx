@@ -104,7 +104,7 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
         <div className="flex items-center gap-3 mb-8">
           <button
             onClick={() => onNavigate('week', weekId)}
-            className="w-11 h-11 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+            className="w-11 h-11 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
             aria-label="Back"
           >←</button>
           <h1 className="flex-1 font-display text-2xl font-bold text-co-ink dark:text-gray-100">Quiz</h1>
@@ -157,7 +157,7 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => setPhase('pick')}
-            className="w-11 h-11 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+            className="w-11 h-11 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
             aria-label="Back"
           >←</button>
           <h2 className="flex-1 font-display text-xl font-bold text-co-ink dark:text-gray-100">
@@ -225,7 +225,7 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => handleSpeak(card.id, card.vietnamese)}
-                      className="text-co-muted hover:text-co-ink dark:hover:text-gray-200 transition-colors"
+                      className="text-co-muted hover:text-co-ink dark:hover:text-gray-200 transition-colors cursor-pointer"
                       aria-label={`Pronounce ${card.vietnamese}`}
                     >
                       <SpeakerIcon active={speakingKey === card.id} />
@@ -233,7 +233,7 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
                     {card.breakdown && (
                       <button
                         onClick={() => setExpandedCardId(expandedCardId === card.id ? null : card.id)}
-                        className="text-co-muted hover:text-co-ink dark:hover:text-gray-200 transition-colors"
+                        className="text-co-muted hover:text-co-ink dark:hover:text-gray-200 transition-colors cursor-pointer"
                         aria-expanded={expandedCardId === card.id}
                         aria-label="Toggle breakdown"
                       >
@@ -259,13 +259,13 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
       <div className="flex gap-3">
         <button
           onClick={() => { setPhase('pick'); setResult(null); setExpandedCardId(null) }}
-          className="flex-1 bg-co-primary text-white py-3 rounded-2xl font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+          className="flex-1 bg-co-primary text-white py-3 rounded-2xl font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
         >
           Play Again
         </button>
         <button
           onClick={() => onNavigate('week', weekId)}
-          className="flex-1 bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 text-co-ink dark:text-gray-100 py-3 rounded-2xl font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+          className="flex-1 bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 text-co-ink dark:text-gray-100 py-3 rounded-2xl font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
         >
           Back to Week
         </button>

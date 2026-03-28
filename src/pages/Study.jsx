@@ -50,7 +50,7 @@ function InlineChunks({ breakdown, field, onSpeak, speakingKey }) {
             <button
               key={i}
               onClick={e => { e.stopPropagation(); onSpeak(i, seg.vi) }}
-              className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 mx-0.5 my-0.5 text-base font-semibold active:opacity-70 transition-opacity ${colorClass}`}
+              className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 mx-0.5 my-0.5 text-base font-semibold active:opacity-70 transition-opacity cursor-pointer ${colorClass}`}
             >
               {seg[field]}
               <svg
@@ -209,7 +209,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
         <p className="text-co-muted dark:text-gray-400">No cards to study yet.</p>
         <button
           onClick={() => onNavigate('week', weekId)}
-          className="text-co-primary font-semibold"
+          className="text-co-primary font-semibold cursor-pointer"
         >
           ← Back to week
         </button>
@@ -226,7 +226,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
       <div className="flex items-center gap-3 mb-8">
         <button
           onClick={() => onNavigate('week', weekId)}
-          className="w-9 h-9 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none"
+          className="w-9 h-9 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none cursor-pointer"
           aria-label="Back to week"
         >
           ←
@@ -274,7 +274,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
         {/* Option C: Grid view toggle */}
         <button
           onClick={() => setGridView(v => !v)}
-          className={`w-9 h-9 flex items-center justify-center rounded-full transition-all ${
+          className={`w-9 h-9 flex items-center justify-center rounded-full transition-all cursor-pointer ${
             gridView
               ? 'text-co-primary bg-co-primary/10 dark:bg-co-primary/20'
               : 'text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800'
@@ -296,7 +296,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
           </span>
           <button
             onClick={dismissBanner}
-            className="text-co-muted hover:text-co-ink ml-1 leading-none text-lg"
+            className="text-co-muted hover:text-co-ink ml-1 leading-none text-lg cursor-pointer"
             aria-label="Dismiss"
           >
             ×
@@ -312,7 +312,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
               <button
                 key={c.id}
                 onClick={() => { goTo(i); setGridView(false) }}
-                className={`rounded-2xl p-3 text-left transition-all active:scale-95 ${
+                className={`rounded-2xl p-3 text-left transition-all active:scale-95 cursor-pointer ${
                   i === index
                     ? 'bg-co-primary/10 dark:bg-co-primary/20 ring-2 ring-co-primary'
                     : 'bg-co-surface dark:bg-gray-800 hover:bg-co-border/40 dark:hover:bg-gray-700'
@@ -395,7 +395,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
                 e.stopPropagation()
                 handleSpeak('card', card.vietnamese)
               }}
-              className={`absolute bottom-4 right-4 w-11 h-11 flex items-center justify-center rounded-full transition-all ${
+              className={`absolute bottom-4 right-4 w-11 h-11 flex items-center justify-center rounded-full transition-all cursor-pointer ${
                 flipped
                   ? 'text-co-primary/60 hover:text-co-primary hover:bg-co-primary/10 dark:text-white/50 dark:hover:text-white/90 dark:hover:bg-white/10'
                   : 'text-co-primary/60 hover:text-co-primary hover:bg-co-primary/10'
@@ -409,7 +409,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
             <button
               onClick={e => { e.stopPropagation(); goTo(index - 1) }}
               disabled={index === 0}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-co-ink/50 dark:text-white/40 disabled:opacity-0 hover:bg-black/20 dark:hover:bg-white/20 hover:text-co-ink dark:hover:text-white active:scale-90 transition-all duration-150 text-3xl"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-co-ink/50 dark:text-white/40 disabled:opacity-0 hover:bg-black/20 dark:hover:bg-white/20 hover:text-co-ink dark:hover:text-white active:scale-90 transition-all duration-150 text-3xl cursor-pointer"
               aria-label="Previous card"
             >
               ‹
@@ -417,7 +417,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
             <button
               onClick={e => { e.stopPropagation(); goTo(index + 1) }}
               disabled={index === cards.length - 1}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-co-ink/50 dark:text-white/40 disabled:opacity-0 hover:bg-black/20 dark:hover:bg-white/20 hover:text-co-ink dark:hover:text-white active:scale-90 transition-all duration-150 text-3xl"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-co-ink/50 dark:text-white/40 disabled:opacity-0 hover:bg-black/20 dark:hover:bg-white/20 hover:text-co-ink dark:hover:text-white active:scale-90 transition-all duration-150 text-3xl cursor-pointer"
               aria-label="Next card"
             >
               ›

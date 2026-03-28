@@ -39,7 +39,7 @@ export default function BreakdownDisplay({
               <button
                 key={i}
                 onClick={() => onSpeakChunk(i, seg.vi)}
-                className={`flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium min-h-[2.75rem] transition-opacity ${CHUNK_COLORS[i % CHUNK_COLORS.length].pill}`}
+                className={`flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium min-h-[2.75rem] transition-opacity cursor-pointer ${CHUNK_COLORS[i % CHUNK_COLORS.length].pill}`}
                 aria-label={`Pronounce: ${seg.vi}`}
               >
                 {seg.vi}
@@ -73,7 +73,7 @@ export default function BreakdownDisplay({
       {onSpeakFull && (
         <button
           onClick={onSpeakFull}
-          className={`mt-3 flex items-center gap-1.5 text-xs transition-colors ${
+          className={`mt-3 flex items-center gap-1.5 text-xs transition-colors cursor-pointer ${
             inverted
               ? 'text-white/40 hover:text-white/70'
               : 'text-co-muted hover:text-co-ink dark:hover:text-gray-300'

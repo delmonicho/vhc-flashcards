@@ -98,10 +98,10 @@ export default function PairMatch({ cards, onDone }) {
                   isMatched
                     ? 'bg-green-100 dark:bg-green-900/30 border-2 border-co-fern text-co-fern dark:text-green-400 opacity-60 cursor-default'
                     : isWrong
-                    ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-400 text-red-600 dark:text-red-400 shake'
+                    ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-400 text-red-600 dark:text-red-400 shake cursor-pointer'
                     : isSelected
-                    ? 'bg-co-primary text-white border-2 border-co-primary shadow-md'
-                    : 'bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 text-co-ink dark:text-gray-100 hover:border-co-primary'
+                    ? 'bg-co-primary text-white border-2 border-co-primary shadow-md cursor-pointer'
+                    : 'bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 text-co-ink dark:text-gray-100 hover:border-co-primary cursor-pointer'
                 }`}
               >
                 {item.text}
@@ -125,10 +125,10 @@ export default function PairMatch({ cards, onDone }) {
                   isMatched
                     ? 'bg-green-100 dark:bg-green-900/30 border-2 border-co-fern text-co-fern dark:text-green-400 opacity-60 cursor-default'
                     : isWrong
-                    ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-400 text-red-600 dark:text-red-400 shake'
+                    ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-400 text-red-600 dark:text-red-400 shake cursor-pointer'
                     : isSelected
-                    ? 'bg-co-primary text-white border-2 border-co-primary shadow-md'
-                    : 'bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 text-co-ink dark:text-gray-100 hover:border-co-primary'
+                    ? 'bg-co-primary text-white border-2 border-co-primary shadow-md cursor-pointer'
+                    : 'bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 text-co-ink dark:text-gray-100 hover:border-co-primary cursor-pointer'
                 }`}
               >
                 {item.text}

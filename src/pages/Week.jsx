@@ -131,7 +131,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => onNavigate('home')}
-          className="w-11 h-11 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+          className="w-11 h-11 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
           aria-label="Back"
         >
           ←
@@ -142,21 +142,21 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
         <button
           onClick={() => onNavigate('study', weekId)}
           disabled={cards.length === 0}
-          className="bg-co-fern text-white px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-fern focus:ring-offset-2"
+          className="bg-co-fern text-white px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-fern focus:ring-offset-2 cursor-pointer"
         >
           Study
         </button>
         <button
           onClick={() => onNavigate('quiz', weekId)}
           disabled={cards.length === 0}
-          className="bg-co-primary text-white px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+          className="bg-co-primary text-white px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
         >
           Quiz
         </button>
         <button
           onClick={() => onNavigate('lotus-quest', weekId)}
           disabled={cards.length === 0}
-          className="bg-[#0d1018] text-[#e0e0e0] border-2 border-[#444] px-3 py-2 rounded font-mono text-xs disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+          className="bg-[#0d1018] text-[#e0e0e0] border-2 border-[#444] px-3 py-2 rounded font-mono text-xs disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
           style={{ boxShadow: '2px 2px 0 #000' }}
         >
           ▶ QUEST
@@ -189,7 +189,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
             <button
               onClick={() => setSourceFilter(sourceFilter === 'all' ? 'untagged' : 'all')}
               aria-pressed={sourceFilter === 'all' || sourceFilter === 'untagged'}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 cursor-pointer ${
                 sourceFilter === 'all' || sourceFilter === 'untagged'
                   ? 'bg-co-primary text-white shadow-sm'
                   : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
@@ -204,7 +204,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
                   onClick={() => setSourceFilter(cat.id)}
                   aria-pressed={sourceFilter === cat.id}
                   style={sourceFilter === cat.id ? { backgroundColor: cat.color, color: '#2D1B12' } : {}}
-                  className={`pl-4 pr-7 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
+                  className={`pl-4 pr-7 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 cursor-pointer ${
                     sourceFilter === cat.id
                       ? 'shadow-sm'
                       : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
@@ -215,7 +215,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
                 <button
                   onClick={e => { e.stopPropagation(); handleDeleteCategory(cat.id) }}
                   aria-label={`Delete ${cat.label} category`}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-co-muted hover:text-red-500 text-sm leading-none focus:opacity-100 focus:outline-none"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-co-muted hover:text-red-500 text-sm leading-none focus:opacity-100 focus:outline-none cursor-pointer"
                 >
                   ×
                 </button>
@@ -268,7 +268,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
                 <button
                   key={card.id}
                   aria-label={`${card.vietnamese} — ${card.english}${cardTags.length ? `, ${cardTags.join(', ')}` : ''}`}
-                  className={`relative flex flex-col w-full min-h-28 text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 ${
+                  className={`relative flex flex-col w-full min-h-28 text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer ${
                     card.status === 'learned' ? 'border-l-4 border-l-co-fern' :
                     card.status === 'learning' ? 'border-l-4 border-l-co-gold' : ''
                   }`}

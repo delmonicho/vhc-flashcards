@@ -86,7 +86,7 @@ export default function MultipleChoice({ cards, allCards, onDone }) {
       {isAnswered && (
         <button
           onClick={handleNext}
-          className="w-full bg-co-primary text-white py-3 rounded-2xl font-semibold text-sm hover:scale-[1.01] active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+          className="w-full bg-co-primary text-white py-3 rounded-2xl font-semibold text-sm hover:scale-[1.01] active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
         >
           {index + 1 >= cards.length ? 'See Results' : 'Next →'}
         </button>

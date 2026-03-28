@@ -138,14 +138,14 @@ export default function ChunkBuilder({ flashcard, onComplete }) {
           <button
             onClick={handleSubmit}
             disabled={!allFilled}
-            className="font-pixel-ui pixel-border bg-[#E8526A] text-white px-8 py-3 text-xs disabled:opacity-40 hover:bg-[#c43e56] active:scale-95 transition-transform"
+            className="font-pixel-ui pixel-border bg-[#E8526A] text-white px-8 py-3 text-xs disabled:opacity-40 hover:bg-[#c43e56] active:scale-95 transition-transform cursor-pointer"
           >
             SUBMIT
           </button>
         ) : (
           <button
             onClick={() => onComplete(isCorrect)}
-            className="font-pixel-ui pixel-border bg-[#5BAF7A] text-white px-8 py-3 text-xs hover:bg-[#4a9468] active:scale-95 transition-transform"
+            className="font-pixel-ui pixel-border bg-[#5BAF7A] text-white px-8 py-3 text-xs hover:bg-[#4a9468] active:scale-95 transition-transform cursor-pointer"
           >
             CONTINUE
           </button>

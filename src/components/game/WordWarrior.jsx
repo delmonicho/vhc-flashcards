@@ -103,7 +103,7 @@ export default function WordWarrior({ flashcards, onComplete }) {
         </div>
         <button
           onClick={handleContinue}
-          className="font-pixel-ui pixel-border bg-[#E8526A] text-white px-8 py-4 text-sm hover:bg-[#c43e56] active:scale-95 transition-transform"
+          className="font-pixel-ui pixel-border bg-[#E8526A] text-white px-8 py-4 text-sm hover:bg-[#c43e56] active:scale-95 transition-transform cursor-pointer"
         >
           CONTINUE
         </button>
@@ -157,14 +157,14 @@ export default function WordWarrior({ flashcards, onComplete }) {
               <button
                 onClick={handleGotIt}
                 disabled={isDefeating}
-                className="font-pixel-ui flex-1 pixel-border-green bg-[#1a3024] text-[#5BAF7A] py-4 text-xs hover:bg-[#243d2e] active:scale-95 transition-transform disabled:opacity-50"
+                className="font-pixel-ui flex-1 pixel-border-green bg-[#1a3024] text-[#5BAF7A] py-4 text-xs hover:bg-[#243d2e] active:scale-95 transition-transform disabled:opacity-50 cursor-pointer"
               >
                 ⚔ GOT IT
               </button>
               <button
                 onClick={handleReview}
                 disabled={isDefeating}
-                className="font-pixel-ui flex-1 pixel-border bg-[#1a2230] text-[#7aade8] py-4 text-xs hover:bg-[#1e2a3e] active:scale-95 transition-transform disabled:opacity-50"
+                className="font-pixel-ui flex-1 pixel-border bg-[#1a2230] text-[#7aade8] py-4 text-xs hover:bg-[#1e2a3e] active:scale-95 transition-transform disabled:opacity-50 cursor-pointer"
                 style={{ borderColor: '#1A5F8A', boxShadow: '3px 3px 0 #000' }}
               >
                 🛡 REVIEW
