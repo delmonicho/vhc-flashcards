@@ -1,8 +1,5 @@
 import { supabase } from './supabase'
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
-
 export function normalizeVietnamese(text) {
   return text.trim().replace(/\s+/g, ' ')
 }
@@ -23,22 +20,13 @@ export async function getOrCreateBreakdown(vietnameseText, cardId, englishText) 
   }
 
   // 2. Generate via Edge Function (proxies Anthropic to avoid CORS)
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-breakdown`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify({ vietnamese: vietnameseText, ...(englishText && { english: englishText }) }),
+  const { data: fnData, error: fnError } = await supabase.functions.invoke('generate-breakdown', {
+    body: { vietnamese: vietnameseText, ...(englishText && { english: englishText }) },
   })
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(`Breakdown generation failed: ${err?.error || res.statusText}`)
-  }
+  if (fnError) throw new Error(`Breakdown generation failed: ${fnError.message}`)
 
-  const { breakdown } = await res.json()
+  const { breakdown } = fnData
 
   if (!Array.isArray(breakdown) || !breakdown[0]?.vi) {
     throw new Error('Breakdown generation failed: unexpected response format')
