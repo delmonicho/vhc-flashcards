@@ -10,7 +10,7 @@
 
 No React Router. App.jsx uses a custom `view` state (`{ page, weekId }`). Pages receive `onNavigate(page, id?)` as a prop. There is no browser history — navigating always re-fetches data from Supabase.
 
-Valid `view.page` values: `'home'`, `'week'`, `'study'`, `'quiz'`, `'lotus-quest'`.
+Valid `view.page` values: `'home'`, `'week'`, `'study'`, `'quiz'`, `'lotus-quest'`, `'diagnostics'` (dev-only, guarded by `import.meta.env.DEV`).
 
 ## Tailwind Color Tokens
 

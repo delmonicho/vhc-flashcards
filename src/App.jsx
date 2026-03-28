@@ -4,6 +4,7 @@ import Week from './pages/Week'
 import Study from './pages/Study'
 import Quiz from './pages/Quiz'
 import LotusQuest from './pages/LotusQuest'
+import Diagnostics from './pages/Diagnostics'
 import { loadCategories } from './lib/categories'
 import { logError } from './lib/logger'
 
@@ -46,6 +47,8 @@ export default function App() {
         <Quiz weekId={view.weekId} onNavigate={navigate} {...themeProps} />
       ) : view.page === 'lotus-quest' ? (
         <LotusQuest weekId={view.weekId} onNavigate={navigate} />
+      ) : view.page === 'diagnostics' && import.meta.env.DEV ? (
+        <Diagnostics onNavigate={navigate} {...themeProps} />
       ) : (
         <Home onNavigate={navigate} {...themeProps} />
       )}

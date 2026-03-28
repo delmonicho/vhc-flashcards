@@ -2,6 +2,14 @@
 
 Full-page views rendered by App.jsx. All receive `onNavigate(page, weekId?)`, `dark`, and `onToggleDark` props.
 
+## Diagnostics.jsx
+
+Dev-only page (`import.meta.env.DEV` guard in App.jsx). Accessible via the hamster wheel icon in the dev section of Home.jsx. Loads all data in parallel on mount.
+
+**5 sections:** DB row counts (all tables), breakdown coverage progress bar, error hotspot table (grouped by page+action), recent errors (last 25, expandable to show details JSON), environment info.
+
+**Queries:** Uses `{ count: 'exact', head: true }` for row counts (no rows returned). Error log queries hit the `logs` table directly. No caching — always fresh on load.
+
 ## App.jsx navigation
 
 `view` state is `{ page, weekId }`. Adding a new page requires a new `view.page === 'newpage'` branch in App.jsx. No browser history, no URL routing — every `onNavigate` replaces the current view entirely.

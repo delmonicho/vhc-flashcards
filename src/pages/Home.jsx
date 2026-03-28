@@ -262,7 +262,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
 
       {/* Dev-only: backfill breakdown cache */}
       {import.meta.env.DEV && (
-        <div className="mt-10 pt-6 border-t border-co-border dark:border-gray-700 text-center">
+        <div className="mt-10 pt-6 border-t border-co-border dark:border-gray-700 text-center flex items-center justify-center gap-1">
           <button
             onClick={async () => {
               setBackfilling(true)
@@ -279,6 +279,29 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
             className="text-xs text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary disabled:opacity-50 transition-colors cursor-pointer"
           >
             {backfilling ? 'Backfilling…' : 'Backfill breakdown cache'}
+          </button>
+          <span className="text-co-border dark:text-gray-700 text-xs mx-1">·</span>
+          <button
+            onClick={() => onNavigate('diagnostics')}
+            aria-label="Diagnostics"
+            className="text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary transition-colors cursor-pointer group"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+              className="w-4 h-4 group-hover:animate-spin" aria-hidden="true">
+              {/* Wheel rim */}
+              <circle cx="12" cy="12" r="9" />
+              {/* Spokes */}
+              <line x1="12" y1="3" x2="12" y2="7" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+              <line x1="3" y1="12" x2="7" y2="12" />
+              <line x1="17" y1="12" x2="21" y2="12" />
+              <line x1="5.6" y1="5.6" x2="8.5" y2="8.5" />
+              <line x1="15.5" y1="15.5" x2="18.4" y2="18.4" />
+              <line x1="18.4" y1="5.6" x2="15.5" y2="8.5" />
+              <line x1="8.5" y1="15.5" x2="5.6" y2="18.4" />
+              {/* Hub */}
+              <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+            </svg>
           </button>
         </div>
       )}
