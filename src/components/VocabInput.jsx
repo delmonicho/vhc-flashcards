@@ -184,7 +184,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
           <button
             onClick={handleAdd}
             disabled={!input.trim() || state === 'loading'}
-            className="bg-co-primary text-white px-5 py-3 rounded-xl font-semibold disabled:opacity-50 hover:scale-105 active:scale-95 transition-all duration-150 min-w-16 cursor-pointer"
+            className="bg-co-primary text-white px-5 py-3 rounded-xl font-semibold disabled:opacity-50 enabled:hover:scale-105 active:scale-95 transition-all duration-150 min-w-16 cursor-pointer disabled:cursor-not-allowed disabled:scale-100"
           >
             {state === 'loading' ? '…' : 'Add'}
           </button>

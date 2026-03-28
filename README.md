@@ -6,16 +6,16 @@ A warm, playful flashcard app for Vietnamese language learners. Built for iPad a
 
 ## What it does
 
-Cô Ơi helps you capture vocabulary from class and homework, review it as flashcards, and test yourself with quizzes — all organized by week.
+Cô Ơi helps you capture vocabulary from class and homework, review it as flashcards, and test yourself with quizzes — all organized by deck.
 
 ---
 
 ## Features
 
-### Weeks
-- Create named weeks to organize your vocab (e.g. "Week 3 — Family")
-- Rename weeks inline by tapping the pencil icon
-- Delete a week (with confirmation) — removes the week and all its cards
+### Decks (also known as "weeks")
+- Create named decks to organize your vocab (e.g. "Week 3 — Family")
+- Rename decks inline by tapping the pencil icon
+- Delete a deck (with confirmation) — removes the deck and all its cards
 
 ### Cards
 - Add cards by typing Vietnamese — English translation is fetched automatically

@@ -27,7 +27,7 @@ function DeleteSheet({ week, cardCount, onConfirm, onCancel, deleting }) {
           Delete "{week.title}"?
         </p>
         <p className="text-sm text-co-muted dark:text-gray-400 mb-6">
-          This will permanently delete the week and all {cardCount || 0}{' '}
+          This will permanently delete the deck and all {cardCount || 0}{' '}
           {(cardCount || 0) === 1 ? 'card' : 'cards'} inside it.
         </p>
         <div className="flex gap-3">
@@ -36,7 +36,7 @@ function DeleteSheet({ week, cardCount, onConfirm, onCancel, deleting }) {
             disabled={deleting}
             className="flex-1 bg-red-500 text-white py-3.5 rounded-2xl font-semibold disabled:opacity-50 hover:bg-red-600 active:scale-95 transition-all cursor-pointer"
           >
-            {deleting ? 'Deleting…' : 'Delete week'}
+            {deleting ? 'Deleting…' : 'Delete deck'}
           </button>
           <button
             onClick={onCancel}
@@ -162,15 +162,15 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
           Cô Ơi
         </h1>
         <p className="text-co-muted dark:text-gray-400 text-base">
-          your Vietnamese class companion
+          Your Vietnamese class companion
         </p>
       </div>
 
-      {/* Create week */}
+      {/* Create deck */}
       <form onSubmit={createWeek} className="flex gap-2 mb-8">
         <input
           className="flex-1 border border-co-border dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary transition-shadow"
-          placeholder='New week, e.g. "Week 3 — Family"'
+          placeholder='New deck, e.g. "Week 3 — Family"'
           value={title}
           onChange={e => setTitle(e.target.value)}
           disabled={creating}
