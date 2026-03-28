@@ -24,13 +24,23 @@ contracts with its parents.
 
 **State machine:** `state` cycles `'idle' → 'loading' → 'preview' → 'error'`. Input is hidden during `'preview'` by design — forces confirm/cancel before adding another card. Never show input and preview simultaneously.
 
-**`source` holds a category id, not a label.** It maps to `flashcards.source` in the DB. The DB has no enum constraint (dropped in migration `20260326044509`), so any string is valid; categories in localStorage are the source of truth.
+**`source` holds a category id, not a label.** It maps to `flashcards.source` in the DB. The DB has no enum constraint (dropped in migration `20260326044509`), so any string is valid; categories in Supabase (`categories` table, via `src/lib/categories.js`) are the source of truth.
 
 **Translation preview fields are editable.** Both vi/en fields in preview state are inputs, not display text. Preserve this editability.
 
 ## ThemeToggle / Logo
 
 Both are pure presentational. ThemeToggle does NOT read localStorage — all persistence is in App.jsx. `Logo.old.jsx` is kept as reference; do not delete it.
+
+## Game components (`src/components/game/`)
+
+All live under `.pixel-mode` styling from the parent LotusQuest page.
+
+**WordWarrior** — 5-life card battle. Flip card reveals English; "GOT IT" removes card from queue, "REVIEW" re-queues it. Loses 1 life per REVIEW. Calls `onDone({ defeated, escaped, xp })` on game over or last card cleared. Audio via `src/lib/sounds.js`.
+
+**ChunkBuilder** — drag-to-order puzzle. Takes a card with `breakdown` array; shuffles chunks into a bank; player drags tiles into slots to reconstruct the original order. **Color alignment constraint:** uses `CHUNK_COLORS[i % length]` — same index as BreakdownDisplay. Do not filter or reorder tiles independently or the vi/en color pairing breaks. Calls `onDone({ correct, total, xp })`.
+
+**LotusSpirit** — pixel sprite component. Accepts `phase` (`'idle'|'attack'|'hurt'|'victory'`) and `animating` (boolean) props. Pure presentational — no state, no side effects.
 
 ## Quiz components (`src/components/quiz/`)
 

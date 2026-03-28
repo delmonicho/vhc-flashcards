@@ -18,7 +18,7 @@ Any new card creation path (bulk import, etc.) must also wire `handleBreakdownRe
 
 **`lastClickedRef` pattern:** Stores the DOM element that opened CardEditModal so focus can return on close. If you add a second trigger for CardEditModal, store its element in the same `lastClickedRef` before calling `setEditingCard`.
 
-**Categories write path:** Always call `saveCategories(updated)` AND `setCategories(updated)` together. Never update one without the other.
+**Categories write path:** Categories are now Supabase-backed (async). Call the async functions from `src/lib/categories.js` (`addCategory`, `deleteCategory`) and update the parent `categories` state via `onCategoriesChange` prop. Never mutate local state without also persisting to Supabase.
 
 **Cards are sorted newest-first** (`created_at DESC`). New cards are prepended via `[newCard, ...prev]`.
 
@@ -39,6 +39,20 @@ Any new card creation path (bulk import, etc.) must also wire `handleBreakdownRe
 **All navigation goes through `goTo(index)`** — resets `flipped`, `speakingKey`, and calls `cancelSpeech()`. Three input methods (swipe, keyboard, scrubber) all call `goTo`. Any new navigation method must too.
 
 **Grid view and card view share `index` state.** Grid click calls `goTo(i)` then `setGridView(false)`.
+
+## LotusQuest.jsx
+
+16-bit pixel game hub. Receives `weekId` and `onNavigate` props.
+
+**Phase machine:** `'hub' → 'word-warrior' | 'chunk-builder' → 'score' → 'hub'`
+
+Loads `cards` (for the given `weekId`) and `game_stats` from Supabase on mount. On mode completion, `handleModeComplete(result)` upserts `game_stats` (Supabase) and updates mastery (localStorage via `mastery.js`).
+
+**Mode availability:**
+- Word Warrior — enabled if `cards.length > 0`
+- Chunk Builder — enabled if any card has `breakdown?.length > 0`
+
+**Pixel theme:** Container applies `.pixel-mode` class, which sets dark background, pixel fonts, and `image-rendering: pixelated`.
 
 ## Quiz.jsx
 

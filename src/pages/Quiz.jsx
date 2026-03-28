@@ -16,7 +16,7 @@ const QUIZ_TYPES = [
   { id: 'mc',        title: 'Multiple Choice', description: 'Pick the correct English translation.',              minCards: 4 },
   { id: 'quickfire', title: 'Quick Fire',       description: 'Flip cards, mark what you know.',                  minCards: 1 },
   { id: 'match',     title: 'Pair Match',       description: 'Match Vietnamese words to their English meanings.', minCards: 4 },
-  { id: 'tiles',     title: 'Word Builder',     description: 'Arrange Vietnamese tiles to match the English. 60-second timer.', minCards: 2 },
+  { id: 'tiles',     title: 'Word Builder',     description: 'Arrange Vietnamese tiles to match the English. 60s timer — earn +5s per correct answer.', minCards: 2 },
 ]
 
 function SpeakerIcon({ active }) {
@@ -64,16 +64,18 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
     }
   }, [phase, result])
 
-  function handleDone({ score, total, results }) {
+  function handleDone({ score, total, results, timeLeft }) {
     const updated = { ...masteryData }
     for (const [cardId, wasCorrect] of results) {
       recordResult(cardId, wasCorrect, updated)
     }
     saveMastery(updated)
     setMasteryData(updated)
-    const xpEarned = Math.round(score * XP_RATES[quizType])
+    const baseXP = Math.round(score * XP_RATES[quizType])
+    const timeBonus = timeLeft != null ? Math.floor(timeLeft / 10) : 0
+    const xpEarned = baseXP + timeBonus
     const totalXP = addXP(xpEarned)
-    setResult({ score, total, results, xpEarned, totalXP })
+    setResult({ score, total, results, xpEarned, totalXP, timeBonus })
     setPhase('score')
   }
 
@@ -195,7 +197,9 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest">Weekly XP</span>
-          <span className="text-co-gold font-semibold text-sm">+{result.xpEarned} XP</span>
+          <span className="text-co-gold font-semibold text-sm">
+            +{result.xpEarned} XP{result.timeBonus > 0 ? ` (incl. ${result.timeBonus} time bonus)` : ''}
+          </span>
         </div>
         <div className="bg-co-border dark:bg-gray-700 h-2 rounded-full">
           <div

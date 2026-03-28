@@ -44,10 +44,10 @@ supabase secrets set ANTHROPIC_API_KEY=sk-ant-... --project-ref zmbfpwjbnqsqywde
 
 `vi_key` is the normalized phrase (trim + collapse whitespace via `normalizeVietnamese()`).
 
-**`source` has no enum constraint** — dropped in `20260326044509_drop_source_check.sql`. Any string is valid; the frontend enforces valid values via localStorage categories.
+**`source` has no enum constraint** — dropped in `20260326044509_drop_source_check.sql`. Any string is valid; the frontend enforces valid values via the Supabase `categories` table.
 
 **No RLS.** This is a single-user personal app. Adding RLS would break all existing client queries without a full audit.
 
-## Upcoming: Quiz
-
-No new tables or migrations needed for the Quiz feature. Quiz session state is ephemeral (held in React state only).
+**Recent migrations:**
+- `20260327000000_add_game_stats.sql` — per-week game performance (XP, cards mastered, streak). `unique(week_id)` constraint; streak logic: increment if last played yesterday or today, reset if gap > 1 day.
+- `20260327100000_add_categories_table.sql` — global categories (migrated from localStorage). `id` is text PK (slugified label).

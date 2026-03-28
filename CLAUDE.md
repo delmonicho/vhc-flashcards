@@ -10,6 +10,8 @@
 
 No React Router. App.jsx uses a custom `view` state (`{ page, weekId }`). Pages receive `onNavigate(page, id?)` as a prop. There is no browser history — navigating always re-fetches data from Supabase.
 
+Valid `view.page` values: `'home'`, `'week'`, `'study'`, `'quiz'`, `'lotus-quest'`.
+
 ## Tailwind Color Tokens
 
 Custom colors use the `co-` prefix (defined in `src/index.css` `@theme` block). Always use these instead of generic Tailwind grays/reds for brand elements:
@@ -34,6 +36,8 @@ Fonts: `font-display` = Baloo 2 (headings), `font-sans` = Nunito (body).
 weeks         id, title, created_at
 flashcards    id, week_id, vietnamese, english, source (any string), status, breakdown (JSONB nullable), created_at
 breakdowns    vi_key (PK), breakdown (JSONB)   ← cache table
+categories    id (text PK), label, color, created_at
+game_stats    id, week_id (unique), xp, cards_mastered, streak_days, last_played, created_at
 ```
 
 `breakdowns.vi_key` is the normalized Vietnamese phrase (`trim + collapse whitespace` via `normalizeVietnamese()` in `src/lib/breakdown.js`). Always use this function before any cache lookup or upsert.
@@ -48,7 +52,7 @@ Deployed to Supabase Edge Runtime (Deno). The only function is `generate-breakdo
 
 ```bash
 # Deploy
-supabase functions deploy generate-breakdown --linked
+supabase functions deploy generate-breakdown --project-ref zmbfpwjbnqsqywdeymow
 
 # Requires ANTHROPIC_API_KEY set in Supabase project secrets (not in .env)
 ```
@@ -81,12 +85,14 @@ Local Supabase stack is not used. Available inspect subcommands: `bloat`, `calls
 - **Tailwind v4**: No config file. Customize via `@theme` and `@custom-variant` in `src/index.css`. Don't create a `tailwind.config.js`.
 - **Search/filter is client-side**: All cards for a week are loaded at once. No pagination needed for current scale.
 - **`VITE_ANTHROPIC_API_KEY`** in `.env` is unused at runtime — it's a leftover. The key lives in Supabase secrets and is only read by the Edge Function.
-- **`source` column has no enum constraint** — the old `('class'|'homework')` check was dropped in migration `20260326044509`. Any string is valid; the category system in localStorage is the source of truth for valid values.
+- **`source` column has no enum constraint** — the old `('class'|'homework')` check was dropped in migration `20260326044509`. Any string is valid; the category system in Supabase (`categories` table) is the source of truth for valid values.
 
 ## localStorage Keys
 
 | Key | Owner | Value |
 |-----|-------|-------|
 | `'theme'` | `src/App.jsx` | `'dark'` or `'light'` |
-| `'viet-categories'` | `src/lib/categories.js` | JSON array of category objects |
+| `'viet-categories'` | `src/lib/categories.js` | **Deprecated** — migrated to Supabase `categories` table on first load, key deleted after migration |
 | `'viVoiceBannerDismissed'` | `src/pages/Study.jsx` | `'1'` when dismissed |
+| `'quiz-mastery'` | `src/lib/mastery.js` | JSON mastery store `{ cardId: { correct, incorrect, streak, lastSeen } }` |
+| `'quiz-xp'` | `src/lib/mastery.js` | JSON `{ weekStart: timestampMs, xp: number }` — resets each Monday UTC |

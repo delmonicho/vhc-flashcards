@@ -18,17 +18,21 @@ Steps 3 and 4 must not be reversed. Always call `getOrCreateBreakdown(vi, cardId
 
 **`normalizeVietnamese(text)`** — always call before any cache lookup or upsert. Trims and collapses internal whitespace. Skipping it causes cache misses for the same phrase with different spacing.
 
+**`stripDiacritics(str)`** — strips all combining diacritical marks via `normalize('NFD')` + regex. Used for fuzzy search: "nam" matches "năm", "nắm", "nám", etc. Do not use for cache keys — use `normalizeVietnamese` for that.
+
 **Breakdown JSONB shape:** `[{ vi: string, en: string }]` — ordered array, both fields required.
 
 **`backfillBreakdownCache()`** is dev-only. Do not call from production paths.
 
 ## categories.js
 
-**localStorage key is `'viet-categories'`** (see `STORAGE_KEY` constant at line 11).
+All functions (`loadCategories`, `addCategory`, `deleteCategory`) are **async** and backed by the Supabase `categories` table.
 
-**Default categories:** `[{ id: 'class', label: 'Class', color: '#FFCCD5' }, { id: 'homework', label: 'Homework', color: '#FFF0C0' }]`.
+**One-time migration:** The first `loadCategories()` call checks for `'viet-categories'` in localStorage. If found, it upserts those rows to Supabase and deletes the localStorage key. After migration, localStorage is no longer used.
 
-**Category `id` is stored as `flashcards.source` in the DB.** `addCategory()` slugifies the label. Renaming a category label does NOT update existing card `source` values — they stay associated by id. Categories are global (not per-week).
+**Default categories:** `[{ id: 'class', label: 'Class', color: '#FFCCD5' }, { id: 'homework', label: 'Homework', color: '#FFF0C0' }]` — seeded in the migration SQL if the table is empty.
+
+**Category `id` is stored as `flashcards.source` in the DB.** `addCategory()` slugifies the label to produce a stable id. Renaming a category label does NOT update existing card `source` values — they stay associated by id. Categories are global (not per-week).
 
 ## speak.js
 

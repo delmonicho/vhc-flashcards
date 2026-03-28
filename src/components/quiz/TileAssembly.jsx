@@ -22,6 +22,7 @@ export default function TileAssembly({ cards, onDone }) {
   const [shaking, setShaking] = useState(false)
   const [flashing, setFlashing] = useState(false)
   const [showAnswer, setShowAnswer] = useState(false)
+  const [answerRevealed, setAnswerRevealed] = useState(false)
   const [results] = useState(() => new Map())
 
   const card = cards[index]
@@ -35,37 +36,35 @@ export default function TileAssembly({ cards, onDone }) {
     setShaking(false)
     setFlashing(false)
     setShowAnswer(false)
+    setAnswerRevealed(false)
   }, [index])
 
-  // Per-card countdown timer
+  // Single countdown timer for the whole quiz (not reset per card)
   useEffect(() => {
-    setSecondsLeft(60)
     const interval = setInterval(() => {
-      setSecondsLeft(s => {
-        if (s <= 1) {
-          clearInterval(interval)
-          handleTimeUp()
-          return 0
-        }
-        return s - 1
-      })
+      setSecondsLeft(s => (s <= 1 ? 0 : s - 1))
     }, 1000)
     return () => clearInterval(interval)
-  }, [index])
+  }, [])
+
+  // Trigger time-up outside the state updater to avoid setState-during-render
+  useEffect(() => {
+    if (secondsLeft === 0) handleTimeUp()
+  }, [secondsLeft])
 
   function handleTimeUp() {
     for (let i = index; i < cards.length; i++) {
       if (!results.has(cards[i].id)) results.set(cards[i].id, false)
     }
     const score = [...results.values()].filter(Boolean).length
-    onDone({ score, total: cards.length, results })
+    onDone({ score, total: cards.length, results, timeLeft: 0 })
   }
 
-  function advance() {
+  function advance(currentSecondsLeft) {
     const next = index + 1
     if (next >= cards.length) {
       const score = [...results.values()].filter(Boolean).length
-      onDone({ score, total: cards.length, results })
+      onDone({ score, total: cards.length, results, timeLeft: currentSecondsLeft ?? secondsLeft })
       return
     }
     setIndex(next)
@@ -86,6 +85,7 @@ export default function TileAssembly({ cards, onDone }) {
     if (assembled === correctWords.join(' ')) {
       results.set(card.id, attempts === 0)
       setFlashing(true)
+      setSecondsLeft(s => Math.min(s + 5, 60))
       setTimeout(() => {
         setFlashing(false)
         advance()
@@ -111,8 +111,8 @@ export default function TileAssembly({ cards, onDone }) {
     setFlashing(true)
     setTimeout(() => {
       setFlashing(false)
-      advance()
-    }, 1000)
+      setAnswerRevealed(true)
+    }, 600)
   }
 
   const canCheck = answer.length === correctWords.length && !flashing && !shaking
@@ -133,8 +133,8 @@ export default function TileAssembly({ cards, onDone }) {
       {/* Timer bar */}
       <div className="bg-co-border dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
         <div
-          key={index}
-          className={`timer-bar h-1.5 rounded-full bg-co-primary${flashing ? ' paused' : ''}`}
+          className={`h-1.5 rounded-full transition-all duration-1000 ${secondsLeft <= 10 ? 'bg-red-500' : 'bg-co-primary'}`}
+          style={{ width: `${(secondsLeft / 60) * 100}%` }}
         />
       </div>
       <div className="text-right text-xs text-co-muted dark:text-gray-500 -mt-2">{secondsLeft}s</div>
@@ -196,8 +196,15 @@ export default function TileAssembly({ cards, onDone }) {
         ))}
       </div>
 
-      {/* Check button */}
-      {canCheck && (
+      {/* Check / Next buttons */}
+      {answerRevealed ? (
+        <button
+          onClick={advance}
+          className="w-full bg-co-primary text-white py-3 rounded-2xl font-semibold text-sm hover:scale-[1.01] active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+        >
+          Next →
+        </button>
+      ) : canCheck && (
         <button
           onClick={handleCheck}
           className="w-full bg-co-primary text-white py-3 rounded-2xl font-semibold text-sm hover:scale-[1.01] active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"

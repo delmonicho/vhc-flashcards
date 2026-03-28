@@ -4,6 +4,10 @@ export function normalizeVietnamese(text) {
   return text.trim().replace(/\s+/g, ' ')
 }
 
+export function stripDiacritics(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
 export async function getOrCreateBreakdown(vietnameseText, cardId, englishText) {
   const viKey = normalizeVietnamese(vietnameseText)
 
@@ -52,12 +56,15 @@ export async function triggerMissingBreakdowns() {
 
   if (error) throw new Error(`Failed to fetch cards: ${error.message}`)
 
-  const results = await Promise.allSettled(
-    cards.map(c => getOrCreateBreakdown(c.vietnamese, c.id, c.english))
-  )
-
-  const failed = results.filter(r => r.status === 'rejected')
-  return { total: cards.length, failed: failed.length }
+  let failed = 0
+  for (const c of cards) {
+    try {
+      await getOrCreateBreakdown(c.vietnamese, c.id, c.english)
+    } catch {
+      failed++
+    }
+  }
+  return { total: cards.length, failed }
 }
 
 export async function backfillBreakdownCache() {

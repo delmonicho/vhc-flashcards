@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getCategoryColor, deleteCategory, upsertCategories, nextColor } from '../lib/categories'
+import { stripDiacritics } from '../lib/breakdown'
 import VocabInput from '../components/VocabInput'
 import ThemeToggle from '../components/ThemeToggle'
 import CardEditModal from '../components/CardEditModal'
@@ -21,8 +22,10 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
   const [loading, setLoading] = useState(true)
   const [editingCard, setEditingCard] = useState(null)
   const [search, setSearch] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
   const [sourceFilter, setSourceFilter] = useState('all')
   const lastClickedRef = useRef(null)
+  const searchInputRef = useRef(null)
 
   useEffect(() => {
     fetchData()
@@ -107,8 +110,9 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
     if (sourceFilter === 'untagged') return tags.length === 0
     if (sourceFilter !== 'all' && !tags.includes(sourceFilter)) return false
     if (search.trim()) {
-      const q = search.toLowerCase()
-      return card.vietnamese.toLowerCase().includes(q) || card.english.toLowerCase().includes(q)
+      const q = stripDiacritics(search.trim().toLowerCase())
+      return stripDiacritics(card.vietnamese.toLowerCase()).includes(q) ||
+             stripDiacritics(card.english.toLowerCase()).includes(q)
     }
     return true
   })
@@ -173,17 +177,41 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
       />
 
       {cards.length > 0 && (
-        <div className="mt-4 bg-co-surface dark:bg-gray-800/50 border border-co-border dark:border-gray-700 rounded-2xl p-4 space-y-3">
-          <label htmlFor="search-cards" className="sr-only">Search cards</label>
-          <input
-            id="search-cards"
-            type="search"
-            placeholder="Search cards…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full border border-co-border dark:border-gray-600 rounded-xl px-4 py-2.5 text-sm bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary"
-          />
+        <div className="mt-4 bg-co-surface dark:bg-gray-800/50 border border-co-border dark:border-gray-700 rounded-2xl p-4">
           <div className="flex gap-2 flex-wrap items-center">
+            {/* Search icon button + expandable input */}
+            <div className="flex items-center">
+              <button
+                onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 0) }}
+                aria-label="Search cards"
+                className={`w-8 h-8 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-white dark:hover:bg-gray-700 transition-all ${searchOpen ? 'text-co-primary' : ''}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+                </svg>
+              </button>
+              {searchOpen && (
+                <>
+                  <label htmlFor="search-cards" className="sr-only">Search cards</label>
+                  <input
+                    ref={searchInputRef}
+                    id="search-cards"
+                    type="search"
+                    placeholder="Search…"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    onBlur={() => { if (!search) setSearchOpen(false) }}
+                    onKeyDown={e => { if (e.key === 'Escape') { setSearch(''); setSearchOpen(false) } }}
+                    className="w-36 border border-co-border dark:border-gray-600 rounded-xl px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary ml-1"
+                  />
+                  <button
+                    onMouseDown={e => { e.preventDefault(); setSearch(''); setSearchOpen(false) }}
+                    aria-label="Clear search"
+                    className="ml-1 w-6 h-6 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200 text-base leading-none"
+                  >×</button>
+                </>
+              )}
+            </div>
             <span className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest">Filter:</span>
             {/* All */}
             <button
