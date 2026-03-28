@@ -24,6 +24,7 @@ export default function TileAssembly({ cards, onDone }) {
   const [showAnswer, setShowAnswer] = useState(false)
   const [answerRevealed, setAnswerRevealed] = useState(false)
   const [results] = useState(() => new Map())
+  const [timerAnnouncement, setTimerAnnouncement] = useState('')
 
   const card = cards[index]
   const correctWords = card.vietnamese.trim().split(/\s+/)
@@ -50,6 +51,8 @@ export default function TileAssembly({ cards, onDone }) {
   // Trigger time-up outside the state updater to avoid setState-during-render
   useEffect(() => {
     if (secondsLeft === 0) handleTimeUp()
+    if (secondsLeft === 10) setTimerAnnouncement('10 seconds remaining')
+    if (secondsLeft === 5) setTimerAnnouncement('5 seconds remaining')
   }, [secondsLeft])
 
   function handleTimeUp() {
@@ -131,13 +134,15 @@ export default function TileAssembly({ cards, onDone }) {
       </div>
 
       {/* Timer bar */}
-      <div className="bg-co-border dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+      <div aria-hidden="true" className="bg-co-border dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
         <div
           className={`h-1.5 rounded-full transition-all duration-1000 ${secondsLeft <= 10 ? 'bg-red-500' : 'bg-co-primary'}`}
           style={{ width: `${(secondsLeft / 60) * 100}%` }}
         />
       </div>
-      <div className="text-right text-xs text-co-muted dark:text-gray-500 -mt-2">{secondsLeft}s</div>
+      <div aria-hidden="true" className="text-right text-xs text-co-muted dark:text-gray-500 -mt-2">{secondsLeft}s</div>
+      {/* Screen reader timer announcements at 10s and 5s thresholds */}
+      <div role="status" aria-live="assertive" aria-atomic="true" className="sr-only">{timerAnnouncement}</div>
 
       {/* English prompt */}
       <div className="bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 rounded-2xl p-5 text-center">

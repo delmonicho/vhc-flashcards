@@ -178,15 +178,20 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
 
       {cards.length > 0 && (
         <div className="mt-4 bg-co-surface dark:bg-gray-800/50 border border-co-border dark:border-gray-700 rounded-2xl p-4">
-          <div className="flex gap-2 flex-wrap items-center">
+          <div role="search" className="flex gap-2 flex-wrap items-center">
             {/* Search icon button + expandable input */}
             <div className="flex items-center">
               <button
-                onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 0) }}
-                aria-label="Search cards"
-                className={`w-8 h-8 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-white dark:hover:bg-gray-700 transition-all ${searchOpen ? 'text-co-primary' : ''}`}
+                onClick={() => {
+                  if (searchOpen) { setSearch(''); setSearchOpen(false) }
+                  else { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 0) }
+                }}
+                aria-label={searchOpen ? 'Close search' : 'Search cards'}
+                aria-expanded={searchOpen}
+                aria-controls="search-cards"
+                className={`w-8 h-8 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-white dark:hover:bg-gray-700 transition-all cursor-pointer ${searchOpen ? 'text-co-primary' : ''}`}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4" aria-hidden="true">
                   <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
                 </svg>
               </button>
@@ -200,15 +205,10 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
                     placeholder="Search…"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    onBlur={() => { if (!search) setSearchOpen(false) }}
-                    onKeyDown={e => { if (e.key === 'Escape') { setSearch(''); setSearchOpen(false) } }}
+
+                    onKeyDown={e => { if (e.key === 'Escape') { setSearch(''); setSearchOpen(false); } }}
                     className="w-36 border border-co-border dark:border-gray-600 rounded-xl px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary ml-1"
                   />
-                  <button
-                    onMouseDown={e => { e.preventDefault(); setSearch(''); setSearchOpen(false) }}
-                    aria-label="Clear search"
-                    className="ml-1 w-6 h-6 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200 text-base leading-none"
-                  >×</button>
                 </>
               )}
             </div>
@@ -216,14 +216,14 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
             {/* All */}
             <button
               onClick={() => setSourceFilter(sourceFilter === 'all' ? 'untagged' : 'all')}
-              aria-pressed={sourceFilter === 'all' || sourceFilter === 'untagged'}
+              aria-pressed={sourceFilter === 'all'}
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 cursor-pointer ${
-                sourceFilter === 'all' || sourceFilter === 'untagged'
+                sourceFilter === 'all'
                   ? 'bg-co-primary text-white shadow-sm'
                   : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
               }`}
             >
-              {sourceFilter === 'untagged' ? 'Untagged' : 'All'}
+              All
             </button>
             {/* Named categories with × delete */}
             {categories.map(cat => (
