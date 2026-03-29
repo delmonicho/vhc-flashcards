@@ -15,13 +15,25 @@ import Diagnostics from './pages/Diagnostics'
 import { loadCategories } from './lib/categories'
 import { logError } from './lib/logger'
 
-function AppInner() {
-  // If the browser is on /auth/callback, show that page immediately
-  const isCallback = window.location.pathname.includes('/auth/callback')
+function buildPath(page, deckId) {
+  if (['deck', 'study', 'quiz', 'lotus-quest'].includes(page)) return `/${page}/${deckId}`
+  if (page === 'home') return '/'
+  return `/${page}`
+}
 
+function parsePath(pathname) {
+  const parts = pathname.replace(/^\//, '').split('/')
+  const page = parts[0] || 'home'
+  if (['deck', 'study', 'quiz', 'lotus-quest'].includes(page) && parts[1]) return { page, deckId: parts[1] }
+  if (page === 'auth' && parts[1] === 'callback') return { page: 'auth/callback', deckId: null }
+  if (['profile', 'login', 'auth', 'privacy', 'diagnostics'].includes(page)) return { page, deckId: null }
+  return { page: 'home', deckId: null }
+}
+
+function AppInner() {
   const [view, setView] = useState(() => {
-    if (isCallback) return { page: 'auth/callback', deckId: null, loginError: null, justCopied: false }
-    return { page: 'home', deckId: null, loginError: null, justCopied: false }
+    const { page, deckId } = parsePath(window.location.pathname)
+    return { page, deckId, loginError: null, justCopied: false }
   })
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem('theme')
@@ -36,7 +48,19 @@ function AppInner() {
       .catch(err => logError('Failed to load categories on app init', { action: 'loadCategories', err }))
   }, [])
 
+  useEffect(() => {
+    history.replaceState({ page: view.page, deckId: view.deckId }, '', window.location.href)
+    function handlePop(e) {
+      const { page, deckId } = e.state ?? parsePath(window.location.pathname)
+      setView({ page, deckId: deckId ?? null, loginError: null, justCopied: false })
+    }
+    window.addEventListener('popstate', handlePop)
+    return () => window.removeEventListener('popstate', handlePop)
+  }, [])
+
   function navigate(page, deckId = null, loginError = null, opts = {}) {
+    const path = buildPath(page, deckId)
+    history.pushState({ page, deckId }, '', path)
     setView({ page, deckId, loginError, justCopied: opts.justCopied ?? false })
   }
 
