@@ -3,6 +3,18 @@
 Shared UI components. Most are presentational; CardEditModal has complex lifecycle
 contracts with its parents.
 
+## PdfImportModal
+
+**Props:** `deckId`, `categories`, `onCategoriesChange`, `onCardsImported(cards[])`, `onClose`.
+
+**Phase machine:** `'uploading' → 'review' → 'importing' → 'done' | 'error'`. Auto-opens the system file picker on mount. File size is validated client-side (3MB max) before the API call.
+
+**Review phase:** editable Vietnamese/English fields per row, checkbox to include/exclude, bulk category pill selector (multi-select), Select All / Deselect All. Categories default to `['class']` if that category exists, else empty.
+
+**Import loop:** sequential Supabase inserts with a live counter; individual failures are silently skipped. Calls `onCardsImported(results)` after all inserts, then transitions to `'done'` phase. Parent (Deck.jsx) queues breakdowns via `getOrCreateBreakdown` — do not call it from inside this modal.
+
+**Retry:** resets to `'uploading'` and clears the file input value so the same file can be re-selected.
+
 ## ErrorBoundary
 
 Class component wrapping `<App />` in `main.jsx`. Catches uncaught React render errors via `componentDidCatch`, logs them with `logError` (including `componentStack`), and shows a minimal unstyled fallback with a "Try again" button that resets error state.

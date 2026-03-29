@@ -6,6 +6,7 @@ import { stripDiacritics, getOrCreateBreakdown } from '../lib/breakdown'
 import { useAuth } from '../context/AuthContext'
 import VocabInput from '../components/VocabInput'
 import CardEditModal from '../components/CardEditModal'
+import PdfImportModal from '../components/PdfImportModal'
 
 function LoadingDots() {
   return (
@@ -28,6 +29,7 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
   const [pendingBreakdowns, setPendingBreakdowns] = useState(new Set())
   const [showCopiedBanner, setShowCopiedBanner] = useState(false)
   const [editingCard, setEditingCard] = useState(null)
+  const [showPdfImport, setShowPdfImport] = useState(false)
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [sourceFilter, setSourceFilter] = useState('all')
@@ -125,6 +127,15 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
 
   function handleBreakdownReady(cardId, breakdown) {
     setCards(prev => prev.map(c => c.id === cardId ? { ...c, breakdown } : c))
+  }
+
+  function handlePdfImport(newCards) {
+    setCards(prev => [...newCards, ...prev])
+    newCards.forEach(card =>
+      getOrCreateBreakdown(card.vietnamese, card.id, card.english)
+        .then(bd => handleBreakdownReady(card.id, bd))
+        .catch(err => logError('pdf import breakdown failed', { page: 'deck', action: 'breakdown', err }))
+    )
   }
 
   function handleModalSave(updatedCard) {
@@ -298,6 +309,15 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
           categories={categories}
           onCategoriesChange={onCategoriesChange}
         />
+      )}
+      {isOwner && (
+        <button
+          onClick={() => setShowPdfImport(true)}
+          className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-co-border dark:border-gray-700 text-sm font-semibold text-co-muted dark:text-gray-400 hover:border-co-primary hover:text-co-primary dark:hover:text-co-primary transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+          aria-label="Import flashcards from PDF"
+        >
+          ↑ Import from PDF
+        </button>
       )}
 
       {isOwner && pendingCount > 0 && (
@@ -493,6 +513,15 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
           onClose={() => setEditingCard(null)}
           onBreakdownReady={handleBreakdownReady}
           triggerRef={lastClickedRef}
+        />
+      )}
+      {showPdfImport && isOwner && (
+        <PdfImportModal
+          deckId={deckId}
+          categories={categories}
+          onCategoriesChange={onCategoriesChange}
+          onCardsImported={handlePdfImport}
+          onClose={() => setShowPdfImport(false)}
         />
       )}
     </div>

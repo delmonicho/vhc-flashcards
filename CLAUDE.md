@@ -92,7 +92,8 @@ Local Supabase stack is not used. Available inspect subcommands: `bloat`, `calls
 - **Breakdown regeneration**: If `vietnamese` text changes on a card, `breakdown` is wiped and re-queued. Preserve breakdown if only `english` or `source` changes.
 - **Tailwind v4**: No config file. Customize via `@theme` and `@custom-variant` in `src/index.css`. Don't create a `tailwind.config.js`.
 - **Search/filter is client-side**: All cards for a deck are loaded at once. No pagination needed for current scale.
-- **`VITE_ANTHROPIC_API_KEY`** and **`VITE_GOOGLE_API_KEY`** are removed. Server-side keys `ANTHROPIC_API_KEY` and `GOOGLE_API_KEY` live in Vercel environment variables and are accessed via `/api/claude` and `/api/translate` serverless functions. The Anthropic key also lives in Supabase secrets for the Edge Function.
+- **`VITE_ANTHROPIC_API_KEY`** and **`VITE_GOOGLE_API_KEY`** are removed. Server-side keys `ANTHROPIC_API_KEY` and `GOOGLE_API_KEY` live in Vercel environment variables and are accessed via `/api/claude`, `/api/translate`, `/api/pdf-extract`, and `/api/pdf-parse-vocab` serverless functions. The Anthropic key also lives in Supabase secrets for the Edge Function.
+- **`pdf-parse` import path**: Use `import pdfParse from 'pdf-parse/lib/pdf-parse.js'` (direct subpath) — the package's top-level entry tries to load test fixtures that don't exist in Vercel's serverless environment.
 - **`source` column has no enum constraint** — the old `('class'|'homework')` check was dropped in migration `20260326044509`. Any string is valid; the category system in Supabase (`categories` table) is the source of truth for valid values.
 
 ## localStorage Keys

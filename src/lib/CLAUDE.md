@@ -85,3 +85,11 @@ Single export: `supabase` client. Import directly everywhere — no wrapper, no 
 **XP schema:** `{ weekStart: timestampMs, xp: number }`. `loadXP()` auto-resets if stored `weekStart` differs from the current Monday (UTC). `addXP(amount)` loads, adds, saves, returns new total. `XP_RATES = { mc: 1, match: 2, quickfire: 1, tiles: 1.5 }` — multiply by score to get XP earned.
 
 **`recordResult(cardId, wasCorrect, store)`** mutates `store` in place — always pass a shallow copy (`{ ...masteryData }`) so React state updates correctly.
+
+## pdfImport.js
+
+Two async exports used by `PdfImportModal`:
+
+**`extractPdfText(file)`** — reads a `File` object via `FileReader`, base64-encodes it, POSTs to `/api/pdf-extract`, returns raw text string. Throws on HTTP error or read failure.
+
+**`parseVocabPairs(text)`** — calls the `parse-vocab` Supabase Edge Function via `supabase.functions.invoke()`, returns `{ pairs: [{vietnamese, english}], truncated: boolean }`. Uses the same `ANTHROPIC_API_KEY` secret as `generate-breakdown` — no Vercel env var needed.

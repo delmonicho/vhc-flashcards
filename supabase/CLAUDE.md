@@ -10,6 +10,20 @@ Edge Functions (Deno runtime) and database migrations for the remote Supabase pr
 - No `package.json` or `node_modules` in the functions directory
 - `fetch` is a global — no import needed
 
+## Edge Function: parse-vocab
+
+**Purpose:** Extracts `[{vietnamese, english}]` flashcard pairs from raw PDF text. Uses the same `ANTHROPIC_API_KEY` secret as `generate-breakdown`. Called by `src/lib/pdfImport.js` via `supabase.functions.invoke('parse-vocab', { body: { text } })`.
+
+**Request:** `POST /functions/v1/parse-vocab` with `{ text: string }`
+**Response:** `{ pairs: [{vietnamese, english}], truncated?: true }` — `truncated` is set when input exceeded 15,000 chars.
+
+**Model:** `claude-haiku-4-5-20251001`. System prompt handles `=` and `:` delimiters, `><` antonym pairs (extracts each side), and skips poetry/grammar examples.
+
+**Deploy:**
+```bash
+supabase functions deploy parse-vocab --project-ref zmbfpwjbnqsqywdeymow
+```
+
 ## Edge Function: generate-breakdown
 
 **Purpose:** Proxies Anthropic API to avoid browser CORS. The only valid path to Claude Haiku from the frontend.
