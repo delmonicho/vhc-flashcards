@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import Logo from '../components/Logo'
 import { signInWithMagicLink } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 
 export default function Login({ onNavigate, loginError }) {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState(loginError || null)
@@ -20,6 +22,16 @@ export default function Login({ onNavigate, loginError }) {
     } else {
       setSent(true)
     }
+  }
+
+  async function handleDevPasswordSignIn(e) {
+    e.preventDefault()
+    if (!email.trim() || !password) return
+    setLoading(true)
+    setError(null)
+    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    setLoading(false)
+    if (err) setError(err.message)
   }
 
   return (
@@ -101,6 +113,29 @@ export default function Login({ onNavigate, loginError }) {
             >
               {loading ? 'Sending…' : 'Send magic link →'}
             </button>
+
+            {import.meta.env.DEV && (
+              <div className="border-t border-gray-700 pt-4 flex flex-col gap-2">
+                <p className="text-xs text-gray-500 text-center">dev only</p>
+                <input
+                  type="password"
+                  placeholder="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  disabled={loading}
+                  className="w-full rounded-xl border border-gray-600 bg-gray-800 px-4 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+                  style={{ minHeight: '44px' }}
+                />
+                <button
+                  type="button"
+                  onClick={handleDevPasswordSignIn}
+                  disabled={loading || !email.trim() || !password}
+                  className="w-full rounded-xl py-2.5 text-gray-300 font-semibold border border-gray-600 disabled:opacity-50 hover:enabled:border-gray-400 transition-all cursor-pointer disabled:cursor-default text-sm"
+                >
+                  Sign in with password
+                </button>
+              </div>
+            )}
           </form>
         )}
       </div>
