@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -25,6 +25,7 @@ export default function TileAssembly({ cards, onDone }) {
   const [answerRevealed, setAnswerRevealed] = useState(false)
   const [results] = useState(() => new Map())
   const [timerAnnouncement, setTimerAnnouncement] = useState('')
+  const timerPausedRef = useRef(false)
 
   const card = cards[index]
   const correctWords = card.vietnamese.trim().split(/\s+/)
@@ -43,7 +44,9 @@ export default function TileAssembly({ cards, onDone }) {
   // Single countdown timer for the whole quiz (not reset per card)
   useEffect(() => {
     const interval = setInterval(() => {
-      setSecondsLeft(s => (s <= 1 ? 0 : s - 1))
+      if (!timerPausedRef.current) {
+        setSecondsLeft(s => (s <= 1 ? 0 : s - 1))
+      }
     }, 1000)
     return () => clearInterval(interval)
   }, [])
@@ -64,6 +67,7 @@ export default function TileAssembly({ cards, onDone }) {
   }
 
   function advance(currentSecondsLeft) {
+    timerPausedRef.current = false
     const next = index + 1
     if (next >= cards.length) {
       const score = [...results.values()].filter(Boolean).length
@@ -107,6 +111,7 @@ export default function TileAssembly({ cards, onDone }) {
   }
 
   function handleShowAnswer() {
+    timerPausedRef.current = true
     results.set(card.id, false)
     setAnswer(correctWords.map((word, i) => ({ id: i, word })))
     setBank([])
