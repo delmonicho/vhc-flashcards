@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { updateProfile, deleteAccount } from '../lib/auth'
+import { supabase } from '../lib/supabase'
+import { getMasteryStage, getMasteryStats, loadMasteryFromSupabase, migrateLocalToSupabase } from '../lib/mastery'
+import MasteryBar from '../components/MasteryBar'
 
 const AVATAR_COLORS = [
   { value: '#E8526A', label: 'Coral' },
@@ -31,6 +34,11 @@ export default function Profile({ onNavigate }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  // Vocabulary dashboard state
+  const [vocabLoading, setVocabLoading] = useState(true)
+  const [deckMastery, setDeckMastery] = useState([]) // [{ deck, cards, masteryData }]
+  const [totalMastered, setTotalMastered] = useState(0)
+
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.display_name ?? '')
@@ -40,6 +48,57 @@ export default function Profile({ onNavigate }) {
       setLearningLanguage(profile.learning_language ?? 'vi')
     }
   }, [profile])
+
+  // Load vocabulary dashboard data
+  useEffect(() => {
+    if (!user) return
+    async function loadVocab() {
+      // Fetch decks + cards in parallel with Supabase mastery
+      const [
+        { data: decks },
+        { data: cards },
+        masteryStore,
+      ] = await Promise.all([
+        supabase.from('decks').select('id, title').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('flashcards').select('id, deck_id').eq('user_id', user.id),
+        loadMasteryFromSupabase(user.id, supabase),
+      ])
+
+      const deckList = decks ?? []
+      const cardList = cards ?? []
+
+      // Run one-time migration from localStorage (idempotent — skips existing rows)
+      const deckCardMap = {}
+      for (const c of cardList) deckCardMap[c.id] = c.deck_id
+      migrateLocalToSupabase(user.id, deckCardMap, supabase)
+
+      // Group cards by deck
+      const cardsByDeck = {}
+      for (const c of cardList) {
+        if (!cardsByDeck[c.deck_id]) cardsByDeck[c.deck_id] = []
+        cardsByDeck[c.deck_id].push(c)
+      }
+
+      const rows = deckList
+        .filter(d => cardsByDeck[d.id]?.length > 0)
+        .map(d => ({
+          deck: d,
+          cards: cardsByDeck[d.id],
+          masteryData: masteryStore,
+        }))
+
+      // Total mastered across all decks
+      let mastered = 0
+      for (const c of cardList) {
+        if (getMasteryStage(masteryStore[c.id]) === 4) mastered++
+      }
+
+      setDeckMastery(rows)
+      setTotalMastered(mastered)
+      setVocabLoading(false)
+    }
+    loadVocab()
+  }, [user])
 
   async function handleSave(e) {
     e.preventDefault()
@@ -83,6 +142,56 @@ export default function Profile({ onNavigate }) {
       </button>
 
       <h1 className="font-display text-2xl font-bold text-co-ink dark:text-gray-100">My Profile</h1>
+
+      {/* ── Vocabulary dashboard ── */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-co-border dark:border-gray-700 p-5 space-y-5">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-co-ink dark:text-gray-100">My Vocabulary</h2>
+          {!vocabLoading && (
+            <span className="text-sm font-semibold text-co-fern">
+              {totalMastered} mastered
+            </span>
+          )}
+        </div>
+
+        {vocabLoading ? (
+          <div className="space-y-4">
+            {[1, 2].map(i => (
+              <div key={i} className="space-y-2 animate-pulse">
+                <div className="h-3 bg-co-border dark:bg-gray-700 rounded w-1/3" />
+                <div className="h-3 bg-co-border dark:bg-gray-700 rounded w-full" />
+              </div>
+            ))}
+          </div>
+        ) : deckMastery.length === 0 ? (
+          <p className="text-sm text-co-muted dark:text-gray-400">
+            No cards yet. Create a deck and start studying to track your progress here.
+          </p>
+        ) : (
+          <div className="space-y-5">
+            {deckMastery.map(({ deck, cards, masteryData }) => {
+              const stats = getMasteryStats(cards, masteryData)
+              const strong = stats.confident + stats.mastered
+              return (
+                <div key={deck.id} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => onNavigate('deck', deck.id)}
+                      className="text-sm font-medium text-co-ink dark:text-gray-100 hover:text-co-primary dark:hover:text-co-primary transition-colors cursor-pointer text-left"
+                    >
+                      {deck.title}
+                    </button>
+                    <span className="text-xs text-co-muted dark:text-gray-400">
+                      {strong} / {stats.total} strong
+                    </span>
+                  </div>
+                  <MasteryBar cards={cards} masteryData={masteryData} />
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Account section */}
       <form onSubmit={handleSave} className="bg-white dark:bg-gray-900 rounded-2xl border border-co-border dark:border-gray-700 p-5 space-y-4">

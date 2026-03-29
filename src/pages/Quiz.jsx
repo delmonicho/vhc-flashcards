@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { speakVietnamese, cancelSpeech } from '../lib/speak'
 import { logError } from '../lib/logger'
+import { useAuth } from '../context/AuthContext'
 import {
   loadMastery, saveMastery, recordResult,
   addXP, XP_RATES, weightedSample,
+  getMasteryStage, getMasteryStats, syncMasteryToSupabase,
 } from '../lib/mastery'
+import MasteryBar from '../components/MasteryBar'
 import BreakdownDisplay from '../components/BreakdownDisplay'
 import MultipleChoice from '../components/quiz/MultipleChoice'
 import QuickFire from '../components/quiz/QuickFire'
@@ -19,6 +22,8 @@ const QUIZ_TYPES = [
   { id: 'tiles',     title: 'Word Builder',     description: 'Arrange Vietnamese tiles to match the English. 60s timer — earn +5s per correct answer.', minCards: 2 },
 ]
 
+const STAGE_NAMES = ['Unseen', 'Learning', 'Familiar', 'Confident', 'Mastered']
+
 function SpeakerIcon({ active }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
@@ -30,6 +35,7 @@ function SpeakerIcon({ active }) {
 }
 
 export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
+  const { user } = useAuth()
   const [phase, setPhase] = useState('pick')
   const [quizType, setQuizType] = useState(null)
   const [cards, setCards] = useState([])
@@ -38,7 +44,6 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
   const [masteryData, setMasteryData] = useState(() => loadMastery())
   const [expandedCardId, setExpandedCardId] = useState(null)
   const [speakingKey, setSpeakingKey] = useState(null)
-  const [xpBarWidth, setXpBarWidth] = useState(0)
 
   useEffect(() => {
     supabase
@@ -54,29 +59,37 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
     return () => cancelSpeech()
   }, [deckId])
 
-  // Animate XP bar when score screen mounts
-  useEffect(() => {
-    if (phase === 'score' && result) {
-      setXpBarWidth(0)
-      const pct = Math.min((result.totalXP / 50) * 100, 100)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setXpBarWidth(pct))
-      })
-    }
-  }, [phase, result])
-
   function handleDone({ score, total, results, timeLeft }) {
+    // Snapshot stages before update to compute improvements
+    const beforeStages = {}
+    for (const [cardId] of results) beforeStages[cardId] = getMasteryStage(masteryData[cardId])
+
     const updated = { ...masteryData }
     for (const [cardId, wasCorrect] of results) {
       recordResult(cardId, wasCorrect, updated)
     }
     saveMastery(updated)
     setMasteryData(updated)
+
+    // Compute cards that moved up a stage
+    const improved = []
+    for (const [cardId] of results) {
+      const after = getMasteryStage(updated[cardId])
+      if (after > beforeStages[cardId]) {
+        improved.push({ cardId, stageName: STAGE_NAMES[after] })
+      }
+    }
+
+    // XP (kept for game_stats compat, not displayed prominently)
     const baseXP = Math.round(score * XP_RATES[quizType])
     const timeBonus = timeLeft != null ? Math.floor(timeLeft / 10) : 0
-    const xpEarned = baseXP + timeBonus
-    const totalXP = addXP(xpEarned)
-    setResult({ score, total, results, xpEarned, totalXP, timeBonus })
+    addXP(baseXP + timeBonus)
+
+    // Sync changed entries to Supabase (fire-and-forget)
+    const changedIds = [...results.keys()]
+    syncMasteryToSupabase(changedIds, user?.id, deckId, updated, supabase)
+
+    setResult({ score, total, results, improved })
     setPhase('score')
   }
 
@@ -193,21 +206,39 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
         <div className="text-co-muted dark:text-gray-400 text-sm">{result.score} / {result.total} correct</div>
       </div>
 
-      {/* XP bar */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest">Weekly XP</span>
-          <span className="text-co-gold font-semibold text-sm">
-            +{result.xpEarned} XP{result.timeBonus > 0 ? ` (incl. ${result.timeBonus} time bonus)` : ''}
+      {/* Mastery progress — hero section */}
+      <div className="bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 rounded-2xl p-5 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest">
+            Deck progress
           </span>
+          {result.improved.length > 0 && (
+            <span className="text-co-fern font-semibold text-sm">
+              +{result.improved.length} word{result.improved.length !== 1 ? 's' : ''} improved
+            </span>
+          )}
         </div>
-        <div className="bg-co-border dark:bg-gray-700 h-2 rounded-full">
-          <div
-            className="bg-co-gold h-2 rounded-full transition-all duration-700"
-            style={{ width: `${xpBarWidth}%` }}
-          />
-        </div>
-        <div className="text-right text-xs text-co-muted dark:text-gray-500 mt-1">{result.totalXP} / 50 XP this week</div>
+        <MasteryBar cards={cards} masteryData={masteryData} />
+        {result.improved.length > 0 && (
+          <ul className="mt-3 space-y-1">
+            {result.improved.slice(0, 4).map(({ cardId, stageName }) => {
+              const card = cards.find(c => c.id === cardId)
+              if (!card) return null
+              return (
+                <li key={cardId} className="flex items-center gap-2 text-sm">
+                  <span className="text-co-fern" aria-hidden="true">↑</span>
+                  <span lang="vi" className="font-display font-medium text-co-ink dark:text-gray-100">{card.vietnamese}</span>
+                  <span className="text-co-muted dark:text-gray-400">→ {stageName}</span>
+                </li>
+              )
+            })}
+            {result.improved.length > 4 && (
+              <li className="text-xs text-co-muted dark:text-gray-400 pl-5">
+                +{result.improved.length - 4} more
+              </li>
+            )}
+          </ul>
+        )}
       </div>
 
       {/* Cards to Review */}

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { loadMastery, saveMastery, recordResult, loadXP, addXP } from '../lib/mastery'
+import { loadMastery, saveMastery, recordResult, loadXP, addXP, getMasteryStats, getMasteryStage, syncMasteryToSupabase } from '../lib/mastery'
 import { logError } from '../lib/logger'
 import { useAuth } from '../context/AuthContext'
+import MasteryBar from '../components/MasteryBar'
 import WordWarrior from '../components/game/WordWarrior'
 import ChunkBuilder from '../components/game/ChunkBuilder'
 
@@ -21,7 +22,7 @@ export default function LotusQuest({ deckId, onNavigate }) {
   const [cbResults, setCbResults] = useState(new Map())
 
   // Score state
-  const [scoreInfo, setScoreInfo] = useState(null) // { correct, total, xpEarned }
+  const [scoreInfo, setScoreInfo] = useState(null) // { correct, total }
 
   useEffect(() => {
     async function load() {
@@ -54,6 +55,9 @@ export default function LotusQuest({ deckId, onNavigate }) {
     saveMastery(updated)
     setMasteryData(updated)
 
+    // Sync mastery to Supabase (fire-and-forget)
+    syncMasteryToSupabase([...resultsMap.keys()], user?.id, deckId, updated, supabase)
+
     // Streak calculation
     const today = new Date().toISOString().split('T')[0]
     const lastPlayed = gameStats?.last_played
@@ -64,7 +68,7 @@ export default function LotusQuest({ deckId, onNavigate }) {
       else if (lastPlayed === yesterday) newStreak = (gameStats.streak_days || 0) + 1
     }
 
-    const masteredCount = Object.values(updated).filter(e => e.streak >= 3).length
+    const masteredCount = Object.values(updated).filter(e => getMasteryStage(e) === 4).length
     const currentXP = loadXP().xp
 
     const { data: newStats, error: statsUpsertError } = await supabase.from('game_stats').upsert({
@@ -81,7 +85,7 @@ export default function LotusQuest({ deckId, onNavigate }) {
 
     const correct = [...resultsMap.values()].filter(Boolean).length
     const total = resultsMap.size
-    setScoreInfo({ correct, total, xpEarned })
+    setScoreInfo({ correct, total })
     setPhase('score')
   }
 
@@ -139,12 +143,17 @@ export default function LotusQuest({ deckId, onNavigate }) {
   }
 
   if (phase === 'score' && scoreInfo) {
+    const stats = getMasteryStats(cards, masteryData)
     return (
       <div className="pixel-mode min-h-screen flex flex-col items-center justify-center px-4 py-8 gap-8">
         <div className="font-pixel-ui text-[#F5A623] text-base leading-relaxed text-center">QUEST COMPLETE!</div>
         <div className="font-pixel-ui pixel-border bg-[#1a2030] p-6 flex flex-col gap-4 text-xs leading-loose text-center w-full max-w-xs">
           <div>CORRECT: <span className="text-[#5BAF7A]">{scoreInfo.correct}</span> / {scoreInfo.total}</div>
-          <div>XP EARNED: <span className="text-[#F5A623]">+{scoreInfo.xpEarned}</span></div>
+          <div className="space-y-1">
+            <div className="text-[#888] mb-1">DECK PROGRESS</div>
+            <MasteryBar cards={cards} masteryData={masteryData} compact pixel />
+            <div className="text-[#5BAF7A]">{stats.mastered} MASTERED</div>
+          </div>
         </div>
         <div className="flex gap-4">
           <button
@@ -167,7 +176,7 @@ export default function LotusQuest({ deckId, onNavigate }) {
   // Hub
   const hasCards = cards.length > 0
   const hasBreakdowns = cards.some(c => c.breakdown?.length > 0)
-  const mastered = Object.values(masteryData).filter(e => e.streak >= 3).length
+  const stats = getMasteryStats(cards, masteryData)
 
   return (
     <div className="pixel-mode min-h-screen px-4 py-8 max-w-lg mx-auto">
@@ -209,19 +218,18 @@ export default function LotusQuest({ deckId, onNavigate }) {
         />
       </div>
 
-      {/* Stats row */}
-      <div className="pixel-border bg-[#1a2030] p-4 flex justify-around text-center text-[10px] leading-loose mb-8">
-        <div>
-          <div className="font-pixel-score text-[#F5A623]">{loadXP().xp}</div>
-          <div className="text-[#888]">XP</div>
-        </div>
-        <div>
-          <div className="font-pixel-score text-[#5BAF7A]">{mastered}</div>
-          <div className="text-[#888]">MASTERED</div>
-        </div>
-        <div>
-          <div className="font-pixel-score text-[#e0e0e0]">{gameStats?.streak_days ?? 0}</div>
-          <div className="text-[#888]">DAY STREAK</div>
+      {/* Mastery stats panel */}
+      <div className="pixel-border bg-[#1a2030] p-4 mb-8 space-y-3">
+        <MasteryBar cards={cards} masteryData={masteryData} compact pixel />
+        <div className="flex justify-around text-center text-[10px] leading-loose">
+          <div>
+            <div className="font-pixel-score text-[#5BAF7A]">{stats.mastered}</div>
+            <div className="text-[#888]">MASTERED</div>
+          </div>
+          <div>
+            <div className="font-pixel-score text-[#e0e0e0]">{gameStats?.streak_days ?? 0}</div>
+            <div className="text-[#888]">DAY STREAK</div>
+          </div>
         </div>
       </div>
 
