@@ -10,7 +10,7 @@ function shuffle(arr) {
 }
 
 export default function PairMatch({ cards, onDone }) {
-  const pool = useMemo(() => cards.slice(0, 8), [])
+  const pool = useMemo(() => cards, [cards])
   const [leftItems] = useState(() => shuffle(pool.map(c => ({ id: c.id, text: c.vietnamese }))))
   const [rightItems] = useState(() => shuffle(pool.map(c => ({ id: c.id, text: c.english }))))
   const [selectedLeft, setSelectedLeft] = useState(null)

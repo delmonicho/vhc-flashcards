@@ -65,6 +65,33 @@ export function getMasteryStats(cards, store) {
   return counts
 }
 
+// Selects up to n cards for a quiz round, prioritising by mastery stage.
+// Priority fill order: Learning(1) → Familiar(2) → Unseen(0) → Confident(3) → Mastered(4)
+// Within each bucket cards are shuffled randomly. Falls back gracefully when
+// the deck has fewer cards than n.
+export function selectQuizCards(cards, n, masteryData) {
+  const buckets = [[], [], [], [], []]
+  for (const card of cards) {
+    buckets[getMasteryStage(masteryData[card.id])].push(card)
+  }
+  // Shuffle each bucket independently
+  for (const bucket of buckets) {
+    for (let i = bucket.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [bucket[i], bucket[j]] = [bucket[j], bucket[i]]
+    }
+  }
+  const result = []
+  for (const stage of [1, 2, 0, 3, 4]) {
+    for (const card of buckets[stage]) {
+      if (result.length >= n) break
+      result.push(card)
+    }
+    if (result.length >= n) break
+  }
+  return result
+}
+
 export function getWeight(cardId, store) {
   const stage = getMasteryStage(store[cardId])
   // Stage 1 (Learning) prioritized heavily; stage 4 (Mastered) sampled sparingly
