@@ -4,6 +4,7 @@ import { getCategoryColor, deleteCategory, upsertCategories, nextColor } from '.
 import { logError } from '../lib/logger'
 import { stripDiacritics } from '../lib/breakdown'
 import { useAuth } from '../context/AuthContext'
+import { getOrCreateBreakdown } from '../lib/breakdown'
 import VocabInput from '../components/VocabInput'
 import CardEditModal from '../components/CardEditModal'
 
@@ -132,10 +133,15 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
       breakdown: c.breakdown ?? null,
     }))
     if (cardInserts.length > 0) {
-      const { error: cardsErr } = await supabase.from('flashcards').insert(cardInserts)
+      const { data: newCards, error: cardsErr } = await supabase.from('flashcards').insert(cardInserts).select()
       if (cardsErr) {
         logError('Failed to copy cards', { page: 'week', action: 'handleCopyDeck', err: cardsErr, details: { weekId } })
         setCopyError('Deck created but some cards failed to copy.')
+      } else if (newCards) {
+        // Fire breakdown generation in the background for any cards that came over without one
+        newCards
+          .filter(c => !c.breakdown)
+          .forEach(c => getOrCreateBreakdown(c.vietnamese, c.id, c.english).catch(() => {}))
       }
     }
     setCopying(false)
