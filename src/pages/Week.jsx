@@ -2,9 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getCategoryColor, deleteCategory, upsertCategories, nextColor } from '../lib/categories'
 import { logError } from '../lib/logger'
-import { stripDiacritics } from '../lib/breakdown'
+import { stripDiacritics, getOrCreateBreakdown } from '../lib/breakdown'
 import { useAuth } from '../context/AuthContext'
-import { getOrCreateBreakdown } from '../lib/breakdown'
 import VocabInput from '../components/VocabInput'
 import CardEditModal from '../components/CardEditModal'
 
@@ -18,7 +17,7 @@ function LoadingDots() {
   )
 }
 
-export default function Week({ weekId, onNavigate, dark, onToggleDark, categories, onCategoriesChange, justCopied = false }) {
+export default function Week({ weekId, onNavigate, categories, onCategoriesChange, justCopied = false }) {
   const { user } = useAuth()
   const [week, setWeek] = useState(null)
   const [cards, setCards] = useState([])
@@ -38,17 +37,6 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
   // Derived: is the current user the owner of this deck?
   const isOwner = week?.user_id === user?.id
 
-  useEffect(() => {
-    fetchData()
-  }, [weekId])
-
-  useEffect(() => {
-    if (!justCopied) return
-    setShowCopiedBanner(true)
-    const t = setTimeout(() => setShowCopiedBanner(false), 3000)
-    return () => clearTimeout(t)
-  }, [justCopied])
-
   function triggerOwnedDeckBreakdowns(loadedCards, weekOwnerId) {
     if (weekOwnerId !== user?.id) return
     const nullCards = loadedCards.filter(c => c.breakdown == null)
@@ -57,7 +45,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
     for (const c of nullCards) {
       getOrCreateBreakdown(c.vietnamese, c.id, c.english)
         .then(breakdown => {
-          handleBreakdownReady(c.id, breakdown)
+          setCards(prev => prev.map(card => card.id === c.id ? { ...card, breakdown } : card))
           setPendingBreakdowns(prev => { const next = new Set(prev); next.delete(c.id); return next })
         })
         .catch(() => {
@@ -119,6 +107,17 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
       onCategoriesChange([...categories, ...recovered])
     }
   }
+
+  // Effects declared after the functions they reference
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchData() }, [weekId])
+
+  useEffect(() => {
+    if (!justCopied) return
+    setShowCopiedBanner(true)
+    const t = setTimeout(() => setShowCopiedBanner(false), 3000)
+    return () => clearTimeout(t)
+  }, [justCopied])
 
   function handleCardCreated(newCard) {
     setCards(prev => [newCard, ...prev])
@@ -293,7 +292,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
               {copying ? 'Copying…' : copyDone ? 'Copied! ✓' : 'Copy to my decks'}
             </button>
             {copyError && (
-              <p className="text-xs text-red-500 dark:text-red-400 max-w-[12rem] text-right">{copyError}</p>
+              <p className="text-xs text-red-500 dark:text-red-400 max-w-48 text-right">{copyError}</p>
             )}
           </div>
         )}
