@@ -138,10 +138,10 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
         logError('Failed to copy cards', { page: 'week', action: 'handleCopyDeck', err: cardsErr, details: { weekId } })
         setCopyError('Deck created but some cards failed to copy.')
       } else if (newCards) {
-        // Fire breakdown generation in the background for any cards that came over without one
-        newCards
-          .filter(c => !c.breakdown)
-          .forEach(c => getOrCreateBreakdown(c.vietnamese, c.id, c.english).catch(() => {}))
+        // Re-apply breakdowns for all copied cards via the cache table.
+        // Covers the case where the INSERT didn't carry breakdown data through,
+        // and handles cards with no prior breakdown by falling back to generation.
+        newCards.forEach(c => getOrCreateBreakdown(c.vietnamese, c.id, c.english).catch(() => {}))
       }
     }
     setCopying(false)
