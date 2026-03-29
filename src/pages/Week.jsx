@@ -23,6 +23,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
   const [copying, setCopying] = useState(false)
+  const [copyError, setCopyError] = useState(null)
   const [editingCard, setEditingCard] = useState(null)
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -40,7 +41,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
   async function fetchData() {
     setLoading(true)
     const [{ data: weekData, error: weekError }, { data: cardsData, error: cardsError }] = await Promise.all([
-      supabase.from('weeks').select('*, profiles(display_name, avatar_color)').eq('id', weekId).single(),
+      supabase.from('weeks').select('*').eq('id', weekId).single(),
       supabase
         .from('flashcards')
         .select('*')
@@ -54,7 +55,17 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
       onNavigate('home')
       return
     }
-    setWeek(weekData)
+    // Fetch author profile separately (no direct FK between weeks and profiles)
+    let weekWithProfile = weekData
+    if (weekData && weekData.user_id !== user?.id) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('display_name, avatar_color')
+        .eq('id', weekData.user_id)
+        .single()
+      weekWithProfile = { ...weekData, profiles: profileData ?? null }
+    }
+    setWeek(weekWithProfile)
     const loaded = cardsData || []
     setCards(loaded)
     setLoading(false)
@@ -99,6 +110,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
 
   async function handleCopyDeck() {
     setCopying(true)
+    setCopyError(null)
     const { data: newWeek, error: weekErr } = await supabase
       .from('weeks')
       .insert({ title: week.title, user_id: user.id, is_public: false })
@@ -106,6 +118,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
       .single()
     if (weekErr) {
       logError('Failed to copy deck', { page: 'week', action: 'handleCopyDeck', err: weekErr, details: { weekId } })
+      setCopyError('Failed to copy deck. Please try again.')
       setCopying(false)
       return
     }
@@ -120,7 +133,10 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
     }))
     if (cardInserts.length > 0) {
       const { error: cardsErr } = await supabase.from('flashcards').insert(cardInserts)
-      if (cardsErr) logError('Failed to copy cards', { page: 'week', action: 'handleCopyDeck', err: cardsErr, details: { weekId } })
+      if (cardsErr) {
+        logError('Failed to copy cards', { page: 'week', action: 'handleCopyDeck', err: cardsErr, details: { weekId } })
+        setCopyError('Deck created but some cards failed to copy.')
+      }
     }
     setCopying(false)
     onNavigate('week', newWeek.id)
@@ -217,13 +233,18 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
           ▶ QUEST
         </button>
         {!isOwner && (
-          <button
-            onClick={handleCopyDeck}
-            disabled={copying || cards.length === 0}
-            className="bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-600 text-co-ink dark:text-gray-200 px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:enabled:border-co-primary transition-all cursor-pointer disabled:cursor-default focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
-          >
-            {copying ? 'Copying…' : 'Copy to my decks'}
-          </button>
+          <div className="flex flex-col items-end gap-1">
+            <button
+              onClick={handleCopyDeck}
+              disabled={copying || cards.length === 0}
+              className="bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-600 text-co-ink dark:text-gray-200 px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:enabled:border-co-primary transition-all cursor-pointer disabled:cursor-default focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+            >
+              {copying ? 'Copying…' : 'Copy to my decks'}
+            </button>
+            {copyError && (
+              <p className="text-xs text-red-500 dark:text-red-400 max-w-[12rem] text-right">{copyError}</p>
+            )}
+          </div>
         )}
       </div>
 
