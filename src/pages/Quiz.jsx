@@ -255,7 +255,8 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
             {missedCards.map(card => (
               <div
                 key={card.id}
-                className="bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 rounded-2xl p-4"
+                onClick={() => card.breakdown && setExpandedCardId(expandedCardId === card.id ? null : card.id)}
+                className={`bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 rounded-2xl p-4 ${card.breakdown ? 'cursor-pointer' : ''}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span lang="vi" className="font-display font-semibold text-co-ink dark:text-gray-100">
@@ -263,24 +264,22 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
                   </span>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
-                      onClick={() => handleSpeak(card.id, card.vietnamese)}
+                      onClick={(e) => { e.stopPropagation(); handleSpeak(card.id, card.vietnamese) }}
                       className="text-co-muted hover:text-co-ink dark:hover:text-gray-200 transition-colors cursor-pointer"
                       aria-label={`Pronounce ${card.vietnamese}`}
                     >
                       <SpeakerIcon active={speakingKey === card.id} />
                     </button>
                     {card.breakdown && (
-                      <button
-                        onClick={() => setExpandedCardId(expandedCardId === card.id ? null : card.id)}
-                        className="text-co-muted hover:text-co-ink dark:hover:text-gray-200 transition-colors cursor-pointer"
-                        aria-expanded={expandedCardId === card.id}
-                        aria-label="Toggle breakdown"
+                      <div
+                        aria-hidden="true"
+                        className="text-co-muted"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
                           className={`w-4 h-4 transition-transform ${expandedCardId === card.id ? 'rotate-180' : ''}`} aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                         </svg>
-                      </button>
+                      </div>
                     )}
                   </div>
                 </div>
