@@ -6,11 +6,11 @@ import { useAuth } from '../context/AuthContext'
 import WordWarrior from '../components/game/WordWarrior'
 import ChunkBuilder from '../components/game/ChunkBuilder'
 
-export default function LotusQuest({ weekId, onNavigate }) {
+export default function LotusQuest({ deckId, onNavigate }) {
   const { user } = useAuth()
   const [phase, setPhase] = useState('hub') // 'hub' | 'word-warrior' | 'chunk-builder' | 'score'
   const [cards, setCards] = useState([])
-  const [week, setWeek] = useState(null)
+  const [deck, setDeck] = useState(null)
   const [gameStats, setGameStats] = useState(null)
   const [masteryData, setMasteryData] = useState(() => loadMastery())
   const [loading, setLoading] = useState(true)
@@ -26,24 +26,24 @@ export default function LotusQuest({ weekId, onNavigate }) {
   useEffect(() => {
     async function load() {
       const [
-        { data: weekData,  error: weekError  },
+        { data: deckData,  error: deckError  },
         { data: cardsData, error: cardsError  },
         { data: statsData, error: statsError  },
       ] = await Promise.all([
-        supabase.from('weeks').select('*').eq('id', weekId).single(),
-        supabase.from('flashcards').select('*').eq('week_id', weekId).order('created_at', { ascending: false }),
-        supabase.from('game_stats').select('*').eq('week_id', weekId).maybeSingle(),
+        supabase.from('decks').select('*').eq('id', deckId).single(),
+        supabase.from('flashcards').select('*').eq('deck_id', deckId).order('created_at', { ascending: false }),
+        supabase.from('game_stats').select('*').eq('deck_id', deckId).maybeSingle(),
       ])
-      if (weekError)  logError('Failed to load week for lotus quest', { page: 'lotus-quest', action: 'fetchData', err: weekError, details: { weekId } })
-      if (cardsError) logError('Failed to load cards for lotus quest', { page: 'lotus-quest', action: 'fetchData', err: cardsError, details: { weekId } })
-      if (statsError) logError('Failed to load game stats', { page: 'lotus-quest', action: 'fetchData', err: statsError, details: { weekId } })
-      setWeek(weekData)
+      if (deckError)  logError('Failed to load deck for lotus quest', { page: 'lotus-quest', action: 'fetchData', err: deckError, details: { deckId } })
+      if (cardsError) logError('Failed to load cards for lotus quest', { page: 'lotus-quest', action: 'fetchData', err: cardsError, details: { deckId } })
+      if (statsError) logError('Failed to load game stats', { page: 'lotus-quest', action: 'fetchData', err: statsError, details: { deckId } })
+      setDeck(deckData)
       setCards(cardsData || [])
       setGameStats(statsData)
       setLoading(false)
     }
     load()
-  }, [weekId])
+  }, [deckId])
 
   async function handleModeComplete(resultsMap, xpEarned) {
     // Update mastery
@@ -69,14 +69,14 @@ export default function LotusQuest({ weekId, onNavigate }) {
 
     const { data: newStats, error: statsUpsertError } = await supabase.from('game_stats').upsert({
       user_id: user.id,
-      week_id: weekId,
+      deck_id: deckId,
       xp: currentXP,
       cards_mastered: masteredCount,
       streak_days: newStreak,
       last_played: today,
-    }, { onConflict: 'user_id, week_id' }).select().maybeSingle()
+    }, { onConflict: 'user_id, deck_id' }).select().maybeSingle()
 
-    if (statsUpsertError) logError('Failed to upsert game stats', { page: 'lotus-quest', action: 'handleModeComplete', err: statsUpsertError, details: { weekId } })
+    if (statsUpsertError) logError('Failed to upsert game stats', { page: 'lotus-quest', action: 'handleModeComplete', err: statsUpsertError, details: { deckId } })
     if (newStats) setGameStats(newStats)
 
     const correct = [...resultsMap.values()].filter(Boolean).length
@@ -154,7 +154,7 @@ export default function LotusQuest({ weekId, onNavigate }) {
             PLAY AGAIN
           </button>
           <button
-            onClick={() => onNavigate('week', weekId)}
+            onClick={() => onNavigate('deck', deckId)}
             className="font-pixel-ui pixel-border bg-[#E8526A] text-white px-6 py-3 text-xs hover:bg-[#c43e56] active:scale-95 transition-transform cursor-pointer"
           >
             BACK TO WEEK
@@ -174,7 +174,7 @@ export default function LotusQuest({ weekId, onNavigate }) {
       {/* Header */}
       <div className="mb-8 text-center">
         <div className="font-pixel-ui font-bold text-[#E8526A] text-xl leading-relaxed mb-2">LOTUS QUEST</div>
-        <div className="font-pixel-ui text-[#888] text-[10px]">▸ {week?.title ?? '...'}</div>
+        <div className="font-pixel-ui text-[#888] text-[10px]">▸ {deck?.title ?? '...'}</div>
       </div>
 
       {/* Mode grid */}
@@ -227,7 +227,7 @@ export default function LotusQuest({ weekId, onNavigate }) {
 
       {/* Back link */}
       <button
-        onClick={() => onNavigate('week', weekId)}
+        onClick={() => onNavigate('deck', deckId)}
         className="font-pixel-ui block text-[10px] text-[#888] hover:text-[#e0e0e0] transition-colors cursor-pointer"
       >
         ← BACK TO WEEK

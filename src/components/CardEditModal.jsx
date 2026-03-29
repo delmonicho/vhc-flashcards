@@ -51,7 +51,7 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
         // Regenerate breakdown in background for new Vietnamese text
         getOrCreateBreakdown(vietnamese, card.id, english)
           .then(newBreakdown => onBreakdownReady?.(card.id, newBreakdown))
-          .catch(err => logError('Breakdown regeneration failed', { page: 'week', action: 'breakdown', err, details: { cardId: card.id, vietnamese } }))
+          .catch(err => logError('Breakdown regeneration failed', { page: 'deck', action: 'breakdown', err, details: { cardId: card.id, vietnamese } }))
       }
     }
     setSaving(false)

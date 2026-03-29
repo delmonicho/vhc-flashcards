@@ -29,7 +29,7 @@ function SpeakerIcon({ active }) {
   )
 }
 
-export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
+export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
   const [phase, setPhase] = useState('pick')
   const [quizType, setQuizType] = useState(null)
   const [cards, setCards] = useState([])
@@ -44,15 +44,15 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
     supabase
       .from('flashcards')
       .select('*')
-      .eq('week_id', weekId)
+      .eq('deck_id', deckId)
       .order('created_at', { ascending: false })
       .then(({ data, error }) => {
-        if (error) logError('Failed to load cards for quiz', { page: 'quiz', action: 'fetchData', err: error, details: { weekId } })
+        if (error) logError('Failed to load cards for quiz', { page: 'quiz', action: 'fetchData', err: error, details: { deckId } })
         setCards(data || [])
         setLoading(false)
       })
     return () => cancelSpeech()
-  }, [weekId])
+  }, [deckId])
 
   // Animate XP bar when score screen mounts
   useEffect(() => {
@@ -108,7 +108,7 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
       <div className="page-fade-in max-w-2xl mx-auto px-4 py-6 md:px-8">
         <div className="flex items-center gap-3 mb-8">
           <button
-            onClick={() => onNavigate('week', weekId)}
+            onClick={() => onNavigate('deck', deckId)}
             className="w-11 h-11 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
             aria-label="Back"
           >←</button>
@@ -268,10 +268,10 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
           Play Again
         </button>
         <button
-          onClick={() => onNavigate('week', weekId)}
+          onClick={() => onNavigate('deck', deckId)}
           className="flex-1 bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 text-co-ink dark:text-gray-100 py-3 rounded-2xl font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
         >
-          Back to Week
+          Back to Deck
         </button>
       </div>
     </div>

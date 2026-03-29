@@ -78,7 +78,7 @@ function InlineChunks({ breakdown, field, onSpeak, speakingKey }) {
   )
 }
 
-export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
+export default function Study({ deckId, onNavigate, dark, onToggleDark }) {
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
   const [index, setIndex] = useState(0)
@@ -95,14 +95,14 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
     supabase
       .from('flashcards')
       .select('*')
-      .eq('week_id', weekId)
+      .eq('deck_id', deckId)
       .order('created_at', { ascending: true })
       .then(({ data, error }) => {
-        if (error) logError('Failed to load cards for study', { page: 'study', action: 'fetchData', err: error, details: { weekId } })
+        if (error) logError('Failed to load cards for study', { page: 'study', action: 'fetchData', err: error, details: { deckId } })
         setCards(data || [])
         setLoading(false)
       })
-  }, [weekId])
+  }, [deckId])
 
   useEffect(() => {
     if (localStorage.getItem(BANNER_KEY)) return
@@ -211,7 +211,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
       <div className="max-w-lg mx-auto p-6 text-center py-12 space-y-4">
         <p className="text-co-muted dark:text-gray-400">No cards to study yet.</p>
         <button
-          onClick={() => onNavigate('week', weekId)}
+          onClick={() => onNavigate('deck', deckId)}
           className="text-co-primary font-semibold cursor-pointer"
         >
           ← Back to week
@@ -228,7 +228,7 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <button
-          onClick={() => onNavigate('week', weekId)}
+          onClick={() => onNavigate('deck', deckId)}
           className="w-9 h-9 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all text-xl leading-none cursor-pointer"
           aria-label="Back to week"
         >

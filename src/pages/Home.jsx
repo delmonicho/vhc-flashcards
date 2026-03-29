@@ -90,15 +90,15 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       { data: cardsData, error: cardsError },
     ] = await Promise.all([
       // Explicit user_id filter — after RLS migration, plain select() would also return public decks from others
-      supabase.from('weeks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('flashcards').select('id, week_id'),
+      supabase.from('decks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('flashcards').select('id, deck_id'),
     ])
-    if (weeksError) logError('Failed to load weeks', { page: 'home', action: 'fetchData', err: weeksError })
+    if (weeksError) logError('Failed to load decks', { page: 'home', action: 'fetchData', err: weeksError })
     if (cardsError) logError('Failed to load card counts', { page: 'home', action: 'fetchData', err: cardsError })
     setWeeks(weeksData || [])
     const counts = {}
     for (const card of cardsData || []) {
-      counts[card.week_id] = (counts[card.week_id] || 0) + 1
+      counts[card.deck_id] = (counts[card.deck_id] || 0) + 1
     }
     setCardCounts(counts)
     setLoading(false)
@@ -107,7 +107,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
   async function fetchPublicDecks() {
     setPublicDecksLoading(true)
     const { data: pubWeeks, error: weeksErr } = await supabase
-      .from('weeks')
+      .from('decks')
       .select('*')
       .eq('is_public', true)
       .neq('user_id', user.id)
@@ -140,7 +140,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
     if (!title.trim()) return
     setCreating(true)
     const { data, error } = await supabase
-      .from('weeks')
+      .from('decks')
       .insert({ title: title.trim(), user_id: user.id, is_public: false })
       .select()
       .single()
@@ -149,7 +149,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       setCardCounts({ ...cardCounts, [data.id]: 0 })
       setTitle('')
     } else if (error) {
-      logError('Failed to create week', { page: 'home', action: 'createWeek', err: error, details: { title } })
+      logError('Failed to create deck', { page: 'home', action: 'createWeek', err: error, details: { title } })
     }
     setCreating(false)
   }
@@ -159,9 +159,9 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
     const next = !week.is_public
     setTogglingId(week.id)
     setWeeks(prev => prev.map(w => w.id === week.id ? { ...w, is_public: next } : w))
-    const { error } = await supabase.from('weeks').update({ is_public: next }).eq('id', week.id)
+    const { error } = await supabase.from('decks').update({ is_public: next }).eq('id', week.id)
     if (error) {
-      logError('Failed to toggle deck visibility', { page: 'home', action: 'togglePublic', err: error, details: { weekId: week.id } })
+      logError('Failed to toggle deck visibility', { page: 'home', action: 'togglePublic', err: error, details: { deckId: week.id } })
       setWeeks(prev => prev.map(w => w.id === week.id ? { ...w, is_public: !next } : w))
     }
     setTogglingId(null)
@@ -173,20 +173,20 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
     setEditingTitle(week.title)
   }
 
-  async function saveEdit(weekId) {
+  async function saveEdit(deckId) {
     const trimmed = editingTitle.trim()
     if (!trimmed) {
       cancelEdit()
       return
     }
-    const original = weeks.find(w => w.id === weekId)?.title
+    const original = weeks.find(w => w.id === deckId)?.title
     if (trimmed === original) {
       cancelEdit()
       return
     }
-    setWeeks(prev => prev.map(w => (w.id === weekId ? { ...w, title: trimmed } : w)))
+    setWeeks(prev => prev.map(w => (w.id === deckId ? { ...w, title: trimmed } : w)))
     setEditingWeekId(null)
-    await supabase.from('weeks').update({ title: trimmed }).eq('id', weekId)
+    await supabase.from('decks').update({ title: trimmed }).eq('id', deckId)
   }
 
   function cancelEdit() {
@@ -197,12 +197,12 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
   async function handleDelete() {
     if (!deleteTarget) return
     setDeleting(true)
-    const [flashcardsResult, weeksResult] = await Promise.all([
-      supabase.from('flashcards').delete().eq('week_id', deleteTarget.id),
-      supabase.from('weeks').delete().eq('id', deleteTarget.id),
+    const [flashcardsResult, decksResult] = await Promise.all([
+      supabase.from('flashcards').delete().eq('deck_id', deleteTarget.id),
+      supabase.from('decks').delete().eq('id', deleteTarget.id),
     ])
-    if (flashcardsResult.error) logError('Failed to delete flashcards on week delete', { page: 'home', action: 'deleteWeek', err: flashcardsResult.error, details: { weekId: deleteTarget.id } })
-    if (weeksResult.error) logError('Failed to delete week', { page: 'home', action: 'deleteWeek', err: weeksResult.error, details: { weekId: deleteTarget.id } })
+    if (flashcardsResult.error) logError('Failed to delete flashcards on deck delete', { page: 'home', action: 'deleteDeck', err: flashcardsResult.error, details: { deckId: deleteTarget.id } })
+    if (decksResult.error) logError('Failed to delete deck', { page: 'home', action: 'deleteDeck', err: decksResult.error, details: { deckId: deleteTarget.id } })
     setWeeks(prev => prev.filter(w => w.id !== deleteTarget.id))
     setCardCounts(prev => {
       const next = { ...prev }
@@ -291,7 +291,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
                 >
                   {/* Main navigate area */}
                   <button
-                    onClick={() => editingWeekId !== week.id && onNavigate('week', week.id)}
+                    onClick={() => editingWeekId !== week.id && onNavigate('deck', week.id)}
                     className="flex-1 text-left px-5 py-4 min-w-0 cursor-pointer"
                   >
                     {editingWeekId === week.id ? (
@@ -430,7 +430,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
                   className="flex items-center bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 overflow-hidden"
                 >
                   <button
-                    onClick={() => onNavigate('week', deck.id)}
+                    onClick={() => onNavigate('deck', deck.id)}
                     className="flex-1 text-left px-5 py-4 min-w-0 cursor-pointer"
                   >
                     <div className="font-display font-semibold text-co-ink dark:text-gray-100 text-lg leading-snug truncate">

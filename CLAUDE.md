@@ -8,11 +8,11 @@
 
 ## Navigation
 
-No React Router. App.jsx uses a custom `view` state (`{ page, weekId }`). Pages receive `onNavigate(page, id?)` as a prop. There is no browser history — navigating always re-fetches data from Supabase.
+No React Router. App.jsx uses a custom `view` state (`{ page, deckId }`). Pages receive `onNavigate(page, id?)` as a prop. There is no browser history — navigating always re-fetches data from Supabase.
 
-Valid `view.page` values: `'home'`, `'week'`, `'study'`, `'quiz'`, `'lotus-quest'`, `'diagnostics'` (dev-only, guarded by `import.meta.env.DEV`), `'login'`, `'auth/callback'`, `'profile'`, `'privacy'`.
+Valid `view.page` values: `'home'`, `'deck'`, `'study'`, `'quiz'`, `'lotus-quest'`, `'diagnostics'` (dev-only, guarded by `import.meta.env.DEV`), `'login'`, `'auth/callback'`, `'profile'`, `'privacy'`.
 
-`navigate(page, weekId, loginError)` — third param passes an error string to the Login page (used by AuthCallback on failure).
+`navigate(page, deckId, loginError)` — third param passes an error string to the Login page (used by AuthCallback on failure).
 
 `AuthProvider` wraps the entire app. `AuthGuard` wraps protected views — shows loading spinner → Login → children. Public pages (`privacy`, `auth/callback`) bypass AuthGuard.
 
@@ -37,16 +37,16 @@ Fonts: `font-display` = Baloo 2 (headings), `font-sans` = Nunito (body).
 ## Database Schema
 
 ```
-weeks         id, user_id (FK → auth.users), title, is_public (boolean, default false), created_at
-flashcards    id, week_id, user_id (FK → auth.users), vietnamese, english, source (any string), status, breakdown (JSONB nullable), created_at
+decks         id, user_id (FK → auth.users), title, is_public (boolean, default false), created_at
+flashcards    id, deck_id, user_id (FK → auth.users), vietnamese, english, source (any string), status, breakdown (JSONB nullable), created_at
 breakdowns    vi_key (PK), breakdown (JSONB)   ← cache table
 categories    id (text PK), label, color, created_at
-game_stats    id, user_id, week_id (unique per user), xp, cards_mastered, streak_days, last_played, created_at
+game_stats    id, user_id, deck_id (unique per user), xp, cards_mastered, streak_days, last_played, created_at
 logs          id, type ('error'|'event'|'perf'), page, action, message, details (JSONB), created_at
 profiles      id (FK → auth.users PK), display_name, avatar_color, native_language, learning_language, class_name, created_at
 ```
 
-RLS is enabled on all tables. Own-data selects are automatically user-scoped. `weeks` and `flashcards` also return public rows (`is_public = true` on the week). Profiles can be read by any authenticated user (for showing author names on public decks). INSERT/UPDATE/DELETE policies remain owner-only. Always use `.eq('user_id', user.id)` explicitly when fetching a user's own weeks to avoid mixing in public decks from others.
+RLS is enabled on all tables. Own-data selects are automatically user-scoped. `decks` and `flashcards` also return public rows (`is_public = true` on the deck). Profiles can be read by any authenticated user (for showing author names on public decks). INSERT/UPDATE/DELETE policies remain owner-only. Always use `.eq('user_id', user.id)` explicitly when fetching a user's own decks to avoid mixing in public decks from others.
 
 `breakdowns.vi_key` is the normalized Vietnamese phrase (`trim + collapse whitespace` via `normalizeVietnamese()` in `src/lib/breakdown.js`). Always use this function before any cache lookup or upsert.
 
@@ -91,7 +91,7 @@ Local Supabase stack is not used. Available inspect subcommands: `bloat`, `calls
 - **Speech API**: `speakVietnamese()` must be called from a user gesture (click handler). iOS requires this — don't call it in `useEffect` or async background tasks.
 - **Breakdown regeneration**: If `vietnamese` text changes on a card, `breakdown` is wiped and re-queued. Preserve breakdown if only `english` or `source` changes.
 - **Tailwind v4**: No config file. Customize via `@theme` and `@custom-variant` in `src/index.css`. Don't create a `tailwind.config.js`.
-- **Search/filter is client-side**: All cards for a week are loaded at once. No pagination needed for current scale.
+- **Search/filter is client-side**: All cards for a deck are loaded at once. No pagination needed for current scale.
 - **`VITE_ANTHROPIC_API_KEY`** and **`VITE_GOOGLE_API_KEY`** are removed. Server-side keys `ANTHROPIC_API_KEY` and `GOOGLE_API_KEY` live in Vercel environment variables and are accessed via `/api/claude` and `/api/translate` serverless functions. The Anthropic key also lives in Supabase secrets for the Edge Function.
 - **`source` column has no enum constraint** — the old `('class'|'homework')` check was dropped in migration `20260326044509`. Any string is valid; the category system in Supabase (`categories` table) is the source of truth for valid values.
 

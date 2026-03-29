@@ -7,7 +7,7 @@ import Login from './pages/Login'
 import Privacy from './pages/Privacy'
 import Profile from './pages/Profile'
 import Home from './pages/Home'
-import Week from './pages/Week'
+import Deck from './pages/Deck'
 import Study from './pages/Study'
 import Quiz from './pages/Quiz'
 import LotusQuest from './pages/LotusQuest'
@@ -20,8 +20,8 @@ function AppInner() {
   const isCallback = window.location.pathname.includes('/auth/callback')
 
   const [view, setView] = useState(() => {
-    if (isCallback) return { page: 'auth/callback', weekId: null, loginError: null, justCopied: false }
-    return { page: 'home', weekId: null, loginError: null, justCopied: false }
+    if (isCallback) return { page: 'auth/callback', deckId: null, loginError: null, justCopied: false }
+    return { page: 'home', deckId: null, loginError: null, justCopied: false }
   })
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem('theme')
@@ -36,8 +36,8 @@ function AppInner() {
       .catch(err => logError('Failed to load categories on app init', { action: 'loadCategories', err }))
   }, [])
 
-  function navigate(page, weekId = null, loginError = null, opts = {}) {
-    setView({ page, weekId, loginError, justCopied: opts.justCopied ?? false })
+  function navigate(page, deckId = null, loginError = null, opts = {}) {
+    setView({ page, deckId, loginError, justCopied: opts.justCopied ?? false })
   }
 
   function toggleDark() {
@@ -67,14 +67,14 @@ function AppInner() {
     <div className={`${dark ? 'dark' : ''} min-h-screen bg-co-warm dark:bg-gray-950 transition-colors duration-200`}>
       <AuthGuard onNavigate={navigate} loginError={view.loginError}>
         <Header dark={dark} onToggleDark={toggleDark} onNavigate={navigate} />
-        {view.page === 'week' ? (
-          <Week weekId={view.weekId} onNavigate={navigate} {...themeProps} categories={categories} onCategoriesChange={setCategories} justCopied={view.justCopied} />
+        {view.page === 'deck' ? (
+          <Deck deckId={view.deckId} onNavigate={navigate} {...themeProps} categories={categories} onCategoriesChange={setCategories} justCopied={view.justCopied} />
         ) : view.page === 'study' ? (
-          <Study weekId={view.weekId} onNavigate={navigate} {...themeProps} />
+          <Study deckId={view.deckId} onNavigate={navigate} {...themeProps} />
         ) : view.page === 'quiz' ? (
-          <Quiz weekId={view.weekId} onNavigate={navigate} {...themeProps} />
+          <Quiz deckId={view.deckId} onNavigate={navigate} {...themeProps} />
         ) : view.page === 'lotus-quest' ? (
-          <LotusQuest weekId={view.weekId} onNavigate={navigate} />
+          <LotusQuest deckId={view.deckId} onNavigate={navigate} />
         ) : view.page === 'profile' ? (
           <Profile onNavigate={navigate} {...themeProps} />
         ) : view.page === 'diagnostics' && import.meta.env.DEV ? (

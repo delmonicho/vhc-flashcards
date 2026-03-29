@@ -6,7 +6,7 @@ import { addCategory, getCategoryColor } from '../lib/categories'
 import { logError } from '../lib/logger'
 import { useAuth } from '../context/AuthContext'
 
-export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady, categories = [], onCategoriesChange }) {
+export default function VocabInput({ deckId, onCardCreated, onCardBreakdownReady, categories = [], onCategoriesChange }) {
   const { user } = useAuth()
   const [tags, setTags] = useState([])           // array of category ids (optional)
   const [input, setInput] = useState('')
@@ -62,7 +62,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
       setPreview({ vietnamese: text, english })
       setState('preview')
     } catch (err) {
-      logError('Google Translate failed', { page: 'week', action: 'translate', err, details: { text } })
+      logError('Google Translate failed', { page: 'deck', action: 'translate', err, details: { text } })
       setError(err.message)
       setState('error')
     }
@@ -73,7 +73,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
     const { data, error } = await supabase
       .from('flashcards')
       .insert({
-        week_id: weekId,
+        deck_id: deckId,
         user_id: user.id,
         vietnamese: preview.vietnamese,
         english: preview.english,
@@ -91,7 +91,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
       setState('idle')
       getOrCreateBreakdown(data.vietnamese, data.id, data.english)
         .then(breakdown => onCardBreakdownReady?.(data.id, breakdown))
-        .catch(err => logError('Breakdown generation failed', { page: 'week', action: 'breakdown', err, details: { cardId: data.id, vietnamese: data.vietnamese } }))
+        .catch(err => logError('Breakdown generation failed', { page: 'deck', action: 'breakdown', err, details: { cardId: data.id, vietnamese: data.vietnamese } }))
     } else {
       setError(error?.message || 'Failed to save card')
       setState('error')

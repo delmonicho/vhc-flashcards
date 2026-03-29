@@ -17,9 +17,9 @@ function LoadingDots() {
   )
 }
 
-export default function Week({ weekId, onNavigate, categories, onCategoriesChange, justCopied = false }) {
+export default function Deck({ deckId, onNavigate, categories, onCategoriesChange, justCopied = false }) {
   const { user } = useAuth()
-  const [week, setWeek] = useState(null)
+  const [deck, setDeck] = useState(null)
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
   const [copying, setCopying] = useState(false)
@@ -35,10 +35,10 @@ export default function Week({ weekId, onNavigate, categories, onCategoriesChang
   const searchInputRef = useRef(null)
 
   // Derived: is the current user the owner of this deck?
-  const isOwner = week?.user_id === user?.id
+  const isOwner = deck?.user_id === user?.id
 
-  function triggerOwnedDeckBreakdowns(loadedCards, weekOwnerId) {
-    if (weekOwnerId !== user?.id) return
+  function triggerOwnedDeckBreakdowns(loadedCards, deckOwnerId) {
+    if (deckOwnerId !== user?.id) return
     const nullCards = loadedCards.filter(c => c.breakdown == null)
     if (nullCards.length === 0) return
     setPendingBreakdowns(new Set(nullCards.map(c => c.id)))
@@ -57,36 +57,36 @@ export default function Week({ weekId, onNavigate, categories, onCategoriesChang
   async function fetchData() {
     setLoading(true)
     setPendingBreakdowns(new Set())
-    const [{ data: weekData, error: weekError }, { data: cardsData, error: cardsError }] = await Promise.all([
-      supabase.from('weeks').select('*').eq('id', weekId).single(),
+    const [{ data: deckData, error: deckError }, { data: cardsData, error: cardsError }] = await Promise.all([
+      supabase.from('decks').select('*').eq('id', deckId).single(),
       supabase
         .from('flashcards')
         .select('*')
-        .eq('week_id', weekId)
+        .eq('deck_id', deckId)
         .order('created_at', { ascending: false }),
     ])
-    if (weekError) logError('Failed to load week', { page: 'week', action: 'fetchData', err: weekError, details: { weekId } })
-    if (cardsError) logError('Failed to load cards', { page: 'week', action: 'fetchData', err: cardsError, details: { weekId } })
-    // If week is null (deleted or not accessible), return home
-    if (!weekData && !weekError) {
+    if (deckError) logError('Failed to load deck', { page: 'deck', action: 'fetchData', err: deckError, details: { deckId } })
+    if (cardsError) logError('Failed to load cards', { page: 'deck', action: 'fetchData', err: cardsError, details: { deckId } })
+    // If deck is null (deleted or not accessible), return home
+    if (!deckData && !deckError) {
       onNavigate('home')
       return
     }
-    // Fetch author profile separately (no direct FK between weeks and profiles)
-    let weekWithProfile = weekData
-    if (weekData && weekData.user_id !== user?.id) {
+    // Fetch author profile separately (no direct FK between decks and profiles)
+    let deckWithProfile = deckData
+    if (deckData && deckData.user_id !== user?.id) {
       const { data: profileData } = await supabase
         .from('profiles')
         .select('display_name, avatar_color')
-        .eq('id', weekData.user_id)
+        .eq('id', deckData.user_id)
         .single()
-      weekWithProfile = { ...weekData, profiles: profileData ?? null }
+      deckWithProfile = { ...deckData, profiles: profileData ?? null }
     }
-    setWeek(weekWithProfile)
+    setDeck(deckWithProfile)
     const loaded = cardsData || []
     setCards(loaded)
     setLoading(false)
-    triggerOwnedDeckBreakdowns(loaded, weekData?.user_id)
+    triggerOwnedDeckBreakdowns(loaded, deckData?.user_id)
 
     // Reconcile: auto-recover any tag IDs on cards that aren't in the categories list
     const allTagIds = [...new Set(loaded.flatMap(c => c.source || []))]
@@ -102,7 +102,7 @@ export default function Week({ weekId, onNavigate, categories, onCategoriesChang
         return cat
       })
       upsertCategories(recovered).catch(err =>
-        logError('Failed to upsert recovered categories', { page: 'week', action: 'fetchData', err })
+        logError('Failed to upsert recovered categories', { page: 'deck', action: 'fetchData', err })
       )
       onCategoriesChange([...categories, ...recovered])
     }
@@ -110,7 +110,7 @@ export default function Week({ weekId, onNavigate, categories, onCategoriesChang
 
   // Effects declared after the functions they reference
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchData() }, [weekId])
+  useEffect(() => { fetchData() }, [deckId])
 
   useEffect(() => {
     if (!justCopied) return
@@ -140,19 +140,19 @@ export default function Week({ weekId, onNavigate, categories, onCategoriesChang
   async function handleCopyDeck() {
     setCopying(true)
     setCopyError(null)
-    const { data: newWeek, error: weekErr } = await supabase
-      .from('weeks')
-      .insert({ title: week.title, user_id: user.id, is_public: false })
+    const { data: newDeck, error: deckErr } = await supabase
+      .from('decks')
+      .insert({ title: deck.title, user_id: user.id, is_public: false })
       .select()
       .single()
-    if (weekErr) {
-      logError('Failed to copy deck', { page: 'week', action: 'handleCopyDeck', err: weekErr, details: { weekId } })
+    if (deckErr) {
+      logError('Failed to copy deck', { page: 'deck', action: 'handleCopyDeck', err: deckErr, details: { deckId } })
       setCopyError('Failed to copy deck. Please try again.')
       setCopying(false)
       return
     }
     const cardInserts = cards.map(c => ({
-      week_id: newWeek.id,
+      deck_id: newDeck.id,
       user_id: user.id,
       vietnamese: c.vietnamese,
       english: c.english,
@@ -163,13 +163,13 @@ export default function Week({ weekId, onNavigate, categories, onCategoriesChang
     if (cardInserts.length > 0) {
       const { error: cardsErr } = await supabase.from('flashcards').insert(cardInserts)
       if (cardsErr) {
-        logError('Failed to copy cards', { page: 'week', action: 'handleCopyDeck', err: cardsErr, details: { weekId } })
+        logError('Failed to copy cards', { page: 'deck', action: 'handleCopyDeck', err: cardsErr, details: { deckId } })
         setCopyError('Deck created but some cards failed to copy.')
       }
     }
     setCopying(false)
     setCopyDone(true)
-    setTimeout(() => onNavigate('week', newWeek.id, null, { justCopied: true }), 600)
+    setTimeout(() => onNavigate('deck', newDeck.id, null, { justCopied: true }), 600)
   }
 
   async function handleDeleteCategory(catId) {
@@ -248,30 +248,30 @@ export default function Week({ weekId, onNavigate, categories, onCategoriesChang
         </button>
         <div className="flex-1 min-w-0">
           <h1 className="font-display text-2xl font-bold truncate text-co-ink dark:text-gray-100">
-            {week?.title}
+            {deck?.title}
           </h1>
-          {!isOwner && week?.profiles?.display_name && (
+          {!isOwner && deck?.profiles?.display_name && (
             <p className="text-sm text-co-muted dark:text-gray-400 mt-0.5">
-              by {week.profiles.display_name}
+              by {deck.profiles.display_name}
             </p>
           )}
         </div>
         <button
-          onClick={() => onNavigate('study', weekId)}
+          onClick={() => onNavigate('study', deckId)}
           disabled={cards.length === 0}
           className="bg-co-fern text-white px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-fern focus:ring-offset-2 cursor-pointer"
         >
           Study
         </button>
         <button
-          onClick={() => onNavigate('quiz', weekId)}
+          onClick={() => onNavigate('quiz', deckId)}
           disabled={cards.length === 0}
           className="bg-co-primary text-white px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
         >
           Quiz
         </button>
         <button
-          onClick={() => onNavigate('lotus-quest', weekId)}
+          onClick={() => onNavigate('lotus-quest', deckId)}
           disabled={cards.length === 0}
           className="bg-[#0d1018] text-[#e0e0e0] border-2 border-[#444] px-3 py-2 rounded font-mono text-xs disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
           style={{ boxShadow: '2px 2px 0 #000' }}
@@ -300,7 +300,7 @@ export default function Week({ weekId, onNavigate, categories, onCategoriesChang
 
       {isOwner && (
         <VocabInput
-          weekId={weekId}
+          deckId={deckId}
           onCardCreated={handleCardCreated}
           onCardBreakdownReady={handleBreakdownReady}
           categories={categories}

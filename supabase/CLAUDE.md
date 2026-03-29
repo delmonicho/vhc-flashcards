@@ -46,10 +46,11 @@ supabase secrets set ANTHROPIC_API_KEY=sk-ant-... --project-ref zmbfpwjbnqsqywde
 
 **`source` has no enum constraint** — dropped in `20260326044509_drop_source_check.sql`. Any string is valid; the frontend enforces valid values via the Supabase `categories` table.
 
-**RLS is enabled** on `weeks`, `flashcards`, `game_stats`, and `profiles`. All rows are user-scoped via `user_id = auth.uid()`. Flashcards use a subquery via week ownership. The `breakdowns` and `categories` tables are shared/public caches and have no RLS.
+**RLS is enabled** on `decks`, `flashcards`, `game_stats`, and `profiles`. All rows are user-scoped via `user_id = auth.uid()`. Flashcards use a subquery via deck ownership. The `breakdowns` and `categories` tables are shared/public caches and have no RLS.
 
 **Recent migrations:**
-- `20260327000000_add_game_stats.sql` — per-week game performance (XP, cards mastered, streak). `unique(week_id)` constraint; streak logic: increment if last played yesterday or today, reset if gap > 1 day.
+- `20260327000000_add_game_stats.sql` — per-deck game performance (XP, cards mastered, streak). `unique(deck_id)` constraint; streak logic: increment if last played yesterday or today, reset if gap > 1 day.
 - `20260327100000_add_categories_table.sql` — global categories (migrated from localStorage). `id` is text PK (slugified label).
-- `20260328100000_auth_profiles.sql` — adds `user_id` to `weeks` and `flashcards`; creates `profiles` table with auto-create trigger on `auth.users` insert; enables RLS on all user tables; adds `delete_user()` security-definer function.
-- `20260329000000_public_decks.sql` — adds `is_public boolean` to weeks (default false); fixes `game_stats` unique constraint from `(week_id)` to `(user_id, week_id)`; updates weeks/flashcards SELECT policies to include public rows; relaxes profiles SELECT to allow any authenticated read.
+- `20260328100000_auth_profiles.sql` — adds `user_id` to `decks` and `flashcards`; creates `profiles` table with auto-create trigger on `auth.users` insert; enables RLS on all user tables; adds `delete_user()` security-definer function.
+- `20260329000000_public_decks.sql` — adds `is_public boolean` to decks (default false); fixes `game_stats` unique constraint from `(deck_id)` to `(user_id, deck_id)`; updates decks/flashcards SELECT policies to include public rows; relaxes profiles SELECT to allow any authenticated read.
+- `20260328200000_rename_weeks_to_decks.sql` — renames `weeks` table to `decks`, `week_id` columns to `deck_id` in `flashcards` and `game_stats`, rebuilds affected RLS policies.

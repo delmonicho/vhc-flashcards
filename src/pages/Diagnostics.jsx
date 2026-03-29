@@ -48,7 +48,7 @@ export default function Diagnostics({ onNavigate, dark, onToggleDark }) {
         withBdRes, withoutBdRes,
         errorsRes,
       ] = await Promise.all([
-        supabase.from('weeks').select('*', { count: 'exact', head: true }),
+        supabase.from('decks').select('*', { count: 'exact', head: true }),
         supabase.from('flashcards').select('*', { count: 'exact', head: true }),
         supabase.from('breakdowns').select('*', { count: 'exact', head: true }),
         supabase.from('categories').select('*', { count: 'exact', head: true }),
@@ -60,7 +60,7 @@ export default function Diagnostics({ onNavigate, dark, onToggleDark }) {
       ])
 
       setStats({
-        weeks: weeksRes.count ?? 0,
+        decks: weeksRes.count ?? 0,
         flashcards: cardsRes.count ?? 0,
         breakdowns: breakdownsRes.count ?? 0,
         categories: categoriesRes.count ?? 0,
@@ -123,7 +123,7 @@ export default function Diagnostics({ onNavigate, dark, onToggleDark }) {
           {/* Section 1: DB Health */}
           <Section title="Database">
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-              <StatCard label="weeks" value={stats.weeks} />
+              <StatCard label="decks" value={stats.decks} />
               <StatCard label="flashcards" value={stats.flashcards} />
               <StatCard label="breakdowns" value={stats.breakdowns} />
               <StatCard label="categories" value={stats.categories} />
