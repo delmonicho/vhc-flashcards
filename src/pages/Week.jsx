@@ -3,8 +3,8 @@ import { supabase } from '../lib/supabase'
 import { getCategoryColor, deleteCategory, upsertCategories, nextColor } from '../lib/categories'
 import { logError } from '../lib/logger'
 import { stripDiacritics } from '../lib/breakdown'
+import { useAuth } from '../context/AuthContext'
 import VocabInput from '../components/VocabInput'
-import ThemeToggle from '../components/ThemeToggle'
 import CardEditModal from '../components/CardEditModal'
 
 function LoadingDots() {
@@ -18,15 +18,20 @@ function LoadingDots() {
 }
 
 export default function Week({ weekId, onNavigate, dark, onToggleDark, categories, onCategoriesChange }) {
+  const { user } = useAuth()
   const [week, setWeek] = useState(null)
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
+  const [copying, setCopying] = useState(false)
   const [editingCard, setEditingCard] = useState(null)
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [sourceFilter, setSourceFilter] = useState('all')
   const lastClickedRef = useRef(null)
   const searchInputRef = useRef(null)
+
+  // Derived: is the current user the owner of this deck?
+  const isOwner = week?.user_id === user?.id
 
   useEffect(() => {
     fetchData()
@@ -35,7 +40,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
   async function fetchData() {
     setLoading(true)
     const [{ data: weekData, error: weekError }, { data: cardsData, error: cardsError }] = await Promise.all([
-      supabase.from('weeks').select('*').eq('id', weekId).single(),
+      supabase.from('weeks').select('*, profiles(display_name, avatar_color)').eq('id', weekId).single(),
       supabase
         .from('flashcards')
         .select('*')
@@ -44,6 +49,11 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
     ])
     if (weekError) logError('Failed to load week', { page: 'week', action: 'fetchData', err: weekError, details: { weekId } })
     if (cardsError) logError('Failed to load cards', { page: 'week', action: 'fetchData', err: cardsError, details: { weekId } })
+    // If week is null (deleted or not accessible), return home
+    if (!weekData && !weekError) {
+      onNavigate('home')
+      return
+    }
     setWeek(weekData)
     const loaded = cardsData || []
     setCards(loaded)
@@ -85,6 +95,35 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
   function handleModalDelete(cardId) {
     setCards(prev => prev.filter(c => c.id !== cardId))
     setEditingCard(null)
+  }
+
+  async function handleCopyDeck() {
+    setCopying(true)
+    const { data: newWeek, error: weekErr } = await supabase
+      .from('weeks')
+      .insert({ title: week.title, user_id: user.id, is_public: false })
+      .select()
+      .single()
+    if (weekErr) {
+      logError('Failed to copy deck', { page: 'week', action: 'handleCopyDeck', err: weekErr, details: { weekId } })
+      setCopying(false)
+      return
+    }
+    const cardInserts = cards.map(c => ({
+      week_id: newWeek.id,
+      user_id: user.id,
+      vietnamese: c.vietnamese,
+      english: c.english,
+      source: c.source,
+      status: 'new',
+      breakdown: c.breakdown ?? null,
+    }))
+    if (cardInserts.length > 0) {
+      const { error: cardsErr } = await supabase.from('flashcards').insert(cardInserts)
+      if (cardsErr) logError('Failed to copy cards', { page: 'week', action: 'handleCopyDeck', err: cardsErr, details: { weekId } })
+    }
+    setCopying(false)
+    onNavigate('week', newWeek.id)
   }
 
   async function handleDeleteCategory(catId) {
@@ -145,9 +184,16 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
         >
           ←
         </button>
-        <h1 className="flex-1 font-display text-2xl font-bold truncate text-co-ink dark:text-gray-100">
-          {week?.title}
-        </h1>
+        <div className="flex-1 min-w-0">
+          <h1 className="font-display text-2xl font-bold truncate text-co-ink dark:text-gray-100">
+            {week?.title}
+          </h1>
+          {!isOwner && week?.profiles?.display_name && (
+            <p className="text-sm text-co-muted dark:text-gray-400 mt-0.5">
+              by {week.profiles.display_name}
+            </p>
+          )}
+        </div>
         <button
           onClick={() => onNavigate('study', weekId)}
           disabled={cards.length === 0}
@@ -170,18 +216,28 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
         >
           ▶ QUEST
         </button>
-        <ThemeToggle dark={dark} onToggle={onToggleDark} />
+        {!isOwner && (
+          <button
+            onClick={handleCopyDeck}
+            disabled={copying || cards.length === 0}
+            className="bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-600 text-co-ink dark:text-gray-200 px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:enabled:border-co-primary transition-all cursor-pointer disabled:cursor-default focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+          >
+            {copying ? 'Copying…' : 'Copy to my decks'}
+          </button>
+        )}
       </div>
 
-      <VocabInput
-        weekId={weekId}
-        onCardCreated={handleCardCreated}
-        onCardBreakdownReady={handleBreakdownReady}
-        categories={categories}
-        onCategoriesChange={onCategoriesChange}
-      />
+      {isOwner && (
+        <VocabInput
+          weekId={weekId}
+          onCardCreated={handleCardCreated}
+          onCardBreakdownReady={handleBreakdownReady}
+          categories={categories}
+          onCategoriesChange={onCategoriesChange}
+        />
+      )}
 
-      {cards.length > 0 && (
+      {cards.length > 0 && isOwner && (
         <div className="mt-4 bg-co-surface dark:bg-gray-800/50 border border-co-border dark:border-gray-700 rounded-2xl p-4">
           <div role="search" className="flex gap-2 flex-wrap items-center">
             {/* Search icon button + expandable input */}
@@ -301,11 +357,15 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
                 <button
                   key={card.id}
                   aria-label={`${card.vietnamese} — ${card.english}${cardTags.length ? `, ${cardTags.join(', ')}` : ''}`}
-                  className={`relative flex flex-col w-full min-h-28 text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer ${
+                  className={`relative flex flex-col w-full min-h-28 text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 ${isOwner ? 'cursor-pointer' : 'cursor-default'} ${
                     card.status === 'learned' ? 'border-l-4 border-l-co-fern' :
                     card.status === 'learning' ? 'border-l-4 border-l-co-gold' : ''
                   }`}
-                  onClick={e => { lastClickedRef.current = e.currentTarget; setEditingCard(card) }}
+                  onClick={e => {
+                    if (!isOwner) return
+                    lastClickedRef.current = e.currentTarget
+                    setEditingCard(card)
+                  }}
                 >
                   <div lang="vi" className="flex-1 font-display font-semibold text-co-ink dark:text-gray-100 mb-1.5 line-clamp-3 text-base leading-snug">
                     {card.vietnamese}

@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { backfillBreakdownCache } from '../lib/breakdown'
 import { logError } from '../lib/logger'
+import { useAuth } from '../context/AuthContext'
 import Logo from '../components/Logo.old'
-import ThemeToggle from '../components/ThemeToggle'
 
 function LoadingDots() {
   return (
@@ -53,6 +53,9 @@ function DeleteSheet({ week, cardCount, onConfirm, onCancel, deleting }) {
 }
 
 export default function Home({ onNavigate, dark, onToggleDark }) {
+  const { user } = useAuth()
+
+  // My Decks state
   const [weeks, setWeeks] = useState([])
   const [cardCounts, setCardCounts] = useState({})
   const [title, setTitle] = useState('')
@@ -63,7 +66,14 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [backfilling, setBackfilling] = useState(false)
+  const [togglingId, setTogglingId] = useState(null)
   const editInputRef = useRef(null)
+
+  // Tab + Public Decks state
+  const [tab, setTab] = useState('mine')
+  const [publicDecks, setPublicDecks] = useState([])
+  const [publicDecksLoading, setPublicDecksLoading] = useState(false)
+  const [publicFetched, setPublicFetched] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -75,8 +85,12 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
 
   async function fetchData() {
     setLoading(true)
-    const [{ data: weeksData, error: weeksError }, { data: cardsData, error: cardsError }] = await Promise.all([
-      supabase.from('weeks').select('*').order('created_at', { ascending: false }),
+    const [
+      { data: weeksData, error: weeksError },
+      { data: cardsData, error: cardsError },
+    ] = await Promise.all([
+      // Explicit user_id filter — after RLS migration, plain select() would also return public decks from others
+      supabase.from('weeks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('flashcards').select('id, week_id'),
     ])
     if (weeksError) logError('Failed to load weeks', { page: 'home', action: 'fetchData', err: weeksError })
@@ -90,13 +104,44 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
     setLoading(false)
   }
 
+  async function fetchPublicDecks() {
+    setPublicDecksLoading(true)
+    const { data: pubWeeks, error: weeksErr } = await supabase
+      .from('weeks')
+      .select('*')
+      .eq('is_public', true)
+      .neq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (weeksErr) {
+      logError('Failed to load public decks', { page: 'home', action: 'fetchPublicDecks', err: weeksErr })
+      setPublicDecksLoading(false)
+      return
+    }
+
+    // Batch-fetch author profiles
+    const authorIds = [...new Set((pubWeeks || []).map(w => w.user_id))]
+    let profileMap = {}
+    if (authorIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_color')
+        .in('id', authorIds)
+      profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]))
+    }
+
+    setPublicDecks((pubWeeks || []).map(w => ({ ...w, author: profileMap[w.user_id] ?? null })))
+    setPublicDecksLoading(false)
+    setPublicFetched(true)
+  }
+
   async function createWeek(e) {
     e.preventDefault()
     if (!title.trim()) return
     setCreating(true)
     const { data, error } = await supabase
       .from('weeks')
-      .insert({ title: title.trim() })
+      .insert({ title: title.trim(), user_id: user.id, is_public: false })
       .select()
       .single()
     if (!error && data) {
@@ -107,6 +152,19 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       logError('Failed to create week', { page: 'home', action: 'createWeek', err: error, details: { title } })
     }
     setCreating(false)
+  }
+
+  async function togglePublic(week, e) {
+    e.stopPropagation()
+    const next = !week.is_public
+    setTogglingId(week.id)
+    setWeeks(prev => prev.map(w => w.id === week.id ? { ...w, is_public: next } : w))
+    const { error } = await supabase.from('weeks').update({ is_public: next }).eq('id', week.id)
+    if (error) {
+      logError('Failed to toggle deck visibility', { page: 'home', action: 'togglePublic', err: error, details: { weekId: week.id } })
+      setWeeks(prev => prev.map(w => w.id === week.id ? { ...w, is_public: !next } : w))
+    }
+    setTogglingId(null)
   }
 
   function startEditing(week, e) {
@@ -157,10 +215,6 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
 
   return (
     <div className="page-fade-in max-w-2xl mx-auto px-4 py-6 md:px-8">
-      {/* Top bar */}
-      <div className="flex items-center justify-end gap-3 mb-2">
-        <ThemeToggle dark={dark} onToggle={onToggleDark} />
-      </div>
 
       {/* Hero */}
       <div className="flex flex-col items-center text-center mb-10 pt-4">
@@ -173,137 +227,227 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
         </p>
       </div>
 
-      {/* Create deck */}
-      <form onSubmit={createWeek} className="flex gap-2 mb-8">
-        <input
-          className="flex-1 border border-co-border dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary transition-shadow"
-          placeholder='New deck, e.g. "Week 3 — Family"'
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          disabled={creating}
-        />
+      {/* Tab bar */}
+      <div className="flex gap-1 bg-co-surface dark:bg-gray-800 rounded-2xl p-1 mb-6">
         <button
-          type="submit"
-          disabled={creating || !title.trim()}
-          className="bg-co-primary text-white px-6 py-3 rounded-full font-semibold disabled:opacity-50 hover:enabled:scale-105 active:enabled:scale-95 transition-all duration-150 whitespace-nowrap cursor-pointer disabled:cursor-default"
+          onClick={() => setTab('mine')}
+          className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
+            tab === 'mine'
+              ? 'bg-white dark:bg-gray-900 text-co-ink dark:text-gray-100 shadow-sm'
+              : 'text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
+          }`}
         >
-          {creating ? 'Creating…' : '+ Deck'}
+          My Decks
         </button>
-      </form>
+        <button
+          onClick={() => {
+            setTab('public')
+            if (!publicFetched && !publicDecksLoading) fetchPublicDecks()
+          }}
+          className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
+            tab === 'public'
+              ? 'bg-white dark:bg-gray-900 text-co-ink dark:text-gray-100 shadow-sm'
+              : 'text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
+          }`}
+        >
+          Public Decks
+        </button>
+      </div>
 
-      {/* Week list */}
-      {loading ? (
-        <LoadingDots />
-      ) : weeks.length === 0 ? (
-        <p className="text-co-muted dark:text-gray-400 text-center py-12">
-          No weeks yet. Create your first one above.
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {weeks.map(week => (
-            <div
-              key={week.id}
-              className="flex items-center bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 overflow-hidden"
+      {/* ── My Decks tab ── */}
+      {tab === 'mine' && (
+        <>
+          {/* Create deck */}
+          <form onSubmit={createWeek} className="flex gap-2 mb-8">
+            <input
+              className="flex-1 border border-co-border dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary transition-shadow"
+              placeholder='New deck, e.g. "Week 3 — Family"'
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              disabled={creating}
+            />
+            <button
+              type="submit"
+              disabled={creating || !title.trim()}
+              className="bg-co-primary text-white px-6 py-3 rounded-full font-semibold disabled:opacity-50 hover:enabled:scale-105 active:enabled:scale-95 transition-all duration-150 whitespace-nowrap cursor-pointer disabled:cursor-default"
             >
-              {/* Main navigate area */}
-              <button
-                onClick={() => editingWeekId !== week.id && onNavigate('week', week.id)}
-                className="flex-1 text-left px-5 py-4 min-w-0 cursor-pointer"
-              >
-                {editingWeekId === week.id ? (
-                  <input
-                    ref={editInputRef}
-                    className="w-full font-display font-semibold text-lg text-co-ink dark:text-gray-100 bg-transparent border-b-2 border-co-primary outline-none"
-                    value={editingTitle}
-                    onChange={e => setEditingTitle(e.target.value)}
-                    onBlur={() => saveEdit(week.id)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') saveEdit(week.id)
-                      if (e.key === 'Escape') cancelEdit()
-                    }}
-                    onClick={e => e.stopPropagation()}
-                  />
-                ) : (
-                  <div className="font-display font-semibold text-co-ink dark:text-gray-100 text-lg leading-snug truncate">
-                    {week.title}
-                  </div>
-                )}
-                <div className="text-sm text-co-muted dark:text-gray-400 mt-0.5">
-                  {cardCounts[week.id] || 0}{' '}
-                  {(cardCounts[week.id] || 0) === 1 ? 'card' : 'cards'}
+              {creating ? 'Creating…' : '+ Deck'}
+            </button>
+          </form>
+
+          {/* Week list */}
+          {loading ? (
+            <LoadingDots />
+          ) : weeks.length === 0 ? (
+            <p className="text-co-muted dark:text-gray-400 text-center py-12">
+              No decks yet. Create your first one above.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {weeks.map(week => (
+                <div
+                  key={week.id}
+                  className="flex items-center bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 overflow-hidden"
+                >
+                  {/* Main navigate area */}
+                  <button
+                    onClick={() => editingWeekId !== week.id && onNavigate('week', week.id)}
+                    className="flex-1 text-left px-5 py-4 min-w-0 cursor-pointer"
+                  >
+                    {editingWeekId === week.id ? (
+                      <input
+                        ref={editInputRef}
+                        className="w-full font-display font-semibold text-lg text-co-ink dark:text-gray-100 bg-transparent border-b-2 border-co-primary outline-none"
+                        value={editingTitle}
+                        onChange={e => setEditingTitle(e.target.value)}
+                        onBlur={() => saveEdit(week.id)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') saveEdit(week.id)
+                          if (e.key === 'Escape') cancelEdit()
+                        }}
+                        onClick={e => e.stopPropagation()}
+                      />
+                    ) : (
+                      <div className="font-display font-semibold text-co-ink dark:text-gray-100 text-lg leading-snug truncate">
+                        {week.title}
+                      </div>
+                    )}
+                    <div className="text-sm text-co-muted dark:text-gray-400 mt-0.5">
+                      {cardCounts[week.id] || 0}{' '}
+                      {(cardCounts[week.id] || 0) === 1 ? 'card' : 'cards'}
+                      {week.is_public && (
+                        <span className="ml-2 text-co-fern dark:text-green-400 font-semibold">· Public</span>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Visibility toggle */}
+                  <button
+                    onClick={e => togglePublic(week, e)}
+                    disabled={togglingId === week.id}
+                    aria-label={week.is_public ? 'Make deck private' : 'Make deck public'}
+                    className="w-11 h-11 flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-40 cursor-pointer disabled:cursor-default"
+                  >
+                    {week.is_public ? (
+                      /* Globe — deck is public */
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-co-fern dark:text-green-400" aria-hidden="true">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      /* Lock — deck is private */
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-co-muted dark:text-gray-500 hover:text-co-primary" aria-hidden="true">
+                        <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+
+                  {/* Edit button */}
+                  <button
+                    onClick={e => startEditing(week, e)}
+                    className="w-11 h-11 flex items-center justify-center text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary transition-colors flex-shrink-0 cursor-pointer"
+                    aria-label="Edit week title"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4" aria-hidden="true">
+                      <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                    </svg>
+                  </button>
+
+                  {/* Delete button */}
+                  <button
+                    onClick={e => { e.stopPropagation(); setDeleteTarget(week) }}
+                    className="w-11 h-11 flex items-center justify-center text-co-muted dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-shrink-0 mr-1 cursor-pointer"
+                    aria-label="Delete week"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4" aria-hidden="true">
+                      <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clipRule="evenodd" />
+                    </svg>
+                  </button>
                 </div>
-              </button>
+              ))}
+            </div>
+          )}
 
-              {/* Edit button */}
+          {/* Dev-only: backfill breakdown cache */}
+          {import.meta.env.DEV && (
+            <div className="mt-10 pt-6 border-t border-co-border dark:border-gray-700 text-center flex items-center justify-center gap-1">
               <button
-                onClick={e => startEditing(week, e)}
-                className="w-11 h-11 flex items-center justify-center text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary transition-colors flex-shrink-0 cursor-pointer"
-                aria-label="Edit week title"
+                onClick={async () => {
+                  setBackfilling(true)
+                  try {
+                    const count = await backfillBreakdownCache()
+                    alert(`Backfilled ${count} breakdown(s) into cache.`)
+                  } catch (e) {
+                    alert(`Backfill failed: ${e.message}`)
+                  } finally {
+                    setBackfilling(false)
+                  }
+                }}
+                disabled={backfilling}
+                className="text-xs text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary disabled:opacity-50 transition-colors cursor-pointer"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
-                </svg>
+                {backfilling ? 'Backfilling…' : 'Backfill breakdown cache'}
               </button>
-
-              {/* Delete button */}
+              <span className="text-co-border dark:text-gray-700 text-xs mx-1">·</span>
               <button
-                onClick={e => { e.stopPropagation(); setDeleteTarget(week) }}
-                className="w-11 h-11 flex items-center justify-center text-co-muted dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-shrink-0 mr-1 cursor-pointer"
-                aria-label="Delete week"
+                onClick={() => onNavigate('diagnostics')}
+                aria-label="Diagnostics"
+                className="text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary transition-colors cursor-pointer group"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clipRule="evenodd" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                  className="w-4 h-4 group-hover:animate-spin" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <line x1="12" y1="3" x2="12" y2="7" />
+                  <line x1="12" y1="17" x2="12" y2="21" />
+                  <line x1="3" y1="12" x2="7" y2="12" />
+                  <line x1="17" y1="12" x2="21" y2="12" />
+                  <line x1="5.6" y1="5.6" x2="8.5" y2="8.5" />
+                  <line x1="15.5" y1="15.5" x2="18.4" y2="18.4" />
+                  <line x1="18.4" y1="5.6" x2="15.5" y2="8.5" />
+                  <line x1="8.5" y1="15.5" x2="5.6" y2="18.4" />
+                  <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
                 </svg>
               </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
-      {/* Dev-only: backfill breakdown cache */}
-      {import.meta.env.DEV && (
-        <div className="mt-10 pt-6 border-t border-co-border dark:border-gray-700 text-center flex items-center justify-center gap-1">
-          <button
-            onClick={async () => {
-              setBackfilling(true)
-              try {
-                const count = await backfillBreakdownCache()
-                alert(`Backfilled ${count} breakdown(s) into cache.`)
-              } catch (e) {
-                alert(`Backfill failed: ${e.message}`)
-              } finally {
-                setBackfilling(false)
-              }
-            }}
-            disabled={backfilling}
-            className="text-xs text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary disabled:opacity-50 transition-colors cursor-pointer"
-          >
-            {backfilling ? 'Backfilling…' : 'Backfill breakdown cache'}
-          </button>
-          <span className="text-co-border dark:text-gray-700 text-xs mx-1">·</span>
-          <button
-            onClick={() => onNavigate('diagnostics')}
-            aria-label="Diagnostics"
-            className="text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary transition-colors cursor-pointer group"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-              className="w-4 h-4 group-hover:animate-spin" aria-hidden="true">
-              {/* Wheel rim */}
-              <circle cx="12" cy="12" r="9" />
-              {/* Spokes */}
-              <line x1="12" y1="3" x2="12" y2="7" />
-              <line x1="12" y1="17" x2="12" y2="21" />
-              <line x1="3" y1="12" x2="7" y2="12" />
-              <line x1="17" y1="12" x2="21" y2="12" />
-              <line x1="5.6" y1="5.6" x2="8.5" y2="8.5" />
-              <line x1="15.5" y1="15.5" x2="18.4" y2="18.4" />
-              <line x1="18.4" y1="5.6" x2="15.5" y2="8.5" />
-              <line x1="8.5" y1="15.5" x2="5.6" y2="18.4" />
-              {/* Hub */}
-              <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
-            </svg>
-          </button>
-        </div>
+      {/* ── Public Decks tab ── */}
+      {tab === 'public' && (
+        publicDecksLoading ? (
+          <LoadingDots />
+        ) : publicDecks.length === 0 ? (
+          <p className="text-co-muted dark:text-gray-400 text-center py-12 text-sm">
+            No public decks yet.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {publicDecks.map(deck => {
+              const count = cardCounts[deck.id] || 0
+              return (
+                <div
+                  key={deck.id}
+                  className="flex items-center bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 overflow-hidden"
+                >
+                  <button
+                    onClick={() => onNavigate('week', deck.id)}
+                    className="flex-1 text-left px-5 py-4 min-w-0 cursor-pointer"
+                  >
+                    <div className="font-display font-semibold text-co-ink dark:text-gray-100 text-lg leading-snug truncate">
+                      {deck.title}
+                    </div>
+                    <div className="text-sm text-co-muted dark:text-gray-400 mt-0.5">
+                      {count} {count === 1 ? 'card' : 'cards'}
+                      {deck.author?.display_name && (
+                        <span className="ml-2">· by {deck.author.display_name}</span>
+                      )}
+                    </div>
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )
       )}
 
       {/* Delete confirmation bottom sheet */}

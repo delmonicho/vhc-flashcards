@@ -56,11 +56,17 @@ All functions (`loadCategories`, `addCategory`, `deleteCategory`) are **async** 
 
 ## translate.js
 
+Proxies requests to `/api/translate` (Vercel serverless function). `GOOGLE_API_KEY` never touches the client bundle. Function signature `translateToEnglish(text)` is unchanged.
+
 **HTML entity decoding is required.** Google Translate returns HTML-encoded output (`&#39;`, `&amp;`, etc.). The textarea trick decodes all entities. Do not replace with regex/string replace — it won't handle all entities. This runs browser-only (uses DOM `document`).
+
+## auth.js
+
+Thin wrappers over Supabase auth. Exports: `signInWithMagicLink(email)`, `signOut()`, `getCurrentUser()`, `getProfile(userId)`, `updateProfile(userId, updates)`, `deleteAccount()`. Import `useAuth()` from `AuthContext` in components instead of calling these directly.
 
 ## supabase.js
 
-Single export: `supabase` client. Import directly everywhere — no wrapper, no abstraction. No RLS — all tables are public. Do not add RLS without auditing all query patterns.
+Single export: `supabase` client. Import directly everywhere — no wrapper, no abstraction. RLS is enabled — all queries are automatically scoped to `auth.uid()`.
 
 ## colors.js
 

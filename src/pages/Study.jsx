@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import ThemeToggle from '../components/ThemeToggle'
 import { logError } from '../lib/logger'
 import { CHUNK_COLORS } from '../lib/colors'
 import { speakVietnamese, cancelSpeech, isVietnameseVoiceAvailable } from '../lib/speak'
@@ -288,7 +287,6 @@ export default function Study({ weekId, onNavigate, dark, onToggleDark }) {
           <GridIcon />
         </button>
 
-        <ThemeToggle dark={dark} onToggle={onToggleDark} />
       </div>
 
       {/* No Vietnamese voice banner */}

@@ -38,6 +38,14 @@ Class component wrapping `<App />` in `main.jsx`. Catches uncaught React render 
 
 Both are pure presentational. ThemeToggle does NOT read localStorage — all persistence is in App.jsx. `Logo.old.jsx` is kept as reference; do not delete it.
 
+## Header.jsx
+
+Renders `<ThemeToggle>` and a `<UserMenu>`. UserMenu reads from `useAuth()` — avatar circle (36px, profile.avatar_color), display name (truncated 120px), click-to-toggle dropdown with "My Profile" and "Sign out" items. Dropdown closes on outside click via `useEffect` + document listener. Passes `onNavigate` down from App.jsx.
+
+## AuthGuard.jsx
+
+Wraps protected views. Loading → pulse-Logo spinner; no user → `<Login>`; user → children. Reads `useAuth()` directly. Passes `onNavigate` and `loginError` through to Login so auth callback errors surface correctly.
+
 ## Game components (`src/components/game/`)
 
 All live under `.pixel-mode` styling from the parent LotusQuest page.

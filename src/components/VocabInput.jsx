@@ -4,8 +4,10 @@ import { supabase } from '../lib/supabase'
 import { getOrCreateBreakdown } from '../lib/breakdown'
 import { addCategory, getCategoryColor } from '../lib/categories'
 import { logError } from '../lib/logger'
+import { useAuth } from '../context/AuthContext'
 
 export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady, categories = [], onCategoriesChange }) {
+  const { user } = useAuth()
   const [tags, setTags] = useState([])           // array of category ids (optional)
   const [input, setInput] = useState('')
   const [state, setState] = useState('idle')     // idle | loading | preview | error
@@ -72,6 +74,7 @@ export default function VocabInput({ weekId, onCardCreated, onCardBreakdownReady
       .from('flashcards')
       .insert({
         week_id: weekId,
+        user_id: user.id,
         vietnamese: preview.vietnamese,
         english: preview.english,
         source: tags,

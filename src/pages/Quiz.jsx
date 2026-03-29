@@ -11,7 +11,6 @@ import MultipleChoice from '../components/quiz/MultipleChoice'
 import QuickFire from '../components/quiz/QuickFire'
 import PairMatch from '../components/quiz/PairMatch'
 import TileAssembly from '../components/quiz/TileAssembly'
-import ThemeToggle from '../components/ThemeToggle'
 
 const QUIZ_TYPES = [
   { id: 'mc',        title: 'Multiple Choice', description: 'Pick the correct English translation.',              minCards: 4 },
@@ -114,7 +113,6 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
             aria-label="Back"
           >←</button>
           <h1 className="flex-1 font-display text-2xl font-bold text-co-ink dark:text-gray-100">Quiz</h1>
-          <ThemeToggle dark={dark} onToggle={onToggleDark} />
         </div>
 
         <div className="space-y-3">
@@ -169,7 +167,6 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
           <h2 className="flex-1 font-display text-xl font-bold text-co-ink dark:text-gray-100">
             {QUIZ_TYPES.find(q => q.id === quizType)?.title}
           </h2>
-          <ThemeToggle dark={dark} onToggle={onToggleDark} />
         </div>
 
         {quizType === 'mc'        && <MultipleChoice {...quizProps} allCards={cards} />}
@@ -188,7 +185,6 @@ export default function Quiz({ weekId, onNavigate, dark, onToggleDark }) {
     <div className="page-fade-in max-w-2xl mx-auto px-4 py-6 md:px-8">
       <div className="flex items-center gap-3 mb-8">
         <h1 className="flex-1 font-display text-2xl font-bold text-co-ink dark:text-gray-100">Results</h1>
-        <ThemeToggle dark={dark} onToggle={onToggleDark} />
       </div>
 
       {/* Score */}

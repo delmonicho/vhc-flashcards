@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import ThemeToggle from '../components/ThemeToggle'
 
 function Section({ title, children }) {
   return (
@@ -107,7 +106,6 @@ export default function Diagnostics({ onNavigate, dark, onToggleDark }) {
           </svg>
           Back
         </button>
-        <ThemeToggle dark={dark} onToggle={onToggleDark} />
       </div>
 
       <h1 className="font-display text-3xl font-bold text-co-ink dark:text-gray-100 mb-8">

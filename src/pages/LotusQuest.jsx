@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { loadMastery, saveMastery, recordResult, loadXP, addXP } from '../lib/mastery'
 import { logError } from '../lib/logger'
+import { useAuth } from '../context/AuthContext'
 import WordWarrior from '../components/game/WordWarrior'
 import ChunkBuilder from '../components/game/ChunkBuilder'
 
 export default function LotusQuest({ weekId, onNavigate }) {
+  const { user } = useAuth()
   const [phase, setPhase] = useState('hub') // 'hub' | 'word-warrior' | 'chunk-builder' | 'score'
   const [cards, setCards] = useState([])
   const [week, setWeek] = useState(null)
@@ -66,12 +68,13 @@ export default function LotusQuest({ weekId, onNavigate }) {
     const currentXP = loadXP().xp
 
     const { data: newStats, error: statsUpsertError } = await supabase.from('game_stats').upsert({
+      user_id: user.id,
       week_id: weekId,
       xp: currentXP,
       cards_mastered: masteredCount,
       streak_days: newStreak,
       last_played: today,
-    }, { onConflict: 'week_id' }).select().maybeSingle()
+    }, { onConflict: 'user_id, week_id' }).select().maybeSingle()
 
     if (statsUpsertError) logError('Failed to upsert game stats', { page: 'lotus-quest', action: 'handleModeComplete', err: statsUpsertError, details: { weekId } })
     if (newStats) setGameStats(newStats)
