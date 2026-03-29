@@ -270,14 +270,6 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
         >
           Quiz
         </button>
-        <button
-          onClick={() => onNavigate('lotus-quest', deckId)}
-          disabled={cards.length === 0}
-          className="bg-[#0d1018] text-[#e0e0e0] border-2 border-[#444] px-3 py-2 rounded font-mono text-xs disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
-          style={{ boxShadow: '2px 2px 0 #000' }}
-        >
-          ▶ QUEST
-        </button>
         {!isOwner && (
           <div className="flex flex-col items-end gap-1">
             <button

@@ -161,6 +161,16 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
             )
           })}
         </div>
+
+        <button
+          onClick={() => onNavigate('lotus-quest', deckId)}
+          disabled={cards.length === 0}
+          className="mt-4 w-full text-left bg-[#0d1018] dark:bg-[#0d1018] border-2 border-[#444] rounded-2xl p-5 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 disabled:opacity-40 hover:enabled:border-[#888] active:scale-[0.98] cursor-pointer disabled:cursor-not-allowed"
+          style={{ boxShadow: '2px 2px 0 #000' }}
+        >
+          <div className="font-mono font-semibold text-[#e0e0e0] text-lg">▶ QUEST</div>
+          <div className="text-[#888] text-sm mt-0.5">16-bit vocabulary adventure mode.</div>
+        </button>
       </div>
     )
   }
