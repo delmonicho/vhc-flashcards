@@ -5,8 +5,8 @@ import { logError } from '../lib/logger'
 import { useAuth } from '../context/AuthContext'
 import {
   loadMastery, saveMastery, recordResult,
-  addXP, XP_RATES, weightedSample,
-  getMasteryStage, getMasteryStats, syncMasteryToSupabase,
+  addXP, XP_RATES, selectQuizCards,
+  getMasteryStage, syncMasteryToSupabase,
 } from '../lib/mastery'
 import MasteryBar from '../components/MasteryBar'
 import BreakdownDisplay from '../components/BreakdownDisplay'
@@ -15,11 +15,13 @@ import QuickFire from '../components/quiz/QuickFire'
 import PairMatch from '../components/quiz/PairMatch'
 import TileAssembly from '../components/quiz/TileAssembly'
 
+const ROUND_SIZES = { mc: 10, quickfire: 20, match: 6, tiles: 8 }
+
 const QUIZ_TYPES = [
-  { id: 'mc',        title: 'Multiple Choice', description: 'Pick the correct English translation.',              minCards: 4 },
-  { id: 'quickfire', title: 'Quick Fire',       description: 'Flip cards, mark what you know.',                  minCards: 1 },
-  { id: 'match',     title: 'Pair Match',       description: 'Match Vietnamese words to their English meanings.', minCards: 4 },
-  { id: 'tiles',     title: 'Word Builder',     description: 'Arrange Vietnamese tiles to match the English. 60s timer — earn +5s per correct answer.', minCards: 2 },
+  { id: 'mc',        title: 'Multiple Choice', description: 'Pick the correct English translation.',              minCards: 4, roundSize: ROUND_SIZES.mc },
+  { id: 'quickfire', title: 'Quick Fire',       description: 'Flip cards, mark what you know.',                  minCards: 1, roundSize: ROUND_SIZES.quickfire },
+  { id: 'match',     title: 'Pair Match',       description: 'Match Vietnamese words to their English meanings.', minCards: 4, roundSize: ROUND_SIZES.match },
+  { id: 'tiles',     title: 'Word Builder',     description: 'Arrange Vietnamese tiles to match the English. 60s timer — earn +5s per correct answer.', minCards: 2, roundSize: ROUND_SIZES.tiles },
 ]
 
 const STAGE_NAMES = ['Unseen', 'Learning', 'Familiar', 'Confident', 'Mastered']
@@ -150,7 +152,9 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
               >
                 <div className="font-display font-semibold text-co-ink dark:text-gray-100 text-lg">{qt.title}</div>
                 <div className="text-co-muted dark:text-gray-400 text-sm mt-0.5">{qt.description}</div>
-                {!eligible && (
+                {eligible ? (
+                  <div className="text-xs text-co-muted dark:text-gray-500 mt-1">Up to {qt.roundSize} cards per round</div>
+                ) : (
                   <div className="text-xs text-co-muted dark:text-gray-500 mt-1">{notEligibleReason}</div>
                 )}
               </button>
@@ -166,7 +170,7 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
     const quizCards = quizType === 'tiles'
       ? cards.filter(c => c.vietnamese.trim().split(/\s+/).length >= 2)
       : cards
-    const sampledCards = weightedSample(quizCards, quizCards.length, masteryData)
+    const sampledCards = selectQuizCards(quizCards, ROUND_SIZES[quizType], masteryData)
     const quizProps = { cards: sampledCards, onDone: handleDone }
 
     return (
