@@ -16,6 +16,11 @@ export default async function handler(req, res) {
   const apiKey = process.env.GOOGLE_API_KEY
   const { q, source, target } = req.body
 
+  if (!apiKey) {
+    console.error('[translate] GOOGLE_API_KEY is not set')
+    return res.status(500).json({ error: 'GOOGLE_API_KEY not configured' })
+  }
+
   try {
     const response = await fetch(`${GOOGLE_TRANSLATE_URL}?key=${apiKey}`, {
       method: 'POST',
@@ -24,10 +29,12 @@ export default async function handler(req, res) {
     })
     const data = await response.json()
     if (data.error) {
-      return res.status(500).json({ error: 'Translation failed' })
+      console.error('[translate] Google API error:', JSON.stringify(data.error))
+      return res.status(500).json({ error: 'Translation failed', detail: data.error.message })
     }
     return res.status(200).json(data)
-  } catch {
+  } catch (err) {
+    console.error('[translate] Unexpected error:', err)
     return res.status(500).json({ error: 'Translation failed' })
   }
 }
