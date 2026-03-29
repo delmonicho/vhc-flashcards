@@ -20,8 +20,8 @@ function AppInner() {
   const isCallback = window.location.pathname.includes('/auth/callback')
 
   const [view, setView] = useState(() => {
-    if (isCallback) return { page: 'auth/callback', weekId: null, loginError: null }
-    return { page: 'home', weekId: null, loginError: null }
+    if (isCallback) return { page: 'auth/callback', weekId: null, loginError: null, justCopied: false }
+    return { page: 'home', weekId: null, loginError: null, justCopied: false }
   })
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem('theme')
@@ -36,8 +36,8 @@ function AppInner() {
       .catch(err => logError('Failed to load categories on app init', { action: 'loadCategories', err }))
   }, [])
 
-  function navigate(page, weekId = null, loginError = null) {
-    setView({ page, weekId, loginError })
+  function navigate(page, weekId = null, loginError = null, opts = {}) {
+    setView({ page, weekId, loginError, justCopied: opts.justCopied ?? false })
   }
 
   function toggleDark() {
@@ -68,7 +68,7 @@ function AppInner() {
       <AuthGuard onNavigate={navigate} loginError={view.loginError}>
         <Header dark={dark} onToggleDark={toggleDark} onNavigate={navigate} />
         {view.page === 'week' ? (
-          <Week weekId={view.weekId} onNavigate={navigate} {...themeProps} categories={categories} onCategoriesChange={setCategories} />
+          <Week weekId={view.weekId} onNavigate={navigate} {...themeProps} categories={categories} onCategoriesChange={setCategories} justCopied={view.justCopied} />
         ) : view.page === 'study' ? (
           <Study weekId={view.weekId} onNavigate={navigate} {...themeProps} />
         ) : view.page === 'quiz' ? (

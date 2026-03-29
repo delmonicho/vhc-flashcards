@@ -18,13 +18,16 @@ function LoadingDots() {
   )
 }
 
-export default function Week({ weekId, onNavigate, dark, onToggleDark, categories, onCategoriesChange }) {
+export default function Week({ weekId, onNavigate, dark, onToggleDark, categories, onCategoriesChange, justCopied = false }) {
   const { user } = useAuth()
   const [week, setWeek] = useState(null)
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
   const [copying, setCopying] = useState(false)
+  const [copyDone, setCopyDone] = useState(false)
   const [copyError, setCopyError] = useState(null)
+  const [pendingBreakdowns, setPendingBreakdowns] = useState(new Set())
+  const [showCopiedBanner, setShowCopiedBanner] = useState(false)
   const [editingCard, setEditingCard] = useState(null)
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -39,8 +42,33 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
     fetchData()
   }, [weekId])
 
+  useEffect(() => {
+    if (!justCopied) return
+    setShowCopiedBanner(true)
+    const t = setTimeout(() => setShowCopiedBanner(false), 3000)
+    return () => clearTimeout(t)
+  }, [justCopied])
+
+  function triggerOwnedDeckBreakdowns(loadedCards, weekOwnerId) {
+    if (weekOwnerId !== user?.id) return
+    const nullCards = loadedCards.filter(c => c.breakdown == null)
+    if (nullCards.length === 0) return
+    setPendingBreakdowns(new Set(nullCards.map(c => c.id)))
+    for (const c of nullCards) {
+      getOrCreateBreakdown(c.vietnamese, c.id, c.english)
+        .then(breakdown => {
+          handleBreakdownReady(c.id, breakdown)
+          setPendingBreakdowns(prev => { const next = new Set(prev); next.delete(c.id); return next })
+        })
+        .catch(() => {
+          setPendingBreakdowns(prev => { const next = new Set(prev); next.delete(c.id); return next })
+        })
+    }
+  }
+
   async function fetchData() {
     setLoading(true)
+    setPendingBreakdowns(new Set())
     const [{ data: weekData, error: weekError }, { data: cardsData, error: cardsError }] = await Promise.all([
       supabase.from('weeks').select('*').eq('id', weekId).single(),
       supabase
@@ -70,6 +98,7 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
     const loaded = cardsData || []
     setCards(loaded)
     setLoading(false)
+    triggerOwnedDeckBreakdowns(loaded, weekData?.user_id)
 
     // Reconcile: auto-recover any tag IDs on cards that aren't in the categories list
     const allTagIds = [...new Set(loaded.flatMap(c => c.source || []))]
@@ -133,19 +162,15 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
       breakdown: c.breakdown ?? null,
     }))
     if (cardInserts.length > 0) {
-      const { data: newCards, error: cardsErr } = await supabase.from('flashcards').insert(cardInserts).select()
+      const { error: cardsErr } = await supabase.from('flashcards').insert(cardInserts)
       if (cardsErr) {
         logError('Failed to copy cards', { page: 'week', action: 'handleCopyDeck', err: cardsErr, details: { weekId } })
         setCopyError('Deck created but some cards failed to copy.')
-      } else if (newCards) {
-        // Re-apply breakdowns for all copied cards via the cache table.
-        // Covers the case where the INSERT didn't carry breakdown data through,
-        // and handles cards with no prior breakdown by falling back to generation.
-        newCards.forEach(c => getOrCreateBreakdown(c.vietnamese, c.id, c.english).catch(() => {}))
       }
     }
     setCopying(false)
-    onNavigate('week', newWeek.id)
+    setCopyDone(true)
+    setTimeout(() => onNavigate('week', newWeek.id, null, { justCopied: true }), 600)
   }
 
   async function handleDeleteCategory(catId) {
@@ -187,8 +212,24 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
     return <LoadingDots />
   }
 
+  const pendingCount = pendingBreakdowns.size
+
   return (
     <div className="page-fade-in max-w-2xl mx-auto px-4 py-6 md:px-8">
+      {showCopiedBanner && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="mb-4 flex items-center justify-between gap-3 bg-co-fern/10 dark:bg-co-fern/20 border border-co-fern/30 rounded-2xl px-4 py-3 text-sm text-co-fern dark:text-green-400"
+        >
+          <span className="font-semibold">✓ Saved to your decks</span>
+          <button
+            onClick={() => setShowCopiedBanner(false)}
+            aria-label="Dismiss"
+            className="hover:opacity-70 transition-opacity cursor-pointer text-base leading-none"
+          >×</button>
+        </div>
+      )}
       {/* Skip link */}
       <a
         href="#cards-grid"
@@ -242,10 +283,14 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
           <div className="flex flex-col items-end gap-1">
             <button
               onClick={handleCopyDeck}
-              disabled={copying || cards.length === 0}
-              className="bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-600 text-co-ink dark:text-gray-200 px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:enabled:border-co-primary transition-all cursor-pointer disabled:cursor-default focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+              disabled={copying || copyDone || cards.length === 0}
+              className={`px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 transition-all cursor-pointer disabled:cursor-default focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 ${
+                copyDone
+                  ? 'bg-co-fern text-white border border-co-fern'
+                  : 'bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-600 text-co-ink dark:text-gray-200 hover:enabled:border-co-primary'
+              }`}
             >
-              {copying ? 'Copying…' : 'Copy to my decks'}
+              {copying ? 'Copying…' : copyDone ? 'Copied! ✓' : 'Copy to my decks'}
             </button>
             {copyError && (
               <p className="text-xs text-red-500 dark:text-red-400 max-w-[12rem] text-right">{copyError}</p>
@@ -262,6 +307,26 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
           categories={categories}
           onCategoriesChange={onCategoriesChange}
         />
+      )}
+
+      {isOwner && pendingCount > 0 && (
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="mt-4 flex items-center gap-2 bg-co-surface dark:bg-gray-800/50 border border-co-border dark:border-gray-700 rounded-2xl px-4 py-3 text-sm text-co-muted dark:text-gray-400"
+        >
+          <span className="flex gap-1" aria-hidden="true">
+            <span className="loading-dot" />
+            <span className="loading-dot" />
+            <span className="loading-dot" />
+          </span>
+          <span>
+            Generating word breakdowns for{' '}
+            <span className="font-semibold text-co-ink dark:text-gray-200">{pendingCount}</span>
+            {' '}{pendingCount === 1 ? 'card' : 'cards'}…
+          </span>
+        </div>
       )}
 
       {cards.length > 0 && isOwner && (
@@ -412,6 +477,9 @@ export default function Week({ weekId, onNavigate, dark, onToggleDark, categorie
                         </span>
                       ))}
                     </div>
+                  )}
+                  {pendingBreakdowns.has(card.id) && (
+                    <span aria-hidden="true" className="absolute top-2 right-2 w-2 h-2 rounded-full bg-co-primary animate-pulse" />
                   )}
                 </button>
               )
