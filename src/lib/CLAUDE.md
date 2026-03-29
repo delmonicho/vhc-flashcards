@@ -62,7 +62,9 @@ Proxies requests to `/api/translate` (Vercel serverless function). `GOOGLE_API_K
 
 ## auth.js
 
-Thin wrappers over Supabase auth. Exports: `signInWithMagicLink(email)`, `signOut()`, `getCurrentUser()`, `getProfile(userId)`, `updateProfile(userId, updates)`, `deleteAccount()`. Import `useAuth()` from `AuthContext` in components instead of calling these directly.
+Thin wrappers over Supabase auth. Exports: `signInWithMagicLink(email)`, `signInWithGoogle()`, `signInWithPassword(email, password)`, `signUpWithPassword(email, password)`, `signOut()`, `getCurrentUser()`, `getProfile(userId)`, `updateProfile(userId, updates)`, `deleteAccount()`. Import `useAuth()` from `AuthContext` in components instead of calling these directly.
+
+**Google OAuth** requires the Google provider to be enabled in the Supabase Dashboard (Authentication → Providers) with valid Client ID + Secret from Google Cloud Console. The authorized redirect URI in Google Cloud must include `https://zmbfpwjbnqsqywdeymow.supabase.co/auth/v1/callback`. The `signInWithGoogle()` call redirects the browser away — no in-page callback needed.
 
 ## supabase.js
 
