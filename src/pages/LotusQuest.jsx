@@ -27,15 +27,15 @@ export default function LotusQuest({ deckId, onNavigate }) {
   useEffect(() => {
     async function load() {
       const [
-        { data: deckData,  error: deckError  },
-        { data: cardsData, error: cardsError  },
-        { data: statsData, error: statsError  },
+        { data: deckData, error: deckError },
+        { data: cardsData, error: cardsError },
+        { data: statsData, error: statsError },
       ] = await Promise.all([
         supabase.from('decks').select('*').eq('id', deckId).single(),
         supabase.from('flashcards').select('*').eq('deck_id', deckId).order('created_at', { ascending: false }),
         supabase.from('game_stats').select('*').eq('deck_id', deckId).maybeSingle(),
       ])
-      if (deckError)  logError('Failed to load deck for lotus quest', { page: 'lotus-quest', action: 'fetchData', err: deckError, details: { deckId } })
+      if (deckError) logError('Failed to load deck for lotus quest', { page: 'lotus-quest', action: 'fetchData', err: deckError, details: { deckId } })
       if (cardsError) logError('Failed to load cards for lotus quest', { page: 'lotus-quest', action: 'fetchData', err: cardsError, details: { deckId } })
       if (statsError) logError('Failed to load game stats', { page: 'lotus-quest', action: 'fetchData', err: statsError, details: { deckId } })
       setDeck(deckData)
@@ -99,8 +99,8 @@ export default function LotusQuest({ deckId, onNavigate }) {
 
   if (loading) {
     return (
-      <div className="pixel-mode min-h-screen flex items-center justify-center">
-        <div className="font-pixel-ui text-[#888] text-xs">LOADING...</div>
+      <div className="pixel-mode min-h-screen w-full flex items-center justify-center">
+        <div className="font-pixel-ui text-[#888] text-sm">LOADING...</div>
       </div>
     )
   }
@@ -145,9 +145,9 @@ export default function LotusQuest({ deckId, onNavigate }) {
   if (phase === 'score' && scoreInfo) {
     const stats = getMasteryStats(cards, masteryData)
     return (
-      <div className="pixel-mode min-h-screen flex flex-col items-center justify-center px-4 py-8 gap-8">
-        <div className="font-pixel-ui text-[#F5A623] text-base leading-relaxed text-center">QUEST COMPLETE!</div>
-        <div className="font-pixel-ui pixel-border bg-[#1a2030] p-6 flex flex-col gap-4 text-xs leading-loose text-center w-full max-w-xs">
+      <div className="pixel-mode min-h-screen w-full flex flex-col items-center justify-center px-4 py-8 gap-8">
+        <div className="font-pixel-ui text-[#F5A623] text-xl leading-relaxed text-center">QUEST COMPLETE!</div>
+        <div className="font-pixel-ui pixel-border bg-[#1a2030] p-8 flex flex-col gap-4 text-sm leading-loose text-center w-full max-w-sm">
           <div>CORRECT: <span className="text-[#5BAF7A]">{scoreInfo.correct}</span> / {scoreInfo.total}</div>
           <div className="space-y-1">
             <div className="text-[#888] mb-1">DECK PROGRESS</div>
@@ -158,13 +158,13 @@ export default function LotusQuest({ deckId, onNavigate }) {
         <div className="flex gap-4">
           <button
             onClick={() => setPhase('hub')}
-            className="font-pixel-ui pixel-border bg-[#1a2030] text-[#e0e0e0] px-6 py-3 text-xs hover:bg-[#243040] active:scale-95 transition-transform cursor-pointer"
+            className="font-pixel-ui pixel-border bg-[#1a2030] text-[#e0e0e0] px-6 py-4 text-sm hover:bg-[#243040] active:scale-95 transition-transform cursor-pointer"
           >
             PLAY AGAIN
           </button>
           <button
             onClick={() => onNavigate('deck', deckId)}
-            className="font-pixel-ui pixel-border bg-[#E8526A] text-white px-6 py-3 text-xs hover:bg-[#c43e56] active:scale-95 transition-transform cursor-pointer"
+            className="font-pixel-ui pixel-border bg-[#E8526A] text-white px-6 py-4 text-sm hover:bg-[#c43e56] active:scale-95 transition-transform cursor-pointer"
           >
             BACK TO WEEK
           </button>
@@ -179,67 +179,70 @@ export default function LotusQuest({ deckId, onNavigate }) {
   const stats = getMasteryStats(cards, masteryData)
 
   return (
-    <div className="pixel-mode min-h-screen px-4 py-8 max-w-lg mx-auto">
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <div className="font-pixel-ui font-bold text-[#E8526A] text-xl leading-relaxed mb-2">LOTUS QUEST</div>
-        <div className="font-pixel-ui text-[#888] text-[10px]">▸ {deck?.title ?? '...'}</div>
-      </div>
+    <div className="pixel-mode min-h-screen w-full">
+      <div className="max-w-2xl mx-auto px-8 py-10">
+        {/* Header */}
+        <div className="mb-10 text-center">
+          <div className="font-pixel-ui font-bold text-co-primary text-3xl leading-relaxed mb-2">LOTUS QUEST</div>
+          <div className="font-pixel-ui text-[#888] text-sm">▸ {deck?.title ?? '...'}</div>
+        </div>
 
-      {/* Mode grid */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <ModeCard
-          icon="⚔"
-          label="WORD WARRIOR"
-          description="Defeat cards with your knowledge"
-          enabled={hasCards}
-          onClick={() => setPhase('word-warrior')}
-        />
-        <ModeCard
-          icon="⚡"
-          label="SPEED SCROLL"
-          description=""
-          enabled={false}
-          comingSoon
-        />
-        <ModeCard
-          icon="🧩"
-          label="CHUNK BUILDER"
-          description="Reassemble Vietnamese phrases"
-          enabled={hasBreakdowns}
-          onClick={startChunkBuilder}
-        />
-        <ModeCard
-          icon="♪"
-          label="TONE TOWER"
-          description=""
-          enabled={false}
-          comingSoon
-        />
-      </div>
+        {/* Mode grid */}
+        <div className="grid grid-cols-2 gap-5 mb-10">
+          <ModeCard
+            icon="⚔"
+            label="WORD WARRIOR"
+            description="Defeat cards with your knowledge"
+            enabled={hasCards}
+            onClick={() => setPhase('word-warrior')}
+          />
+          <ModeCard
+            icon="⚡"
+            label="SPEED SCROLL"
+            description=""
+            enabled={false}
+            comingSoon
+          />
+          <ModeCard
+            icon="🧩"
+            label="CHUNK BUILDER"
+            description="Reassemble Vietnamese phrases"
+            enabled={hasBreakdowns}
+            onClick={startChunkBuilder}
+          />
+          <ModeCard
+            icon="♪"
+            label="TONE TOWER"
+            description=""
+            enabled={false}
+            comingSoon
+          />
+        </div>
 
-      {/* Mastery stats panel */}
-      <div className="pixel-border bg-[#1a2030] p-4 mb-8 space-y-3">
-        <MasteryBar cards={cards} masteryData={masteryData} compact pixel />
-        <div className="flex justify-around text-center text-[10px] leading-loose">
+        {/* Stats row */}
+        <div className="pixel-border bg-[#1a2030] p-6 flex justify-around text-center text-sm leading-loose mb-10">
           <div>
-            <div className="font-pixel-score text-[#5BAF7A]">{stats.mastered}</div>
+            <div className="font-pixel-score text-co-gold text-lg">{loadXP().xp}</div>
+            <div className="text-[#888]">XP</div>
+          </div>
+          <div>
+            <div className="font-pixel-score text-co-fern text-lg">{mastered}</div>
             <div className="text-[#888]">MASTERED</div>
           </div>
           <div>
-            <div className="font-pixel-score text-[#e0e0e0]">{gameStats?.streak_days ?? 0}</div>
+            <div className="font-pixel-score text-[#e0e0e0] text-lg">{gameStats?.streak_days ?? 0}</div>
             <div className="text-[#888]">DAY STREAK</div>
           </div>
         </div>
-      </div>
 
-      {/* Back link */}
-      <button
-        onClick={() => onNavigate('deck', deckId)}
-        className="font-pixel-ui block text-[10px] text-[#888] hover:text-[#e0e0e0] transition-colors cursor-pointer"
-      >
-        ← BACK TO WEEK
-      </button>
+        {/* Back link */}
+        <button
+          onClick={() => onNavigate('deck', deckId)}
+          className="font-pixel-ui block text-sm text-[#888] hover:text-[#e0e0e0] transition-colors cursor-pointer"
+        >
+          ← BACK TO WEEK
+        </button>
+      </div>
     </div>
   )
 }
@@ -249,20 +252,19 @@ function ModeCard({ icon, label, description, enabled, onClick, comingSoon }) {
     <button
       onClick={enabled ? onClick : undefined}
       disabled={!enabled}
-      className={`pixel-border p-4 flex flex-col gap-2 text-left transition-transform ${
-        enabled
+      className={`pixel-border p-4 flex flex-col gap-2 text-left transition-transform ${enabled
           ? 'bg-[#1a2030] hover:bg-[#243040] active:scale-95 cursor-pointer'
           : 'bg-[#111518] cursor-default opacity-60'
-      }`}
+        }`}
     >
-      <div className="text-2xl">{icon}</div>
-      <div className="font-pixel-ui text-[10px] text-[#e0e0e0] leading-snug">{label}</div>
+      <div className="text-3xl">{icon}</div>
+      <div className="font-pixel-ui text-sm text-[#e0e0e0] leading-snug">{label}</div>
       {comingSoon ? (
-        <span className="text-[8px] text-[#F5A623] border border-[#F5A623] px-1 py-px w-fit">
+        <span className="text-xs text-co-gold border border-co-gold px-1 py-px w-fit">
           COMING SOON
         </span>
       ) : (
-        <div className="text-[8px] text-[#888] leading-snug">{description}</div>
+        <div className="text-xs text-[#888] leading-snug">{description}</div>
       )}
     </button>
   )
