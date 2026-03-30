@@ -310,7 +310,7 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
           onCategoriesChange={onCategoriesChange}
         />
       )}
-      {isOwner && (
+      {isOwner && import.meta.env.DEV && (
         <button
           onClick={() => setShowPdfImport(true)}
           className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-co-border dark:border-gray-700 text-sm font-semibold text-co-muted dark:text-gray-400 hover:border-co-primary hover:text-co-primary dark:hover:text-co-primary transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
@@ -515,7 +515,7 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
           triggerRef={lastClickedRef}
         />
       )}
-      {showPdfImport && isOwner && (
+      {showPdfImport && isOwner && import.meta.env.DEV && (
         <PdfImportModal
           deckId={deckId}
           categories={categories}
