@@ -94,7 +94,7 @@ function AppInner() {
         {view.page === 'deck' ? (
           <Deck deckId={view.deckId} onNavigate={navigate} {...themeProps} categories={categories} onCategoriesChange={setCategories} justCopied={view.justCopied} />
         ) : view.page === 'study' ? (
-          <Study deckId={view.deckId} onNavigate={navigate} {...themeProps} />
+          <Study deckId={view.deckId} onNavigate={navigate} {...themeProps} categories={categories} />
         ) : view.page === 'quiz' ? (
           <Quiz deckId={view.deckId} onNavigate={navigate} {...themeProps} />
         ) : view.page === 'lotus-quest' ? (

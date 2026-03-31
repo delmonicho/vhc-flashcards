@@ -78,7 +78,7 @@ function InlineChunks({ breakdown, field, onSpeak, speakingKey }) {
   )
 }
 
-export default function Study({ deckId, onNavigate, dark, onToggleDark }) {
+export default function Study({ deckId, onNavigate, dark, onToggleDark, categories = [] }) {
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
   const [index, setIndex] = useState(0)
@@ -87,6 +87,7 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark }) {
   const [showVoiceBanner, setShowVoiceBanner] = useState(false)
   const [gridView, setGridView] = useState(false)
   const [showHint, setShowHint] = useState(false)
+  const [activeFilter, setActiveFilter] = useState('all')
   const touchStartX = useRef(null)
   const sliderRef = useRef(null)
   const isDragging = useRef(false)
@@ -122,18 +123,25 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark }) {
     return () => clearTimeout(timer)
   }, [cards.length])
 
+  const filteredCards = activeFilter === 'all'
+    ? cards
+    : cards.filter(c => (c.source || []).includes(activeFilter))
+
+  const presentCategoryIds = [...new Set(cards.flatMap(c => c.source || []))]
+  const presentCategories = categories.filter(c => presentCategoryIds.includes(c.id))
+
   // Option A: Keyboard navigation
   useEffect(() => {
-    if (gridView || cards.length === 0) return
+    if (gridView || filteredCards.length === 0) return
     function handleKey(e) {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
       if (e.key === 'ArrowLeft') { if (index > 0) goTo(index - 1) }
-      else if (e.key === 'ArrowRight') { if (index < cards.length - 1) goTo(index + 1) }
+      else if (e.key === 'ArrowRight') { if (index < filteredCards.length - 1) goTo(index + 1) }
       else if (e.key === ' ') { e.preventDefault(); setFlipped(f => !f) }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [index, cards.length, gridView])
+  }, [index, filteredCards.length, gridView])
 
   function goTo(newIndex) {
     cancelSpeech()
@@ -182,7 +190,7 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark }) {
     const rect = sliderRef.current?.getBoundingClientRect()
     if (!rect) return index
     const fraction = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
-    return Math.min(Math.floor(fraction * cards.length), cards.length - 1)
+    return Math.min(Math.floor(fraction * filteredCards.length), filteredCards.length - 1)
   }
 
   function handleSliderPointerDown(e) {
@@ -220,8 +228,9 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark }) {
     )
   }
 
-  const card = cards[index]
-  const progress = (index + 1) / cards.length
+  const safeIndex = Math.min(index, Math.max(filteredCards.length - 1, 0))
+  const card = filteredCards[safeIndex]
+  const progress = filteredCards.length > 0 ? (safeIndex + 1) / filteredCards.length : 0
 
   return (
     <div className="page-fade-in max-w-lg mx-auto px-4 py-6 md:px-8">
@@ -237,7 +246,7 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1.5">
             <div className="text-sm text-co-muted dark:text-gray-400">
-              {index + 1} / {cards.length}
+              {filteredCards.length > 0 ? safeIndex + 1 : 0} / {filteredCards.length}
             </div>
           </div>
           {/* Option B: Draggable scrubber slider */}
@@ -250,8 +259,8 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark }) {
             role="slider"
             aria-label="Navigate cards"
             aria-valuemin={1}
-            aria-valuemax={cards.length}
-            aria-valuenow={index + 1}
+            aria-valuemax={filteredCards.length}
+            aria-valuenow={filteredCards.length > 0 ? safeIndex + 1 : 0}
             className="w-full relative flex items-center py-2 cursor-grab active:cursor-grabbing touch-none select-none"
           >
             <div className="w-full h-2 bg-co-border dark:bg-gray-700 rounded-full overflow-hidden">
@@ -289,6 +298,39 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark }) {
 
       </div>
 
+      {/* Tag filter pills */}
+      {presentCategories.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button
+            onClick={() => { setActiveFilter('all'); setIndex(0); setFlipped(false) }}
+            className={`px-3 py-1 rounded-full text-sm font-medium cursor-pointer transition-all ${
+              activeFilter === 'all'
+                ? 'bg-co-ink text-white dark:bg-gray-100 dark:text-gray-900'
+                : 'bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-400 hover:bg-co-border/40'
+            }`}
+          >
+            All ({cards.length})
+          </button>
+          {presentCategories.map(cat => {
+            const count = cards.filter(c => (c.source || []).includes(cat.id)).length
+            return (
+              <button
+                key={cat.id}
+                onClick={() => { setActiveFilter(cat.id); setIndex(0); setFlipped(false) }}
+                className={`px-3 py-1 rounded-full text-sm font-medium cursor-pointer transition-all ${
+                  activeFilter === cat.id ? 'ring-2 ring-offset-1 ring-co-ink/20' : 'opacity-80 hover:opacity-100'
+                }`}
+                style={activeFilter === cat.id
+                  ? { backgroundColor: cat.color, color: '#2D1B12' }
+                  : { backgroundColor: cat.color + '66', color: '#2D1B12' }}
+              >
+                {cat.label} ({count})
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* No Vietnamese voice banner */}
       {showVoiceBanner && (
         <div className="flex items-start gap-3 bg-co-cream dark:bg-amber-900/20 border border-co-gold/40 rounded-2xl px-4 py-3 mb-4 text-sm text-co-ink dark:text-amber-300">
@@ -307,15 +349,25 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark }) {
       )}
 
       {/* Option C: Grid overview */}
-      {gridView ? (
+      {filteredCards.length === 0 ? (
+        <div className="text-center py-12 space-y-3">
+          <p className="text-co-muted dark:text-gray-400">No cards match this filter.</p>
+          <button
+            onClick={() => { setActiveFilter('all'); setIndex(0) }}
+            className="text-co-primary font-semibold cursor-pointer"
+          >
+            Show all cards
+          </button>
+        </div>
+      ) : gridView ? (
         <div className="page-fade-in">
           <div className="grid grid-cols-3 gap-2">
-            {cards.map((c, i) => (
+            {filteredCards.map((c, i) => (
               <button
                 key={c.id}
                 onClick={() => { goTo(i); setGridView(false) }}
                 className={`rounded-2xl p-3 text-left transition-all active:scale-95 cursor-pointer ${
-                  i === index
+                  i === safeIndex
                     ? 'bg-co-primary/10 dark:bg-co-primary/20 ring-2 ring-co-primary'
                     : 'bg-co-surface dark:bg-gray-800 hover:bg-co-border/40 dark:hover:bg-gray-700'
                 }`}
@@ -323,11 +375,21 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark }) {
                 <div className="text-sm font-semibold text-co-ink dark:text-gray-100 line-clamp-2 leading-snug">
                   {c.vietnamese}
                 </div>
-                {c.source && (
-                  <div className={`mt-1.5 text-xs font-medium ${
-                    c.source === 'class' ? 'text-co-primary' : 'text-teal-500 dark:text-teal-400'
-                  }`}>
-                    {c.source === 'class' ? 'Class' : 'HW'}
+                {(c.source || []).length > 0 && (
+                  <div className="flex flex-wrap gap-0.5 mt-1.5">
+                    {(c.source || []).slice(0, 2).map(tagId => {
+                      const cat = categories.find(ct => ct.id === tagId)
+                      if (!cat) return null
+                      return (
+                        <span
+                          key={tagId}
+                          className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+                          style={{ backgroundColor: cat.color, color: '#2D1B12' }}
+                        >
+                          {cat.label}
+                        </span>
+                      )
+                    })}
                   </div>
                 )}
               </button>
@@ -409,16 +471,16 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark }) {
 
             {/* Navigation arrows */}
             <button
-              onClick={e => { e.stopPropagation(); goTo(index - 1) }}
-              disabled={index === 0}
+              onClick={e => { e.stopPropagation(); goTo(safeIndex - 1) }}
+              disabled={safeIndex === 0}
               className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-co-ink/50 dark:text-white/40 disabled:opacity-0 hover:bg-black/20 dark:hover:bg-white/20 hover:text-co-ink dark:hover:text-white active:scale-90 transition-all duration-150 text-3xl cursor-pointer"
               aria-label="Previous card"
             >
               ‹
             </button>
             <button
-              onClick={e => { e.stopPropagation(); goTo(index + 1) }}
-              disabled={index === cards.length - 1}
+              onClick={e => { e.stopPropagation(); goTo(safeIndex + 1) }}
+              disabled={safeIndex === filteredCards.length - 1}
               className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-co-ink/50 dark:text-white/40 disabled:opacity-0 hover:bg-black/20 dark:hover:bg-white/20 hover:text-co-ink dark:hover:text-white active:scale-90 transition-all duration-150 text-3xl cursor-pointer"
               aria-label="Next card"
             >
