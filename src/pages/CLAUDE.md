@@ -58,11 +58,17 @@ Any new card creation path (bulk import, etc.) must also wire `handleBreakdownRe
 
 ## Study.jsx
 
+**Props:** Receives `categories` (array from App.jsx state) in addition to the standard page props. App.jsx passes this alongside `deckId`, `onNavigate`, `dark`, `onToggleDark`.
+
 **Cards are sorted oldest-first** (`created_at ASC`) — chronological order of addition. Opposite of Deck.jsx.
 
-**All navigation goes through `goTo(index)`** — resets `flipped`, `speakingKey`, and calls `cancelSpeech()`. Three input methods (swipe, keyboard, scrubber) all call `goTo`. Any new navigation method must too.
+**Tag filtering:** `activeFilter` state (`'all'` or a category id). `filteredCards` is derived each render from `cards` and `activeFilter`. All navigation, progress display, and rendering operate on `filteredCards` — never `cards` directly. `cards` is only used for the "no cards" empty-state guard and for computing filter pill counts. Filter pills only appear when the deck has at least one tagged card (`presentCategories.length > 0`).
 
-**Grid view and card view share `index` state.** Grid click calls `goTo(i)` then `setGridView(false)`.
+**All navigation goes through `goTo(index)`** — resets `flipped`, `speakingKey`, and calls `cancelSpeech()`. Three input methods (swipe, keyboard, scrubber) all call `goTo`. Any new navigation method must too. `index` always refers to position within `filteredCards`.
+
+**`safeIndex`** clamps `index` to `filteredCards.length - 1` to handle the moment a filter change shrinks the list below the current position. Use `safeIndex` (not `index`) when accessing `filteredCards[safeIndex]` and for nav arrow disabled states.
+
+**Grid view and card view share `index` state.** Grid click calls `goTo(i)` then `setGridView(false)`. Grid cards show colored category pills (up to 2) using the `categories` prop lookup — `source` is `text[]`, not a string.
 
 ## LotusQuest.jsx
 
