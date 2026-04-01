@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { extractPdfText, parseVocabPairs } from '../lib/pdfImport'
-import { addCategory, nextColor } from '../lib/categories'
+import { addCategory } from '../lib/categories'
 
 // Stable display colors per tag name so they don't shift between renders
 const TAG_COLORS = {
@@ -30,7 +30,6 @@ export default function PdfImportModal({ deckId, categories, onCategoriesChange,
   const [selectedCategories, setSelectedCategories] = useState(() =>
     categories.some(c => c.id === 'class') ? ['class'] : []
   )
-  const [importedCount, setImportedCount] = useState(0)
   const [importedTotal, setImportedTotal] = useState(0)
   const [importedCards, setImportedCards] = useState([])
   const [errorMsg, setErrorMsg] = useState('')
@@ -79,7 +78,6 @@ export default function PdfImportModal({ deckId, categories, onCategoriesChange,
   async function handleImport() {
     const toImport = edits.filter((_, i) => checked[i])
     setImportedTotal(toImport.length)
-    setImportedCount(0)
     setPhase('importing')
 
     // Create any suggested tag categories that don't exist yet
@@ -96,30 +94,20 @@ export default function PdfImportModal({ deckId, categories, onCategoriesChange,
       onCategoriesChange(currentCats)
     }
 
-    const results = []
-    for (let i = 0; i < toImport.length; i++) {
-      setImportedCount(i + 1)
-      const pair = toImport[i]
-      const source = [
+    const rows = toImport.map(pair => ({
+      deck_id: deckId,
+      user_id: user.id,
+      vietnamese: pair.vietnamese,
+      english: pair.english,
+      source: [
         ...selectedCategories,
         ...(pair.tag && activeSuggestedTags.has(pair.tag) ? [pair.tag] : []),
-      ]
-      try {
-        const { data } = await supabase
-          .from('flashcards')
-          .insert({
-            deck_id: deckId,
-            user_id: user.id,
-            vietnamese: pair.vietnamese,
-            english: pair.english,
-            source,
-            status: 'new',
-          })
-          .select()
-          .single()
-        if (data) results.push(data)
-      } catch { /* skip individual failures */ }
-    }
+      ],
+      status: 'new',
+    }))
+
+    const { data } = await supabase.from('flashcards').insert(rows).select()
+    const results = data ?? []
     setImportedCards(results)
     setPhase('done')
     onCardsImported(results)
@@ -363,7 +351,7 @@ export default function PdfImportModal({ deckId, categories, onCategoriesChange,
                 aria-atomic="true"
                 className="text-sm font-semibold text-co-ink dark:text-gray-100"
               >
-                Importing {importedCount} / {importedTotal} cards…
+                Importing {importedTotal} cards…
               </p>
             </div>
           )}
