@@ -10,6 +10,9 @@ const TAG_COLORS = {
   dialogue:   '#D6F5E3',
   poem:       '#EDE4FF',
   grammar:    '#FFF0C0',
+  review:     '#FFE8D6',
+  example:    '#D6F5E3',
+  exercise:   '#FCE4EC',
 }
 function tagColor(tag) {
   return TAG_COLORS[tag] ?? '#F0F0F0'
