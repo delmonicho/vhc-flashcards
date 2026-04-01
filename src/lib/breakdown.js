@@ -51,6 +51,7 @@ export async function getOrCreateBreakdown(vietnameseText, cardId, englishText) 
 
 // Optimized batch version for bulk import flows.
 // Reduces N cache reads + N cache writes + N flashcard updates → 1 + 1 + 1.
+// Claude API calls go from N concurrent to ceil(misses/20) sequential batch calls.
 // onCardReady(cardId, breakdown) is called as each breakdown becomes available.
 export async function batchGetOrCreateBreakdowns(cards, onCardReady) {
   if (cards.length === 0) return
@@ -70,35 +71,54 @@ export async function batchGetOrCreateBreakdowns(cards, onCardReady) {
   // Notify UI for cache hits immediately
   hits.forEach(card => onCardReady(card.id, cacheMap.get(normalizeVietnamese(card.vietnamese))))
 
-  // 2. Generate breakdowns for cache misses — all concurrent
-  const generated = []
-  await Promise.all(misses.map(async (card) => {
+  // 2. Batch generate for cache misses — one Claude call per chunk of 20 (sequential)
+  // De-duplicate by vi_key first so identical words only get generated once
+  const uniqueMisses = [...new Map(misses.map(c => [normalizeVietnamese(c.vietnamese), c])).values()]
+  const batchResultMap = new Map() // vi_key → breakdown
+
+  const CHUNK_SIZE = 20
+  for (let i = 0; i < uniqueMisses.length; i += CHUNK_SIZE) {
+    const chunk = uniqueMisses.slice(i, i + CHUNK_SIZE)
     try {
-      const { data: fnData, error: fnError } = await supabase.functions.invoke('generate-breakdown', {
-        body: { vietnamese: card.vietnamese, ...(card.english && { english: card.english }) },
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('batch-breakdown', {
+        body: { cards: chunk.map(c => ({ vietnamese: c.vietnamese, english: c.english })) },
       })
       if (fnError) throw new Error(fnError.message)
-      const { breakdown } = fnData
-      if (!Array.isArray(breakdown) || !breakdown[0]?.vi) throw new Error('unexpected response format')
-      generated.push({ vi_key: normalizeVietnamese(card.vietnamese), breakdown, cardId: card.id })
-      onCardReady(card.id, breakdown)
+      const { results } = fnData ?? {}
+      if (Array.isArray(results)) {
+        results.forEach((item, idx) => {
+          const bd = item?.breakdown
+          if (Array.isArray(bd) && bd[0]?.vi) {
+            batchResultMap.set(normalizeVietnamese(chunk[idx].vietnamese), bd)
+          }
+        })
+      }
     } catch (err) {
-      logError('Breakdown generation failed', { action: 'batch-breakdown', err, details: { vietnamese: card.vietnamese } })
+      logError('Batch breakdown chunk failed', { action: 'batch-breakdown', err, details: { chunkSize: chunk.length } })
     }
-  }))
+  }
 
-  // 3. Batch upsert new breakdowns to cache — single query
-  if (generated.length > 0) {
+  // Apply results to all miss cards (including any with duplicate vi_keys)
+  const generated = []
+  for (const card of misses) {
+    const vk = normalizeVietnamese(card.vietnamese)
+    const bd = batchResultMap.get(vk)
+    if (bd) {
+      generated.push({ vi_key: vk, breakdown: bd, cardId: card.id })
+      onCardReady(card.id, bd)
+    }
+  }
+
+  // 3. Batch upsert new breakdowns to cache (deduplicated by vi_key)
+  const cacheRows = [...new Map(generated.map(g => [g.vi_key, { vi_key: g.vi_key, breakdown: g.breakdown }])).values()]
+  if (cacheRows.length > 0) {
     const { error } = await supabase
       .from('breakdowns')
-      .upsert(
-        generated.map(({ vi_key, breakdown }) => ({ vi_key, breakdown })),
-        { onConflict: 'vi_key' }
-      )
+      .upsert(cacheRows, { onConflict: 'vi_key' })
     if (error) logError('Failed to batch cache breakdowns', { action: 'batch-breakdown-cache', err: error })
   }
 
-  // 4. Bulk update flashcard.breakdown — single RPC call for all cards (hits + misses)
+  // 4. Bulk update flashcard.breakdown — single RPC call for all cards (hits + generated)
   const flashcardUpdates = [
     ...hits.map(card => ({ id: card.id, breakdown: cacheMap.get(normalizeVietnamese(card.vietnamese)) })),
     ...generated.map(({ cardId, breakdown }) => ({ id: cardId, breakdown })),

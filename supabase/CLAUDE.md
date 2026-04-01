@@ -10,6 +10,20 @@ Edge Functions (Deno runtime) and database migrations for the remote Supabase pr
 - No `package.json` or `node_modules` in the functions directory
 - `fetch` is a global — no import needed
 
+## Edge Function: batch-breakdown
+
+**Purpose:** Generates morpheme breakdowns for multiple Vietnamese words in a single Claude call. Used by `batchGetOrCreateBreakdowns()` during PDF import to avoid rate-limiting from N concurrent requests.
+
+**Request:** `POST /functions/v1/batch-breakdown` with `{ cards: [{vietnamese, english?}] }` (max 20 per call)
+**Response:** `{ results: [{breakdown: [{vi, en}]}] }` — array in same order as input, matched by index.
+
+**Model:** `claude-haiku-4-5-20251001`. Processes up to 20 words per call; caller chunks larger imports.
+
+**Deploy:**
+```bash
+supabase functions deploy batch-breakdown --project-ref zmbfpwjbnqsqywdeymow
+```
+
 ## Edge Function: parse-vocab
 
 **Purpose:** Extracts `[{vietnamese, english}]` flashcard pairs from raw PDF text. Uses the same `ANTHROPIC_API_KEY` secret as `generate-breakdown`. Called by `src/lib/pdfImport.js` via `supabase.functions.invoke('parse-vocab', { body: { text } })`.
