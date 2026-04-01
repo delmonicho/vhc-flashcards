@@ -5,19 +5,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const SYSTEM_PROMPT = `You are a Vietnamese language assistant extracting flashcard vocabulary from class materials.
+const SYSTEM_PROMPT = `You are a Vietnamese language assistant extracting flashcard content from class materials.
 
 EXTRACT as separate cards — tag each pair with its section:
 - Vocabulary lists ("word = meaning", "word : meaning") → tag "vocabulary"
 - Antonym pairs ("trễ = late >< sớm = early") → extract EACH side as its own card, tag "vocabulary"
 - Grammar keywords introduced as headers (e.g. "Sẽ", "Sắp", "Hơi") — infer English meaning from the description that follows → tag "grammar"
-- Words or short phrases (≤8 words) from poem or song lyrics → tag "poem"
-- Words or short phrases from dialogue or conversation sections → tag "dialogue"
+- Example sentences in grammar notes (e.g. "Tôi đang chuẩn bị cơm tối = I'm preparing my dinner") → full Vietnamese sentence as front, English translation as back → tag "example"
+- Words, phrases, or lines from dialogue/conversation sections → tag "dialogue"
+- Sentences in Review (Ôn tập) sections → include as full sentence cards with English translation → tag "review"
+- Exercise sections headed by "Đặt câu hỏi" / "Form a question" or similar:
+  * For each numbered sentence, form the appropriate Vietnamese question targeting the key underlined or emphasized phrase
+  * Card: vietnamese = the question formed, english = English translation of that question
+  * Tag "exercise"
+- Words or short phrases from poem or song lyrics → tag "poem"
 
 SKIP:
-- Example sentences illustrating grammar (arrow sentences like "Anh ấy sẽ ăn trưa...")
-- English-only text, section headers, housekeeping items, exercise instructions, page numbers
-- Full sentences longer than 8 Vietnamese words
+- English-only text, section headers, housekeeping lines, page numbers
+- The exercise instruction line itself (not the numbered items)
 
 Return ONLY valid JSON — no markdown, no explanation.
 Format: {"pairs":[{"vietnamese":"...","english":"...","tag":"vocabulary"}]}`
@@ -49,7 +54,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 4096,
+        max_tokens: 8192,
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: truncatedText }],
       }),
