@@ -62,6 +62,9 @@ supabase secrets set ANTHROPIC_API_KEY=sk-ant-... --project-ref zmbfpwjbnqsqywde
 
 **RLS is enabled** on `decks`, `flashcards`, `game_stats`, and `profiles`. All rows are user-scoped via `user_id = auth.uid()`. Flashcards use a subquery via deck ownership. The `breakdowns` and `categories` tables are shared/public caches and have no RLS.
 
+**RPC functions:**
+- `bulk_update_card_breakdowns(updates jsonb)` — added in `20260401000000`. Takes a JSON array of `{id: uuid, breakdown: jsonb}` objects and updates all matching flashcards in a single query. Used by `batchGetOrCreateBreakdowns()` in `src/lib/breakdown.js`. RLS applies (only updates caller's own cards).
+
 **Recent migrations:**
 - `20260327000000_add_game_stats.sql` — per-deck game performance (XP, cards mastered, streak). `unique(deck_id)` constraint; streak logic: increment if last played yesterday or today, reset if gap > 1 day.
 - `20260327100000_add_categories_table.sql` — global categories (migrated from localStorage). `id` is text PK (slugified label).

@@ -49,6 +49,66 @@ export async function getOrCreateBreakdown(vietnameseText, cardId, englishText) 
   return breakdown
 }
 
+// Optimized batch version for bulk import flows.
+// Reduces N cache reads + N cache writes + N flashcard updates → 1 + 1 + 1.
+// onCardReady(cardId, breakdown) is called as each breakdown becomes available.
+export async function batchGetOrCreateBreakdowns(cards, onCardReady) {
+  if (cards.length === 0) return
+
+  const viKeys = cards.map(c => normalizeVietnamese(c.vietnamese))
+
+  // 1. Single batch cache lookup
+  const { data: cached } = await supabase
+    .from('breakdowns')
+    .select('vi_key, breakdown')
+    .in('vi_key', viKeys)
+
+  const cacheMap = new Map((cached ?? []).map(r => [r.vi_key, r.breakdown]))
+  const hits = cards.filter(c => cacheMap.has(normalizeVietnamese(c.vietnamese)))
+  const misses = cards.filter(c => !cacheMap.has(normalizeVietnamese(c.vietnamese)))
+
+  // Notify UI for cache hits immediately
+  hits.forEach(card => onCardReady(card.id, cacheMap.get(normalizeVietnamese(card.vietnamese))))
+
+  // 2. Generate breakdowns for cache misses — all concurrent
+  const generated = []
+  await Promise.all(misses.map(async (card) => {
+    try {
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('generate-breakdown', {
+        body: { vietnamese: card.vietnamese, ...(card.english && { english: card.english }) },
+      })
+      if (fnError) throw new Error(fnError.message)
+      const { breakdown } = fnData
+      if (!Array.isArray(breakdown) || !breakdown[0]?.vi) throw new Error('unexpected response format')
+      generated.push({ vi_key: normalizeVietnamese(card.vietnamese), breakdown, cardId: card.id })
+      onCardReady(card.id, breakdown)
+    } catch (err) {
+      logError('Breakdown generation failed', { action: 'batch-breakdown', err, details: { vietnamese: card.vietnamese } })
+    }
+  }))
+
+  // 3. Batch upsert new breakdowns to cache — single query
+  if (generated.length > 0) {
+    const { error } = await supabase
+      .from('breakdowns')
+      .upsert(
+        generated.map(({ vi_key, breakdown }) => ({ vi_key, breakdown })),
+        { onConflict: 'vi_key' }
+      )
+    if (error) logError('Failed to batch cache breakdowns', { action: 'batch-breakdown-cache', err: error })
+  }
+
+  // 4. Bulk update flashcard.breakdown — single RPC call for all cards (hits + misses)
+  const flashcardUpdates = [
+    ...hits.map(card => ({ id: card.id, breakdown: cacheMap.get(normalizeVietnamese(card.vietnamese)) })),
+    ...generated.map(({ cardId, breakdown }) => ({ id: cardId, breakdown })),
+  ]
+  if (flashcardUpdates.length > 0) {
+    const { error } = await supabase.rpc('bulk_update_card_breakdowns', { updates: flashcardUpdates })
+    if (error) logError('Failed to bulk update card breakdowns', { action: 'bulk-breakdown-write', err: error })
+  }
+}
+
 export async function triggerMissingBreakdowns() {
   const { data: cards, error } = await supabase
     .from('flashcards')

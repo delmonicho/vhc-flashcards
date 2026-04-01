@@ -24,6 +24,8 @@ Utility and service modules. Each has sharp edges worth knowing before editing.
 
 Steps 3 and 4 must not be reversed. Always call `getOrCreateBreakdown(vi, cardId, en?)` after the card is already saved to DB — if the card doesn't exist yet, the flashcard update silently no-ops.
 
+**`batchGetOrCreateBreakdowns(cards, onCardReady)`** — use this for bulk import flows (e.g. PDF import). Takes an array of `{id, vietnamese, english}` objects and a callback fired as each breakdown becomes available. Collapses N cache reads, N cache writes, and N flashcard updates into 1 each via a batch SELECT, batch UPSERT, and the `bulk_update_card_breakdowns` RPC. Edge Function calls remain 1-per-cache-miss (unavoidable). `onCardReady(cardId, breakdown)` is called as each breakdown resolves so the UI can update incrementally.
+
 **`getOrCreateBreakdown(vietnameseText, cardId, englishText?)`** — `englishText` is optional but should always be passed from call sites. It's forwarded to the Edge Function and included in the Claude prompt so ambiguous words (e.g. "đá" = kick vs. dump) resolve to the correct meaning. The cache key is still VI-only — English context only affects generation, not cache lookup.
 
 **`triggerMissingBreakdowns()`** — dev/one-time utility. Fetches all cards with `breakdown = null` and calls `getOrCreateBreakdown` for each. Run from the browser console after bulk imports or data migrations.

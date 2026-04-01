@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getCategoryColor, deleteCategory, upsertCategories, nextColor } from '../lib/categories'
 import { logError } from '../lib/logger'
-import { stripDiacritics, getOrCreateBreakdown } from '../lib/breakdown'
+import { stripDiacritics, getOrCreateBreakdown, batchGetOrCreateBreakdowns } from '../lib/breakdown'
 import { useAuth } from '../context/AuthContext'
 import VocabInput from '../components/VocabInput'
 import CardEditModal from '../components/CardEditModal'
@@ -131,11 +131,8 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
 
   function handlePdfImport(newCards) {
     setCards(prev => [...newCards, ...prev])
-    newCards.forEach(card =>
-      getOrCreateBreakdown(card.vietnamese, card.id, card.english)
-        .then(bd => handleBreakdownReady(card.id, bd))
-        .catch(err => logError('pdf import breakdown failed', { page: 'deck', action: 'breakdown', err }))
-    )
+    batchGetOrCreateBreakdowns(newCards, handleBreakdownReady)
+      .catch(err => logError('pdf import breakdown failed', { page: 'deck', action: 'batch-breakdown', err }))
   }
 
   function handleModalSave(updatedCard) {
