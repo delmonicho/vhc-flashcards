@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { updateProfile, deleteAccount } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { getMasteryStage, getMasteryStats, loadMasteryFromSupabase, migrateLocalToSupabase } from '../lib/mastery'
-import MasteryBar from '../components/MasteryBar'
+import MasteryBar, { STAGES } from '../components/MasteryBar'
 
 const AVATAR_COLORS = [
   { value: '#E8526A', label: 'Coral' },
@@ -22,6 +22,16 @@ const AVATAR_ICONS = [
   { value: '🐉', label: 'Dragon' },
   { value: '🍚', label: 'Rice' },
   { value: '🛵', label: 'Moped' },
+]
+
+// Short descriptions for the one-time stage legend in the vocabulary dashboard.
+// Index-aligned with STAGES from MasteryBar (0=Unseen … 4=Mastered).
+const STAGE_DESCS = [
+  'Not practiced yet',
+  'Just getting started',
+  'Building a streak',
+  'Strong recall',
+  'Long-term memory',
 ]
 
 const NATIVE_LANGUAGES = ['English', 'French', 'Spanish', 'Mandarin', 'Japanese', 'Korean', 'Other']
@@ -47,8 +57,9 @@ export default function Profile({ onNavigate }) {
 
   // Vocabulary dashboard state
   const [vocabLoading, setVocabLoading] = useState(true)
-  const [deckMastery, setDeckMastery] = useState([]) // [{ deck, cards, masteryData }]
+  const [deckMastery, setDeckMastery] = useState([]) // [{ deck, cards, masteryData, isPublic? }]
   const [totalMastered, setTotalMastered] = useState(0)
+  const [masteryExpanded, setMasteryExpanded] = useState(false)
 
   useEffect(() => {
     if (profile) {
@@ -70,15 +81,17 @@ export default function Profile({ onNavigate }) {
   useEffect(() => {
     if (!user) return
     async function loadVocab() {
-      // Fetch decks + cards in parallel with Supabase mastery
+      // Fetch own decks + cards + mastery store + tracked deck IDs in parallel
       const [
         { data: decks },
         { data: cards },
         masteryStore,
+        { data: trackedRows },
       ] = await Promise.all([
         supabase.from('decks').select('id, title').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('flashcards').select('id, deck_id').eq('user_id', user.id),
         loadMasteryFromSupabase(user.id, supabase),
+        supabase.from('card_mastery').select('deck_id').eq('user_id', user.id),
       ])
 
       const deckList = decks ?? []
@@ -89,7 +102,7 @@ export default function Profile({ onNavigate }) {
       for (const c of cardList) deckCardMap[c.id] = c.deck_id
       migrateLocalToSupabase(user.id, deckCardMap, supabase)
 
-      // Group cards by deck
+      // Group own cards by deck
       const cardsByDeck = {}
       for (const c of cardList) {
         if (!cardsByDeck[c.deck_id]) cardsByDeck[c.deck_id] = []
@@ -104,10 +117,34 @@ export default function Profile({ onNavigate }) {
           masteryData: masteryStore,
         }))
 
-      // Total mastered across all decks
+      // Find public decks the user has practiced (tracked in card_mastery but not their own deck)
+      const ownDeckIds = new Set(deckList.map(d => d.id))
+      const allTrackedDeckIds = [...new Set((trackedRows ?? []).map(r => r.deck_id))]
+      const publicDeckIds = allTrackedDeckIds.filter(id => id && !ownDeckIds.has(id))
+
+      if (publicDeckIds.length > 0) {
+        const [{ data: publicDecksData }, { data: publicCardsData }] = await Promise.all([
+          supabase.from('decks').select('id, title').in('id', publicDeckIds),
+          supabase.from('flashcards').select('id, deck_id').in('deck_id', publicDeckIds),
+        ])
+        const publicCardsByDeck = {}
+        for (const c of publicCardsData ?? []) {
+          if (!publicCardsByDeck[c.deck_id]) publicCardsByDeck[c.deck_id] = []
+          publicCardsByDeck[c.deck_id].push(c)
+        }
+        for (const d of publicDecksData ?? []) {
+          if (publicCardsByDeck[d.id]?.length > 0) {
+            rows.push({ deck: d, cards: publicCardsByDeck[d.id], masteryData: masteryStore, isPublic: true })
+          }
+        }
+      }
+
+      // Total mastered across all rows (own + public)
       let mastered = 0
-      for (const c of cardList) {
-        if (getMasteryStage(masteryStore[c.id]) === 4) mastered++
+      for (const { cards: rowCards } of rows) {
+        for (const c of rowCards) {
+          if (getMasteryStage(masteryStore[c.id]) === 4) mastered++
+        }
       }
 
       setDeckMastery(rows)
@@ -191,26 +228,45 @@ export default function Profile({ onNavigate }) {
           </p>
         ) : (
           <div className="space-y-5">
-            {deckMastery.map(({ deck, cards, masteryData }) => {
-              const stats = getMasteryStats(cards, masteryData)
-              const strong = stats.confident + stats.mastered
-              return (
-                <div key={deck.id} className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() => onNavigate('deck', deck.id)}
-                      className="text-sm font-medium text-co-ink dark:text-gray-100 hover:text-co-primary dark:hover:text-co-primary transition-colors cursor-pointer text-left"
-                    >
-                      {deck.title}
-                    </button>
-                    <span className="text-xs text-co-muted dark:text-gray-400">
-                      {strong} / {stats.total} strong
-                    </span>
+            {/* Stage legend — defined once, applies to all decks below */}
+            <div className="grid grid-cols-2 min-[440px]:grid-cols-3 sm:grid-cols-5 gap-x-3 gap-y-2.5 pb-4 border-b border-co-border dark:border-gray-700">
+              {STAGES.map(({ key, label, className }, i) => (
+                <div key={key} className="flex items-start gap-1.5">
+                  <span className={`mt-0.5 shrink-0 w-2.5 h-2.5 rounded-sm ${className}`} />
+                  <div>
+                    <div className="text-xs font-medium text-co-ink dark:text-gray-100 leading-tight">{label}</div>
+                    <div className="text-[11px] leading-tight text-co-muted dark:text-gray-400">{STAGE_DESCS[i]}</div>
                   </div>
-                  <MasteryBar cards={cards} masteryData={masteryData} />
                 </div>
-              )
-            })}
+              ))}
+            </div>
+
+            {(masteryExpanded || deckMastery.length <= 6 ? deckMastery : deckMastery.slice(0, 6)).map(({ deck, cards, masteryData, isPublic }) => (
+              <div key={deck.id} className="space-y-1.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <button
+                    onClick={() => onNavigate('deck', deck.id)}
+                    className="text-sm font-medium text-co-ink dark:text-gray-100 hover:text-co-primary dark:hover:text-co-primary transition-colors cursor-pointer text-left truncate"
+                  >
+                    {deck.title}
+                  </button>
+                  {isPublic && (
+                    <span className="shrink-0 text-[10px] font-medium text-co-muted dark:text-gray-500 border border-co-border dark:border-gray-600 rounded px-1 py-0.5 leading-none">
+                      Public
+                    </span>
+                  )}
+                </div>
+                <MasteryBar cards={cards} masteryData={masteryData} />
+              </div>
+            ))}
+            {deckMastery.length > 6 && (
+              <button
+                onClick={() => setMasteryExpanded(v => !v)}
+                className="w-full text-sm text-co-primary hover:underline cursor-pointer text-left pt-1 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 rounded"
+              >
+                {masteryExpanded ? 'Show less' : `Show all ${deckMastery.length} decks`}
+              </button>
+            )}
           </div>
         )}
       </div>

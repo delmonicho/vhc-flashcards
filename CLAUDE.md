@@ -41,6 +41,7 @@ decks         id, user_id (FK → auth.users), title, is_public (boolean, defaul
 flashcards    id, deck_id, user_id (FK → auth.users), vietnamese, english, source (any string), status, breakdown (JSONB nullable), created_at
 breakdowns    vi_key (PK), breakdown (JSONB)   ← cache table
 categories    id (text PK), label, color, created_at
+card_mastery  user_id, card_id, deck_id, correct, incorrect, streak, last_seen, sessions_count  ← PK (user_id, card_id)
 game_stats    id, user_id, deck_id (unique per user), xp, cards_mastered, streak_days, last_played, created_at
 logs          id, type ('error'|'event'|'perf'), page, action, message, details (JSONB), created_at
 profiles      id (FK → auth.users PK), display_name, avatar_color, native_language, learning_language, class_name, created_at

@@ -69,11 +69,11 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
   const [togglingId, setTogglingId] = useState(null)
   const editInputRef = useRef(null)
 
-  // Tab + Public Decks state
+  // Tab + Shared Decks state
   const [tab, setTab] = useState('mine')
-  const [publicDecks, setPublicDecks] = useState([])
-  const [publicDecksLoading, setPublicDecksLoading] = useState(false)
-  const [publicFetched, setPublicFetched] = useState(false)
+  const [classmateDecks, setClassmateDecks] = useState([])
+  const [sharedDecksLoading, setSharedDecksLoading] = useState(false)
+  const [sharedFetched, setSharedFetched] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -104,8 +104,8 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
     setLoading(false)
   }
 
-  async function fetchPublicDecks() {
-    setPublicDecksLoading(true)
+  async function fetchSharedDecks() {
+    setSharedDecksLoading(true)
     const { data: pubWeeks, error: weeksErr } = await supabase
       .from('decks')
       .select('*')
@@ -114,8 +114,8 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       .order('created_at', { ascending: false })
 
     if (weeksErr) {
-      logError('Failed to load public decks', { page: 'home', action: 'fetchPublicDecks', err: weeksErr })
-      setPublicDecksLoading(false)
+      logError('Failed to load shared decks', { page: 'home', action: 'fetchSharedDecks', err: weeksErr })
+      setSharedDecksLoading(false)
       return
     }
 
@@ -130,9 +130,9 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]))
     }
 
-    setPublicDecks((pubWeeks || []).map(w => ({ ...w, author: profileMap[w.user_id] ?? null })))
-    setPublicDecksLoading(false)
-    setPublicFetched(true)
+    setClassmateDecks((pubWeeks || []).map(w => ({ ...w, author: profileMap[w.user_id] ?? null })))
+    setSharedDecksLoading(false)
+    setSharedFetched(true)
   }
 
   async function createWeek(e) {
@@ -241,16 +241,16 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
         </button>
         <button
           onClick={() => {
-            setTab('public')
-            if (!publicFetched && !publicDecksLoading) fetchPublicDecks()
+            setTab('shared')
+            if (!sharedFetched && !sharedDecksLoading) fetchSharedDecks()
           }}
           className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
-            tab === 'public'
+            tab === 'shared'
               ? 'bg-white dark:bg-gray-900 text-co-ink dark:text-gray-100 shadow-sm'
               : 'text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
           }`}
         >
-          Public Decks
+          Shared Decks
         </button>
       </div>
 
@@ -316,7 +316,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
                       {cardCounts[week.id] || 0}{' '}
                       {(cardCounts[week.id] || 0) === 1 ? 'card' : 'cards'}
                       {week.is_public && (
-                        <span className="ml-2 text-co-fern dark:text-green-400 font-semibold">· Public</span>
+                        <span className="ml-2 text-co-fern dark:text-green-400 font-semibold">· Shared</span>
                       )}
                     </div>
                   </button>
@@ -325,16 +325,16 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
                   <button
                     onClick={e => togglePublic(week, e)}
                     disabled={togglingId === week.id}
-                    aria-label={week.is_public ? 'Make deck private' : 'Make deck public'}
+                    aria-label={week.is_public ? 'Make deck private' : 'Share deck'}
                     className="w-11 h-11 flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-40 cursor-pointer disabled:cursor-default"
                   >
                     {week.is_public ? (
-                      /* Globe — deck is public */
+                      /* Open lock — deck is shared */
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-co-fern dark:text-green-400" aria-hidden="true">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M14.5 1A4.5 4.5 0 0010 5.5V9H3a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-1.5V5.5a3 3 0 116 0v2.25a.75.75 0 001.5 0V5.5A4.5 4.5 0 0014.5 1z" clipRule="evenodd" />
                       </svg>
                     ) : (
-                      /* Lock — deck is private */
+                      /* Closed lock — deck is private */
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-co-muted dark:text-gray-500 hover:text-co-primary" aria-hidden="true">
                         <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
                       </svg>
@@ -412,40 +412,86 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
         </>
       )}
 
-      {/* ── Public Decks tab ── */}
-      {tab === 'public' && (
-        publicDecksLoading ? (
+      {/* ── Shared Decks tab ── */}
+      {tab === 'shared' && (
+        sharedDecksLoading ? (
           <LoadingDots />
-        ) : publicDecks.length === 0 ? (
-          <p className="text-co-muted dark:text-gray-400 text-center py-12 text-sm">
-            No public decks yet.
-          </p>
         ) : (
-          <div className="space-y-3">
-            {publicDecks.map(deck => {
-              const count = cardCounts[deck.id] || 0
-              return (
-                <div
-                  key={deck.id}
-                  className="flex items-center bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 overflow-hidden"
-                >
-                  <button
-                    onClick={() => onNavigate('deck', deck.id)}
-                    className="flex-1 text-left px-5 py-4 min-w-0 cursor-pointer"
-                  >
-                    <div className="font-display font-semibold text-co-ink dark:text-gray-100 text-lg leading-snug truncate">
-                      {deck.title}
-                    </div>
-                    <div className="text-sm text-co-muted dark:text-gray-400 mt-0.5">
-                      {count} {count === 1 ? 'card' : 'cards'}
-                      {deck.author?.display_name && (
-                        <span className="ml-2">· by {deck.author.display_name}</span>
-                      )}
-                    </div>
-                  </button>
+          <div className="space-y-8">
+            {/* Classmates' Shared Decks */}
+            <div>
+              <h2 className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-3">
+                Classmates' Shared Decks
+              </h2>
+              {classmateDecks.length === 0 ? (
+                <p className="text-sm text-co-muted dark:text-gray-400 py-4">
+                  No classmates have shared decks yet.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {classmateDecks.map(deck => {
+                    const count = cardCounts[deck.id] || 0
+                    return (
+                      <div
+                        key={deck.id}
+                        className="flex items-center bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 overflow-hidden"
+                      >
+                        <button
+                          onClick={() => onNavigate('deck', deck.id)}
+                          className="flex-1 text-left px-5 py-4 min-w-0 cursor-pointer"
+                        >
+                          <div className="font-display font-semibold text-co-ink dark:text-gray-100 text-lg leading-snug truncate">
+                            {deck.title}
+                          </div>
+                          <div className="text-sm text-co-muted dark:text-gray-400 mt-0.5">
+                            {count} {count === 1 ? 'card' : 'cards'}
+                            {deck.author?.display_name && (
+                              <span className="ml-2">· by {deck.author.display_name}</span>
+                            )}
+                          </div>
+                        </button>
+                      </div>
+                    )
+                  })}
                 </div>
-              )
-            })}
+              )}
+            </div>
+
+            {/* Your Shared Decks */}
+            <div>
+              <h2 className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-3">
+                Your Shared Decks
+              </h2>
+              {weeks.filter(w => w.is_public).length === 0 ? (
+                <p className="text-sm text-co-muted dark:text-gray-400 py-4">
+                  You haven't shared any decks yet. Use the globe icon on a deck to share it with classmates.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {weeks.filter(w => w.is_public).map(deck => {
+                    const count = cardCounts[deck.id] || 0
+                    return (
+                      <div
+                        key={deck.id}
+                        className="flex items-center bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 overflow-hidden"
+                      >
+                        <button
+                          onClick={() => onNavigate('deck', deck.id)}
+                          className="flex-1 text-left px-5 py-4 min-w-0 cursor-pointer"
+                        >
+                          <div className="font-display font-semibold text-co-ink dark:text-gray-100 text-lg leading-snug truncate">
+                            {deck.title}
+                          </div>
+                          <div className="text-sm text-co-muted dark:text-gray-400 mt-0.5">
+                            {count} {count === 1 ? 'card' : 'cards'}
+                          </div>
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )
       )}

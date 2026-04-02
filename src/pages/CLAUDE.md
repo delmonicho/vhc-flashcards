@@ -40,9 +40,11 @@ Any new card creation path (bulk import, etc.) must also wire `handleBreakdownRe
 
 ## Home.jsx
 
-**Tabbed view:** `tab` state (`'mine' | 'public'`). My Decks tab is default; Public Decks tab lazy-fetches on first activation (`publicFetched` flag prevents re-fetch on tab switch).
+**Tabbed view:** `tab` state (`'mine' | 'shared'`). My Decks tab is default; Shared Decks tab lazy-fetches classmates' decks on first activation (`sharedFetched` flag prevents re-fetch on tab switch).
 
-**`fetchPublicDecks()`:** Queries `decks` filtered by `is_public = true` and `neq('user_id', user.id)`, then batch-fetches author profiles by unique `user_id`s. Result is stored in `publicDecks` — each item has an `author` property (`{ display_name, avatar_color }`).
+**`fetchSharedDecks()`:** Queries `decks` filtered by `is_public = true` and `neq('user_id', user.id)`, then batch-fetches author profiles by unique `user_id`s. Result is stored in `classmateDecks` — each item has an `author` property (`{ display_name, avatar_color }`).
+
+**Shared Decks tab has two sections:** "Classmates' Shared Decks" (from `classmateDecks`) and "Your Shared Decks" (derived by filtering `weeks.filter(w => w.is_public)` — no extra fetch needed since `weeks` is already loaded).
 
 **My Decks query must use `.eq('user_id', user.id)` explicitly** — after the public decks RLS migration, a plain select returns other users' public decks too. Always scope to current user for the My Decks list.
 
@@ -83,6 +85,10 @@ Loads `cards` (for the given `deckId`) and `game_stats` from Supabase on mount. 
 - Chunk Builder — enabled if any card has `breakdown?.length > 0`
 
 **Pixel theme:** Container applies `.pixel-mode` class, which sets dark background, pixel fonts, and `image-rendering: pixelated`.
+
+## Profile.jsx
+
+**Vocabulary dashboard** loads four things in parallel: own decks, own cards, mastery store (`loadMasteryFromSupabase`), and all `card_mastery.deck_id` rows for the user. After resolving own decks, it diffs the tracked deck IDs against `ownDeckIds` to find public decks the user has practiced. Those are fetched in a second parallel call (`decks` + `flashcards` by deck ID) and appended to `deckMastery` with `isPublic: true`. Public deck rows render a small "Public" badge next to the title. `totalMastered` iterates all rows (own + public). Collapse threshold is 6 — a "Show all N decks" / "Show less" toggle is rendered when exceeded.
 
 ## Quiz.jsx
 

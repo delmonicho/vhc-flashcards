@@ -1,7 +1,7 @@
 import { getMasteryStats } from '../lib/mastery'
 
 // Stage metadata — order matches stage indices 0–4
-const STAGES = [
+export const STAGES = [
   { key: 'unseen',    label: 'Unseen',    className: 'bg-gray-200 dark:bg-gray-700' },
   { key: 'learning',  label: 'Learning',  className: 'bg-co-primary' },
   { key: 'familiar',  label: 'Familiar',  className: 'bg-co-gold' },
