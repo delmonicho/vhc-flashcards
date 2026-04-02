@@ -106,3 +106,4 @@ Local Supabase stack is not used. Available inspect subcommands: `bloat`, `calls
 | `'viVoiceBannerDismissed'` | `src/pages/Study.jsx` | `'1'` when dismissed |
 | `'quiz-mastery'` | `src/lib/mastery.js` | JSON mastery store `{ cardId: { correct, incorrect, streak, lastSeen } }` |
 | `'quiz-xp'` | `src/lib/mastery.js` | JSON `{ totalXP: number }` — cumulative lifetime XP, never resets |
+| `'practice-streak'` | `src/lib/mastery.js` | JSON `{ current, longest, lastDate }` — global daily practice streak across all decks |

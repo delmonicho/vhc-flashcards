@@ -90,6 +90,10 @@ Single export: `supabase` client. Import directly everywhere — no wrapper, no 
 
 **`mergeMastery(local, remote)`** — merges localStorage mastery with Supabase mastery. For each card, the entry with the higher `correct + incorrect` total wins. Called in Quiz on mount to keep deck progress consistent with Profile.
 
+**`loadStreak()` / `updateStreak()`** — global daily practice streak (`'practice-streak'` key → `{ current, longest, lastDate }`). `updateStreak()` is idempotent within a calendar day — call it at the end of any quiz session. Shown on Home hero, Profile header, and Quiz score screen (only when `current >= 2`).
+
+**`getXPMilestone(totalXP)`** — returns `{ label, nextAt }` for the current XP milestone. Labels: Beginner (0) → Student (50) → Learner (200) → Speaker (500) → Conversant (1000) → Fluent (2500). Shown on Profile.
+
 **`recordResult(cardId, wasCorrect, store)`** mutates `store` in place — always pass a shallow copy (`{ ...masteryData }`) so React state updates correctly.
 
 ## pdfImport.js

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { updateProfile, deleteAccount } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { getMasteryStage, getMasteryStats, loadMasteryFromSupabase, migrateLocalToSupabase, loadXP } from '../lib/mastery'
+import { getMasteryStage, getMasteryStats, loadMasteryFromSupabase, migrateLocalToSupabase, loadXP, loadStreak, getXPMilestone } from '../lib/mastery'
 import MasteryBar, { STAGES } from '../components/MasteryBar'
 
 const AVATAR_COLORS = [
@@ -60,6 +60,7 @@ export default function Profile({ onNavigate }) {
   const [deckMastery, setDeckMastery] = useState([]) // [{ deck, cards, masteryData, isPublic? }]
   const [totalMastered, setTotalMastered] = useState(0)
   const [totalXP, setTotalXP] = useState(0)
+  const [streak, setStreak] = useState(() => loadStreak())
   const [masteryExpanded, setMasteryExpanded] = useState(false)
 
   useEffect(() => {
@@ -77,6 +78,7 @@ export default function Profile({ onNavigate }) {
     const stored = localStorage.getItem(`avatar-icon-${user.id}`)
     setAvatarIcon(stored ?? null)
     setTotalXP(loadXP().totalXP)
+    setStreak(loadStreak())
   }, [user])
 
   // Load vocabulary dashboard data
@@ -211,7 +213,8 @@ export default function Profile({ onNavigate }) {
           {!vocabLoading && (
             <span className="text-sm text-co-muted dark:text-gray-400">
               <span className="font-semibold text-co-fern">{totalMastered} mastered</span>
-              {totalXP > 0 && <span> · {totalXP} XP</span>}
+              {streak.current >= 2 && <span> · 🔥 {streak.current} day streak</span>}
+              {totalXP > 0 && <span> · {getXPMilestone(totalXP).label} ({totalXP} XP)</span>}
             </span>
           )}
         </div>

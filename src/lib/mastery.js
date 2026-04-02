@@ -148,6 +148,44 @@ export function addXP(amount) {
 
 export const XP_RATES = { mc: 1, match: 2, quickfire: 1, tiles: 1.5 }
 
+// ─── Streak ────────────────────────────────────────────────────────────────
+
+export function loadStreak() {
+  try {
+    return JSON.parse(localStorage.getItem('practice-streak') || 'null')
+      ?? { current: 0, longest: 0, lastDate: null }
+  } catch {
+    return { current: 0, longest: 0, lastDate: null }
+  }
+}
+
+// Call once per quiz/practice session. Idempotent within a calendar day.
+export function updateStreak() {
+  const today = new Date().toISOString().split('T')[0]
+  const data = loadStreak()
+  if (data.lastDate === today) return data  // already recorded today
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+  const newCurrent = data.lastDate === yesterday ? data.current + 1 : 1
+  const updated = { current: newCurrent, longest: Math.max(newCurrent, data.longest ?? 0), lastDate: today }
+  localStorage.setItem('practice-streak', JSON.stringify(updated))
+  return updated
+}
+
+// ─── XP milestones ─────────────────────────────────────────────────────────
+
+const XP_MILESTONES = [
+  { min: 2500, label: 'Fluent',     nextAt: null },
+  { min: 1000, label: 'Conversant', nextAt: 2500 },
+  { min: 500,  label: 'Speaker',    nextAt: 1000 },
+  { min: 200,  label: 'Learner',    nextAt: 500  },
+  { min: 50,   label: 'Student',    nextAt: 200  },
+  { min: 0,    label: 'Beginner',   nextAt: 50   },
+]
+
+export function getXPMilestone(totalXP) {
+  return XP_MILESTONES.find(m => totalXP >= m.min) ?? XP_MILESTONES[XP_MILESTONES.length - 1]
+}
+
 // Returns an array of human-readable hint strings explaining what's blocking
 // a card from advancing to the next stage. Returns [] if stage 0 (unseen) or
 // stage 4 (already mastered). Designed for showing in quiz results.

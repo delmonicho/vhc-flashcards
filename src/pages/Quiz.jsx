@@ -8,6 +8,7 @@ import {
   addXP, loadXP, XP_RATES, selectQuizCards,
   getMasteryStage, syncMasteryToSupabase,
   loadMasteryFromSupabase, mergeMastery, getNextStageHints,
+  updateStreak,
 } from '../lib/mastery'
 import MasteryBar from '../components/MasteryBar'
 import BreakdownDisplay from '../components/BreakdownDisplay'
@@ -124,11 +125,14 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
       }
     }
 
+    // Streak
+    const streak = updateStreak()
+
     // Sync changed entries to Supabase (fire-and-forget)
     const changedIds = [...results.keys()]
     syncMasteryToSupabase(changedIds, user?.id, deckId, updated, supabase)
 
-    setResult({ score, total, results, improved, xpEarned, totalXP, xpBarPct, nearlyThere })
+    setResult({ score, total, results, improved, xpEarned, totalXP, xpBarPct, nearlyThere, streak })
     setPhase('score')
   }
 
@@ -267,6 +271,11 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
                 style={{ width: `${xpBarWidth}%` }}
               />
             </div>
+            {result.streak?.current >= 2 && (
+              <p className="text-sm text-co-muted dark:text-gray-400 mt-2">
+                🔥 <span className="font-semibold text-co-ink dark:text-gray-100">{result.streak.current} day streak</span>
+              </p>
+            )}
           </div>
         )}
       </div>

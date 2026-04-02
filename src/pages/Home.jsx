@@ -4,6 +4,7 @@ import { backfillBreakdownCache } from '../lib/breakdown'
 import { logError } from '../lib/logger'
 import { useAuth } from '../context/AuthContext'
 import Logo from '../components/Logo.old'
+import { loadStreak } from '../lib/mastery'
 
 function LoadingDots() {
   return (
@@ -68,6 +69,8 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
   const [backfilling, setBackfilling] = useState(false)
   const [togglingId, setTogglingId] = useState(null)
   const editInputRef = useRef(null)
+
+  const [streak] = useState(() => loadStreak())
 
   // Tab + Shared Decks state
   const [tab, setTab] = useState('mine')
@@ -225,6 +228,11 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
         <p className="text-co-muted dark:text-gray-400 text-base">
           Your Vietnamese class companion
         </p>
+        {streak.current >= 2 && (
+          <p className="text-sm text-co-muted dark:text-gray-400 mt-1">
+            🔥 <span className="font-semibold text-co-ink dark:text-gray-100">{streak.current} day streak</span>
+          </p>
+        )}
       </div>
 
       {/* Tab bar */}
