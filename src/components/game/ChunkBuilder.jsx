@@ -68,11 +68,11 @@ export default function ChunkBuilder({ flashcard, onComplete }) {
   return (
     <div className="pixel-mode min-h-screen flex flex-col px-4 py-8 gap-6">
       {/* English prompt */}
-      <div className="text-center leading-loose text-[#e0e0e0] px-2" style={{ fontFamily: 'var(--font-pixel-viet)', fontSize: 'clamp(16px,3vw,24px)', opacity: 0.85 }}>
+      <div className="text-center leading-loose text-[#e0e0e0] px-2" style={{ fontFamily: 'var(--font-pixel-viet)', fontSize: 'clamp(32px,5vw,48px)', opacity: 0.85 }}>
         {flashcard.english}
       </div>
 
-      <div className="font-pixel-ui text-[10px] text-[#888] text-center">ARRANGE THE VIETNAMESE CHUNKS IN ORDER</div>
+      <div className="font-pixel-ui text-[15px] text-[#888] text-center">ARRANGE THE VIETNAMESE CHUNKS IN ORDER</div>
 
       {/* Target slots */}
       <div className="flex flex-wrap justify-center gap-2">
@@ -86,7 +86,7 @@ export default function ChunkBuilder({ flashcard, onComplete }) {
             <div
               key={i}
               style={{ fontFamily: 'var(--font-pixel-viet)' }}
-              className={`${borderClass} min-w-[60px] min-h-[40px] flex items-center justify-center px-3 py-2 text-[10px] cursor-pointer ${slot ? color : 'bg-[#1a2030] text-[#555]'}`}
+              className={`${borderClass} min-w-[60px] min-h-[40px] flex items-center justify-center px-3 py-2 text-[20px] cursor-pointer ${slot ? color : 'bg-[#1a2030] text-[#555]'}`}
               onClick={() => removeFromSlot(i)}
               onDragOver={e => e.preventDefault()}
               onDrop={() => dropIntoSlot(i)}
@@ -109,7 +109,7 @@ export default function ChunkBuilder({ flashcard, onComplete }) {
                 onDragStart={() => { dragId.current = tile.id }}
                 onClick={() => placeTile(tile)}
                 style={{ fontFamily: 'var(--font-pixel-viet)' }}
-                className={`pixel-border ${color} px-3 py-2 text-[10px] cursor-grab active:cursor-grabbing select-none`}
+                className={`pixel-border ${color} px-3 py-2 text-[20px] cursor-grab active:cursor-grabbing select-none`}
               >
                 {tile.seg.vi}
               </div>
@@ -124,7 +124,7 @@ export default function ChunkBuilder({ flashcard, onComplete }) {
           <div className="font-pixel-ui text-[10px] text-[#888] mb-2">CORRECT ORDER:</div>
           <div className="flex flex-wrap justify-center gap-2">
             {breakdown.map((seg, i) => (
-              <span key={i} style={{ fontFamily: 'var(--font-pixel-viet)' }} className={`${CHUNK_COLORS[i % CHUNK_COLORS.length].pill} px-2 py-1 text-[10px]`}>
+              <span key={i} style={{ fontFamily: 'var(--font-pixel-viet)' }} className={`${CHUNK_COLORS[i % CHUNK_COLORS.length].pill} px-2 py-1 text-[20px]`}>
                 {seg.vi}
               </span>
             ))}

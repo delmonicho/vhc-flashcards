@@ -90,7 +90,7 @@ export default function LotusQuest({ deckId, onNavigate }) {
   }
 
   function startChunkBuilder() {
-    const queue = cards.filter(c => c.breakdown?.length > 0)
+    const queue = cards.filter(c => c.breakdown?.length > 1)
     setCbQueue(queue)
     setCbIndex(0)
     setCbResults(new Map())
@@ -226,7 +226,7 @@ export default function LotusQuest({ deckId, onNavigate }) {
             <div className="text-[#888]">XP</div>
           </div>
           <div>
-            <div className="font-pixel-score text-co-fern text-lg">{mastered}</div>
+            <div className="font-pixel-score text-co-fern text-lg">{stats.mastered}</div>
             <div className="text-[#888]">MASTERED</div>
           </div>
           <div>
