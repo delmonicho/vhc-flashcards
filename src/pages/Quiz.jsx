@@ -51,14 +51,14 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
 
   // Animate XP bar when score screen appears
   useEffect(() => {
-    if (phase !== 'score' || !result?.xpEarned) return
+    if (phase !== 'score' || !result?.xpBarPct) return
     setXpBarWidth(0)
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        setXpBarWidth(Math.min((result.xpEarned / 50) * 100, 100))
+        setXpBarWidth(result.xpBarPct)
       })
     })
-  }, [phase, result?.xpEarned])
+  }, [phase, result?.xpBarPct])
 
   useEffect(() => {
     supabase
@@ -109,12 +109,18 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
     const xpEarned = baseXP + timeBonus
     const totalXP = addXP(xpEarned)
 
+    // Bar fills to reflect this round's accuracy so 100% correct = full bar
+    const xpBarPct = total > 0 ? Math.round((score / total) * 100) : 0
+
     // Cards that didn't level up but have a clear next-step hint
     const nearlyThere = []
     for (const [cardId] of results) {
-      if (getMasteryStage(updated[cardId]) === beforeStages[cardId]) {
+      const currentStage = getMasteryStage(updated[cardId])
+      if (currentStage === beforeStages[cardId]) {
         const hints = getNextStageHints(updated[cardId])
-        if (hints.length > 0) nearlyThere.push({ cardId, hints })
+        if (hints.length > 0) {
+          nearlyThere.push({ cardId, hints, targetStage: STAGE_NAMES[currentStage + 1] })
+        }
       }
     }
 
@@ -122,7 +128,7 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
     const changedIds = [...results.keys()]
     syncMasteryToSupabase(changedIds, user?.id, deckId, updated, supabase)
 
-    setResult({ score, total, results, improved, xpEarned, totalXP, nearlyThere })
+    setResult({ score, total, results, improved, xpEarned, totalXP, xpBarPct, nearlyThere })
     setPhase('score')
   }
 
@@ -252,8 +258,8 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
         {result.xpEarned > 0 && (
           <div className="mt-4 mx-auto max-w-xs">
             <div className="flex justify-between text-xs mb-1">
-              <span className="font-semibold text-co-gold">+{result.xpEarned} XP</span>
-              <span className="text-co-muted dark:text-gray-400">{result.totalXP} total</span>
+              <span className="font-semibold text-co-gold">+{result.xpEarned} XP earned</span>
+              <span className="text-co-muted dark:text-gray-400">{result.totalXP} XP all time</span>
             </div>
             <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
               <div
@@ -305,16 +311,17 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
               Close to leveling up
             </div>
             <ul className="space-y-1">
-              {result.nearlyThere.slice(0, 3).map(({ cardId, hints }) => {
+              {result.nearlyThere.slice(0, 3).map(({ cardId, hints, targetStage }) => {
                 const card = cards.find(c => c.id === cardId)
                 if (!card) return null
                 const isDayGate = hints.some(h => h.includes('different day'))
+                const hintText = isDayGate ? `ready tomorrow → ${targetStage}` : `${hints[0]} → ${targetStage}`
                 return (
                   <li key={cardId} className="flex items-start gap-2 text-sm">
                     <span className="shrink-0 mt-0.5" aria-hidden="true">{isDayGate ? '📅' : '→'}</span>
                     <span>
                       <span lang="vi" className="font-display font-medium text-co-ink dark:text-gray-100">{card.vietnamese}</span>
-                      <span className="text-co-muted dark:text-gray-400"> — {hints[0]}</span>
+                      <span className="text-co-muted dark:text-gray-400"> — {hintText}</span>
                     </span>
                   </li>
                 )
