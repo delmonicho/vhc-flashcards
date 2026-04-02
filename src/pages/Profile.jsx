@@ -16,11 +16,11 @@ const AVATAR_COLORS = [
 
 const AVATAR_ICONS = [
   { value: null, label: 'Initial (default)' },
-  { value: '🐱', label: 'Cat' },
-  { value: '🐻', label: 'Bear' },
-  { value: '🦊', label: 'Fox' },
-  { value: '🦉', label: 'Owl' },
-  { value: '🐼', label: 'Panda' },
+  { value: '🪷', label: 'Lotus' },
+  { value: '🎋', label: 'Bamboo' },
+  { value: '🍜', label: 'Noodle soup' },
+  { value: '🐉', label: 'Dragon' },
+  { value: '🍚', label: 'Rice' },
 ]
 
 const NATIVE_LANGUAGES = ['English', 'French', 'Spanish', 'Mandarin', 'Japanese', 'Korean', 'Other']
