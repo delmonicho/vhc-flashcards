@@ -26,8 +26,8 @@ export default function Logo({ size = 'sm' }) {
       <path className="petal petal-side-left" d="M50 75 C40 62 22 58 12 68 C2 76 32 84 50 75Z" fill="#FDD5E8" />
       <path className="petal petal-side-right" d="M50 75 C60 62 78 58 88 68 C98 76 68 84 50 75Z" fill="#FDD5E8" />
       {/* Golden center */}
-      <circle cx="50" cy="50" r="7" fill="#F5C842" />
-      <circle cx="50" cy="50" r="3.5" fill="#FFE060" />
+      <circle cx="50" cy="55" r="7" fill="#F5C842" />
+      <circle cx="50" cy="55" r="3.5" fill="#FFE060" />
 
       {/* Outer petals */}
       <path className="petal petal-left-outer" d="M50 75 C18 68 8 36 26 18 C36 50 44 64 50 75Z" fill="#F9A8C9" />

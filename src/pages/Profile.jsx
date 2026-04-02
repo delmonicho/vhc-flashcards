@@ -21,6 +21,7 @@ const AVATAR_ICONS = [
   { value: '🍜', label: 'Noodle soup' },
   { value: '🐉', label: 'Dragon' },
   { value: '🍚', label: 'Rice' },
+  { value: '🛵', label: 'Moped' },
 ]
 
 const NATIVE_LANGUAGES = ['English', 'French', 'Spanish', 'Mandarin', 'Japanese', 'Korean', 'Other']
