@@ -5,8 +5,9 @@ import { logError } from '../lib/logger'
 import { useAuth } from '../context/AuthContext'
 import {
   loadMastery, saveMastery, recordResult,
-  addXP, XP_RATES, selectQuizCards,
+  addXP, loadXP, XP_RATES, selectQuizCards,
   getMasteryStage, syncMasteryToSupabase,
+  loadMasteryFromSupabase, mergeMastery, getNextStageHints,
 } from '../lib/mastery'
 import MasteryBar from '../components/MasteryBar'
 import BreakdownDisplay from '../components/BreakdownDisplay'
@@ -46,6 +47,18 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
   const [masteryData, setMasteryData] = useState(() => loadMastery())
   const [expandedCardId, setExpandedCardId] = useState(null)
   const [speakingKey, setSpeakingKey] = useState(null)
+  const [xpBarWidth, setXpBarWidth] = useState(0)
+
+  // Animate XP bar when score screen appears
+  useEffect(() => {
+    if (phase !== 'score' || !result?.xpEarned) return
+    setXpBarWidth(0)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setXpBarWidth(Math.min((result.xpEarned / 50) * 100, 100))
+      })
+    })
+  }, [phase, result?.xpEarned])
 
   useEffect(() => {
     supabase
@@ -58,8 +71,16 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
         setCards(data || [])
         setLoading(false)
       })
+    // Merge Supabase mastery with localStorage so deck progress matches Profile
+    if (user) {
+      loadMasteryFromSupabase(user.id, supabase).then(remote => {
+        const merged = mergeMastery(loadMastery(), remote)
+        saveMastery(merged)
+        setMasteryData(merged)
+      })
+    }
     return () => cancelSpeech()
-  }, [deckId])
+  }, [deckId, user])
 
   function handleDone({ score, total, results, timeLeft }) {
     // Snapshot stages before update to compute improvements
@@ -82,16 +103,26 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
       }
     }
 
-    // XP (kept for game_stats compat, not displayed prominently)
+    // XP
     const baseXP = Math.round(score * XP_RATES[quizType])
     const timeBonus = timeLeft != null ? Math.floor(timeLeft / 10) : 0
-    addXP(baseXP + timeBonus)
+    const xpEarned = baseXP + timeBonus
+    const totalXP = addXP(xpEarned)
+
+    // Cards that didn't level up but have a clear next-step hint
+    const nearlyThere = []
+    for (const [cardId] of results) {
+      if (getMasteryStage(updated[cardId]) === beforeStages[cardId]) {
+        const hints = getNextStageHints(updated[cardId])
+        if (hints.length > 0) nearlyThere.push({ cardId, hints })
+      }
+    }
 
     // Sync changed entries to Supabase (fire-and-forget)
     const changedIds = [...results.keys()]
     syncMasteryToSupabase(changedIds, user?.id, deckId, updated, supabase)
 
-    setResult({ score, total, results, improved })
+    setResult({ score, total, results, improved, xpEarned, totalXP, nearlyThere })
     setPhase('score')
   }
 
@@ -218,6 +249,20 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
       <div className="text-center mb-8">
         <div className="font-display text-6xl font-bold text-co-primary mb-1">{scorePct}%</div>
         <div className="text-co-muted dark:text-gray-400 text-sm">{result.score} / {result.total} correct</div>
+        {result.xpEarned > 0 && (
+          <div className="mt-4 mx-auto max-w-xs">
+            <div className="flex justify-between text-xs mb-1">
+              <span className="font-semibold text-co-gold">+{result.xpEarned} XP</span>
+              <span className="text-co-muted dark:text-gray-400">{result.totalXP} total</span>
+            </div>
+            <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-co-gold transition-all duration-700 ease-out"
+                style={{ width: `${xpBarWidth}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mastery progress — hero section */}
@@ -252,6 +297,30 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
               </li>
             )}
           </ul>
+        )}
+        {result.nearlyThere?.length > 0 && (
+          <>
+            {result.improved.length > 0 && <div className="border-t border-co-border dark:border-gray-700 mt-3 mb-2" />}
+            <div className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-2">
+              Close to leveling up
+            </div>
+            <ul className="space-y-1">
+              {result.nearlyThere.slice(0, 3).map(({ cardId, hints }) => {
+                const card = cards.find(c => c.id === cardId)
+                if (!card) return null
+                const isDayGate = hints.some(h => h.includes('different day'))
+                return (
+                  <li key={cardId} className="flex items-start gap-2 text-sm">
+                    <span className="shrink-0 mt-0.5" aria-hidden="true">{isDayGate ? '📅' : '→'}</span>
+                    <span>
+                      <span lang="vi" className="font-display font-medium text-co-ink dark:text-gray-100">{card.vietnamese}</span>
+                      <span className="text-co-muted dark:text-gray-400"> — {hints[0]}</span>
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
         )}
       </div>
 

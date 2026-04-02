@@ -105,4 +105,4 @@ Local Supabase stack is not used. Available inspect subcommands: `bloat`, `calls
 | `'viet-categories'` | `src/lib/categories.js` | **Deprecated** — migrated to Supabase `categories` table on first load, key deleted after migration |
 | `'viVoiceBannerDismissed'` | `src/pages/Study.jsx` | `'1'` when dismissed |
 | `'quiz-mastery'` | `src/lib/mastery.js` | JSON mastery store `{ cardId: { correct, incorrect, streak, lastSeen } }` |
-| `'quiz-xp'` | `src/lib/mastery.js` | JSON `{ weekStart: timestampMs, xp: number }` — resets each Monday UTC |
+| `'quiz-xp'` | `src/lib/mastery.js` | JSON `{ totalXP: number }` — cumulative lifetime XP, never resets |

@@ -84,7 +84,11 @@ Single export: `supabase` client. Import directly everywhere — no wrapper, no 
 
 **`weightedSample(cards, n, store)`** — weight-2 cards appear twice in the pool before Fisher-Yates shuffle; deduplicates by id. Pass `cards.length` as `n` to get all cards in weighted order.
 
-**XP schema:** `{ weekStart: timestampMs, xp: number }`. `loadXP()` auto-resets if stored `weekStart` differs from the current Monday (UTC). `addXP(amount)` loads, adds, saves, returns new total. `XP_RATES = { mc: 1, match: 2, quickfire: 1, tiles: 1.5 }` — multiply by score to get XP earned.
+**XP schema:** `{ totalXP: number }` — cumulative lifetime total, never resets. `loadXP()` returns `{ totalXP }` (defaults to 0 on first use). `addXP(amount)` increments, saves, returns new total. `XP_RATES = { mc: 1, match: 2, quickfire: 1, tiles: 1.5 }` — multiply by score to get XP earned.
+
+**`getNextStageHints(entry)`** — returns `string[]` describing what's blocking a card from advancing (e.g. `"2 more correct in a row"`, `"come back on a different day"`). Returns `[]` for stage 0 (unseen) or stage 4 (mastered). Used in Quiz score screen.
+
+**`mergeMastery(local, remote)`** — merges localStorage mastery with Supabase mastery. For each card, the entry with the higher `correct + incorrect` total wins. Called in Quiz on mount to keep deck progress consistent with Profile.
 
 **`recordResult(cardId, wasCorrect, store)`** mutates `store` in place — always pass a shallow copy (`{ ...masteryData }`) so React state updates correctly.
 

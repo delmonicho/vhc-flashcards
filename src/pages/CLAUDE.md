@@ -100,4 +100,6 @@ Phase machine: `phase` state cycles `'pick' → 'playing' → 'score'`. Single p
 
 **Weighted sampling:** `weightedSample(cards, n, masteryData)` is called at play-phase entry. Missed cards (streak < 3 && incorrect > 0) get 2x weight. For `tiles` mode, cards are pre-filtered to multi-word only (`split(/\s+/).length >= 2`).
 
-**Score screen:** XP bar animates from 0 to `totalXP / 50 * 100`% via double-rAF trick after phase transitions to `'score'`. Missed-cards list scrolls within `max-h-64`. Breakdown toggle shows `<BreakdownDisplay>` inline — no navigation.
+**Score screen:** XP bar (`co-gold`, rounded-full) animates from 0 → `xpEarned / 50 * 100`% via double-rAF on phase transition to `'score'`. Shows `+N XP` label and cumulative total. "Close to leveling up" section lists up to 3 cards that didn't advance but have hints (from `getNextStageHints`); "come back on a different day" cards get a 📅 icon. Missed-cards list scrolls within `max-h-64`. Breakdown toggle shows `<BreakdownDisplay>` inline — no navigation.
+
+**Mastery state** is loaded from localStorage on mount, then merged with Supabase data via `mergeMastery()` once the async fetch resolves. This keeps deck progress bar consistent with Profile.

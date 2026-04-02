@@ -129,38 +129,61 @@ export function getMissedCards(cards, resultsMap) {
   return cards.filter(c => resultsMap.get(c.id) === false)
 }
 
-export function getWeekStart() {
-  const now = new Date()
-  const day = now.getUTCDay() // 0=Sun, 1=Mon...
-  const diff = day === 0 ? -6 : 1 - day
-  const monday = new Date(now)
-  monday.setUTCDate(now.getUTCDate() + diff)
-  monday.setUTCHours(0, 0, 0, 0)
-  return monday.getTime()
-}
-
 export function loadXP() {
   try {
     const data = JSON.parse(localStorage.getItem('quiz-xp') || 'null')
-    const currentWeekStart = getWeekStart()
-    if (!data || data.weekStart !== currentWeekStart) {
-      return { weekStart: currentWeekStart, xp: 0 }
-    }
-    return data
+    return { totalXP: data?.totalXP ?? 0 }
   } catch (err) {
     logError('Failed to parse quiz-xp from localStorage', { action: 'loadXP', err })
-    return { weekStart: getWeekStart(), xp: 0 }
+    return { totalXP: 0 }
   }
 }
 
 export function addXP(amount) {
   const data = loadXP()
-  data.xp += amount
+  data.totalXP = (data.totalXP ?? 0) + amount
   localStorage.setItem('quiz-xp', JSON.stringify(data))
-  return data.xp
+  return data.totalXP
 }
 
 export const XP_RATES = { mc: 1, match: 2, quickfire: 1, tiles: 1.5 }
+
+// Returns an array of human-readable hint strings explaining what's blocking
+// a card from advancing to the next stage. Returns [] if stage 0 (unseen) or
+// stage 4 (already mastered). Designed for showing in quiz results.
+export function getNextStageHints(entry) {
+  const stage = getMasteryStage(entry)
+  if (!entry || stage === 0 || stage === 4) return []
+  const { correct = 0, incorrect = 0, streak = 0, sessionsCount = 1 } = entry
+  const accuracy = (correct + incorrect) > 0 ? correct / (correct + incorrect) : 0
+  const hints = []
+  if (stage === 1) {
+    const need = 2 - streak
+    if (need > 0) hints.push(`${need} more correct in a row`)
+  } else if (stage === 2) {
+    if (streak < 4) hints.push(`${4 - streak} more correct in a row`)
+    if (accuracy < 0.60) hints.push(`raise accuracy to 60% (now ${Math.round(accuracy * 100)}%)`)
+  } else if (stage === 3) {
+    if (streak < 5) hints.push(`${5 - streak} more correct in a row`)
+    if (accuracy < 0.70) hints.push(`raise accuracy to 70% (now ${Math.round(accuracy * 100)}%)`)
+    if (sessionsCount < 2) hints.push('come back on a different day')
+  }
+  return hints
+}
+
+// Merges localStorage mastery with Supabase mastery. Supabase is the source of
+// truth for cross-session history; local captures the latest in-session state.
+// For each card, the entry with the higher total attempt count wins.
+export function mergeMastery(local, remote) {
+  const merged = { ...remote }
+  for (const [id, entry] of Object.entries(local)) {
+    const remoteEntry = remote[id]
+    const localTotal = (entry.correct ?? 0) + (entry.incorrect ?? 0)
+    const remoteTotal = remoteEntry ? (remoteEntry.correct ?? 0) + (remoteEntry.incorrect ?? 0) : 0
+    if (localTotal >= remoteTotal) merged[id] = entry
+  }
+  return merged
+}
 
 // ─── Supabase sync ─────────────────────────────────────────────────────────
 
