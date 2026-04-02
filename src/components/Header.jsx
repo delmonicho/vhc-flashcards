@@ -26,6 +26,7 @@ function UserMenu({ onNavigate }) {
 
   const initial = profile?.display_name?.[0]?.toUpperCase() ?? '?'
   const color = profile?.avatar_color ?? '#E8526A'
+  const icon = user ? (localStorage.getItem(`avatar-icon-${user.id}`) ?? null) : null
 
   return (
     <div className="relative" ref={menuRef}>
@@ -40,7 +41,7 @@ function UserMenu({ onNavigate }) {
           style={{ background: color, fontFamily: 'var(--font-pixel-ui)' }}
           aria-hidden="true"
         >
-          {initial}
+          {icon ?? initial}
         </span>
         {/* Display name */}
         <span

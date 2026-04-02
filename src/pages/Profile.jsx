@@ -14,6 +14,15 @@ const AVATAR_COLORS = [
   { value: '#9070C0', label: 'Purple' },
 ]
 
+const AVATAR_ICONS = [
+  { value: null, label: 'Initial (default)' },
+  { value: '🐱', label: 'Cat' },
+  { value: '🐻', label: 'Bear' },
+  { value: '🦊', label: 'Fox' },
+  { value: '🦉', label: 'Owl' },
+  { value: '🐼', label: 'Panda' },
+]
+
 const NATIVE_LANGUAGES = ['English', 'French', 'Spanish', 'Mandarin', 'Japanese', 'Korean', 'Other']
 const LEARNING_LANGUAGES = ['Vietnamese', 'French', 'Spanish', 'Mandarin', 'Japanese', 'Korean', 'Other']
 
@@ -23,6 +32,7 @@ export default function Profile({ onNavigate }) {
   const [displayName, setDisplayName] = useState('')
   const [className, setClassName] = useState('')
   const [avatarColor, setAvatarColor] = useState('#E8526A')
+  const [avatarIcon, setAvatarIcon] = useState(null)
   const [nativeLanguage, setNativeLanguage] = useState('en')
   const [learningLanguage, setLearningLanguage] = useState('vi')
 
@@ -48,6 +58,12 @@ export default function Profile({ onNavigate }) {
       setLearningLanguage(profile.learning_language ?? 'vi')
     }
   }, [profile])
+
+  useEffect(() => {
+    if (!user) return
+    const stored = localStorage.getItem(`avatar-icon-${user.id}`)
+    setAvatarIcon(stored ?? null)
+  }, [user])
 
   // Load vocabulary dashboard data
   useEffect(() => {
@@ -115,6 +131,11 @@ export default function Profile({ onNavigate }) {
     if (error) {
       setSaveError(error.message)
     } else {
+      if (avatarIcon) {
+        localStorage.setItem(`avatar-icon-${user.id}`, avatarIcon)
+      } else {
+        localStorage.removeItem(`avatar-icon-${user.id}`)
+      }
       await refreshProfile()
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 2000)
@@ -226,69 +247,64 @@ export default function Profile({ onNavigate }) {
           </div>
         </div>
 
-        {saveError && <p className="text-sm text-red-500">{saveError}</p>}
-
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full sm:w-auto bg-co-primary text-white px-6 py-3 rounded-full font-semibold disabled:opacity-50 hover:enabled:scale-105 active:enabled:scale-95 transition-all cursor-pointer disabled:cursor-default"
-        >
-          {saving ? 'Saving…' : saveSuccess ? 'Saved!' : 'Save changes'}
-        </button>
       </form>
 
-      {/* Avatar color section */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-co-border dark:border-gray-700 p-5 space-y-3">
-        <h2 className="font-semibold text-co-ink dark:text-gray-100">Profile color</h2>
-        <div className="flex gap-3 flex-wrap">
-          {AVATAR_COLORS.map(({ value, label }) => (
-            <button
-              key={value}
-              onClick={() => setAvatarColor(value)}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-co-primary"
-              style={{ background: value }}
-              aria-label={`${label} color${avatarColor === value ? ' (selected)' : ''}`}
-            >
-              {avatarColor === value && (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" className="w-5 h-5" aria-hidden="true">
-                  <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
-                </svg>
-              )}
-            </button>
-          ))}
+      {/* Avatar color + icon section */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-co-border dark:border-gray-700 p-5 space-y-5">
+        <div className="space-y-3">
+          <h2 className="font-semibold text-co-ink dark:text-gray-100">Profile color</h2>
+          <div className="flex gap-3 flex-wrap">
+            {AVATAR_COLORS.map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setAvatarColor(value)}
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-co-primary"
+                style={{ background: value }}
+                aria-label={`${label} color${avatarColor === value ? ' (selected)' : ''}`}
+              >
+                {avatarColor === value && (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" className="w-5 h-5" aria-hidden="true">
+                    <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h2 className="font-semibold text-co-ink dark:text-gray-100">Avatar</h2>
+          <div className="flex gap-3 flex-wrap">
+            {AVATAR_ICONS.map(({ value, label }) => {
+              const selected = avatarIcon === value
+              return (
+                <button
+                  key={label}
+                  onClick={() => setAvatarIcon(value)}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-transform hover:scale-110 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-co-primary border-2 ${selected ? 'border-co-primary' : 'border-transparent'}`}
+                  style={{ background: avatarColor }}
+                  aria-label={`${label}${selected ? ' (selected)' : ''}`}
+                >
+                  {value === null
+                    ? <span className="text-white text-sm font-semibold" style={{ fontFamily: 'var(--font-pixel-ui)' }}>{(profile?.display_name?.[0] ?? '?').toUpperCase()}</span>
+                    : value
+                  }
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Language settings */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-co-border dark:border-gray-700 p-5 space-y-4">
-        <h2 className="font-semibold text-co-ink dark:text-gray-100">Language settings</h2>
-
-        <div className="space-y-1">
-          <label className="text-sm text-co-muted dark:text-gray-400">Native language</label>
-          <select
-            value={nativeLanguage}
-            onChange={e => setNativeLanguage(e.target.value)}
-            className="w-full border border-co-border dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-co-primary transition-shadow cursor-pointer"
-          >
-            {NATIVE_LANGUAGES.map(lang => (
-              <option key={lang} value={lang.toLowerCase().slice(0, 2)}>{lang}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm text-co-muted dark:text-gray-400">Learning language</label>
-          <select
-            value={learningLanguage}
-            onChange={e => setLearningLanguage(e.target.value)}
-            className="w-full border border-co-border dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-co-primary transition-shadow cursor-pointer"
-          >
-            {LEARNING_LANGUAGES.map(lang => (
-              <option key={lang} value={lang.toLowerCase().slice(0, 2)}>{lang}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+      {/* Save changes */}
+      {saveError && <p className="text-sm text-red-500">{saveError}</p>}
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="w-full sm:w-auto bg-co-primary text-white px-6 py-3 rounded-full font-semibold disabled:opacity-50 hover:enabled:scale-105 active:enabled:scale-95 transition-all cursor-pointer disabled:cursor-default"
+      >
+        {saving ? 'Saving…' : saveSuccess ? 'Saved!' : 'Save changes'}
+      </button>
 
       {/* Danger zone */}
       <div className="rounded-2xl border border-red-300 dark:border-red-800 p-5 space-y-3">
