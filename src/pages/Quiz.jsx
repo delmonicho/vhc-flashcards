@@ -16,14 +16,16 @@ import MultipleChoice from '../components/quiz/MultipleChoice'
 import QuickFire from '../components/quiz/QuickFire'
 import PairMatch from '../components/quiz/PairMatch'
 import TileAssembly from '../components/quiz/TileAssembly'
+import PronunciationQuiz from '../components/quiz/PronunciationQuiz'
 
-const ROUND_SIZES = { mc: 10, quickfire: 20, match: 6, tiles: 8 }
+const ROUND_SIZES = { mc: 10, quickfire: 20, match: 6, tiles: 8, pronunciation: 5 }
 
 const QUIZ_TYPES = [
-  { id: 'mc',        title: 'Multiple Choice', description: 'Pick the correct English translation.',              minCards: 4, roundSize: ROUND_SIZES.mc },
-  { id: 'quickfire', title: 'Quick Fire',       description: 'Flip cards, mark what you know.',                  minCards: 1, roundSize: ROUND_SIZES.quickfire },
-  { id: 'match',     title: 'Pair Match',       description: 'Match Vietnamese words to their English meanings.', minCards: 4, roundSize: ROUND_SIZES.match },
-  { id: 'tiles',     title: 'Word Builder',     description: 'Arrange Vietnamese tiles to match the English. 60s timer — earn +5s per correct answer.', minCards: 2, roundSize: ROUND_SIZES.tiles },
+  { id: 'mc',           title: 'Multiple Choice', description: 'Pick the correct English translation.',              minCards: 4, roundSize: ROUND_SIZES.mc },
+  { id: 'quickfire',    title: 'Quick Fire',       description: 'Flip cards, mark what you know.',                  minCards: 1, roundSize: ROUND_SIZES.quickfire },
+  { id: 'match',        title: 'Pair Match',       description: 'Match Vietnamese words to their English meanings.', minCards: 4, roundSize: ROUND_SIZES.match },
+  { id: 'tiles',        title: 'Word Builder',     description: 'Arrange Vietnamese tiles to match the English. 60s timer — earn +5s per correct answer.', minCards: 2, roundSize: ROUND_SIZES.tiles },
+  { id: 'pronunciation', title: 'Pronunciation',   description: 'Record yourself saying each word and get tone-by-tone feedback.', minCards: 1, roundSize: ROUND_SIZES.pronunciation, requiresMic: true },
 ]
 
 const STAGE_NAMES = ['Unseen', 'Learning', 'Familiar', 'Confident', 'Mastered']
@@ -180,6 +182,10 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
               eligible = multiWord.length >= 2
               notEligibleReason = 'Need ≥2 multi-word cards'
             }
+            if (qt.requiresMic && !navigator.mediaDevices?.getUserMedia) {
+              eligible = false
+              notEligibleReason = 'Microphone not available'
+            }
             return (
               <button
                 key={qt.id}
@@ -237,10 +243,11 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
           </h2>
         </div>
 
-        {quizType === 'mc'        && <MultipleChoice {...quizProps} allCards={cards} />}
-        {quizType === 'quickfire' && <QuickFire {...quizProps} />}
-        {quizType === 'match'     && <PairMatch {...quizProps} />}
-        {quizType === 'tiles'     && <TileAssembly {...quizProps} />}
+        {quizType === 'mc'           && <MultipleChoice {...quizProps} allCards={cards} />}
+        {quizType === 'quickfire'    && <QuickFire {...quizProps} />}
+        {quizType === 'match'        && <PairMatch {...quizProps} />}
+        {quizType === 'tiles'        && <TileAssembly {...quizProps} />}
+        {quizType === 'pronunciation' && <PronunciationQuiz {...quizProps} />}
       </div>
     )
   }
