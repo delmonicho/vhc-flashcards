@@ -33,6 +33,7 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [sourceFilter, setSourceFilter] = useState('all')
+  const [deletingCat, setDeletingCat] = useState(null) // { id, label, cardCount }
   const lastClickedRef = useRef(null)
   const searchInputRef = useRef(null)
 
@@ -274,7 +275,7 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
         <button
           onClick={() => onNavigate('quiz', deckId)}
           disabled={cards.length === 0}
-          className="bg-co-primary text-white px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
+          className="bg-co-gold text-co-ink px-4 py-2 rounded-full font-semibold text-sm disabled:opacity-40 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-gold focus:ring-offset-2 cursor-pointer"
         >
           Quiz
         </button>
@@ -310,7 +311,7 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
       {isOwner && (
         <button
           onClick={() => setShowPdfImport(true)}
-          className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-co-border dark:border-gray-700 text-sm font-semibold text-co-muted dark:text-gray-400 hover:border-co-primary hover:text-co-primary dark:hover:text-co-primary transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+          className="mt-2 mx-auto flex items-center gap-1.5 px-4 py-1.5 rounded-lg border border-dashed border-co-border dark:border-gray-700 text-xs font-semibold text-co-muted dark:text-gray-400 hover:border-co-primary hover:text-co-primary dark:hover:text-co-primary transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
           aria-label="Import flashcards from PDF"
         >
           ↑ Import from PDF
@@ -339,9 +340,9 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
 
       {cards.length > 0 && isOwner && (
         <div className="mt-4 bg-co-surface dark:bg-gray-800/50 border border-co-border dark:border-gray-700 rounded-2xl p-4">
-          <div role="search" className="flex gap-2 flex-wrap items-center">
+          <div role="search" className="flex items-center gap-2">
             {/* Search icon button + expandable input */}
-            <div className="flex items-center">
+            <div className="flex items-center shrink-0">
               <button
                 onClick={() => {
                   if (searchOpen) { setSearch(''); setSearchOpen(false) }
@@ -366,50 +367,57 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
                     placeholder="Search…"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-
                     onKeyDown={e => { if (e.key === 'Escape') { setSearch(''); setSearchOpen(false); } }}
                     className="w-36 border border-co-border dark:border-gray-600 rounded-xl px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary ml-1"
                   />
                 </>
               )}
             </div>
-            <span className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest">Filter:</span>
-            {/* All */}
-            <button
-              onClick={() => setSourceFilter(sourceFilter === 'all' ? 'untagged' : 'all')}
-              aria-pressed={sourceFilter === 'all'}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 cursor-pointer ${
-                sourceFilter === 'all'
-                  ? 'bg-co-primary text-white shadow-sm'
-                  : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
-              }`}
-            >
-              All
-            </button>
-            {/* Named categories with × delete */}
-            {categories.map(cat => (
-              <div key={cat.id} className="group relative flex items-center">
+            {/* Horizontally scrollable pill strip — outer clips, inner pads so borders aren't cut */}
+            <div className="overflow-x-auto min-w-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+              <div className="flex items-center gap-2 px-1 py-1">
+                {/* All */}
                 <button
-                  onClick={() => setSourceFilter(cat.id)}
-                  aria-pressed={sourceFilter === cat.id}
-                  style={sourceFilter === cat.id ? { backgroundColor: cat.color, color: '#2D1B12' } : {}}
-                  className={`pl-4 pr-7 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 cursor-pointer ${
-                    sourceFilter === cat.id
-                      ? 'shadow-sm'
+                  onClick={() => setSourceFilter(sourceFilter === 'all' ? 'untagged' : 'all')}
+                  aria-pressed={sourceFilter === 'all'}
+                  className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 cursor-pointer ${
+                    sourceFilter === 'all'
+                      ? 'bg-co-primary text-white shadow-sm'
                       : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
                   }`}
                 >
-                  {cat.label}
+                  All
                 </button>
-                <button
-                  onClick={e => { e.stopPropagation(); handleDeleteCategory(cat.id) }}
-                  aria-label={`Delete ${cat.label} category`}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-co-muted hover:text-red-500 text-sm leading-none focus:opacity-100 focus:outline-none cursor-pointer"
-                >
-                  ×
-                </button>
+                {/* Named categories with × delete */}
+                {categories.map(cat => (
+                  <div key={cat.id} className="group relative flex items-center shrink-0">
+                    <button
+                      onClick={() => setSourceFilter(cat.id)}
+                      aria-pressed={sourceFilter === cat.id}
+                      style={sourceFilter === cat.id ? { backgroundColor: cat.color, color: '#2D1B12' } : {}}
+                      className={`pl-4 pr-7 py-2 rounded-full text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 cursor-pointer ${
+                        sourceFilter === cat.id
+                          ? 'shadow-sm'
+                          : 'bg-white dark:bg-gray-700 text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation()
+                        const count = cards.filter(c => (c.source || []).includes(cat.id)).length
+                        setDeletingCat({ id: cat.id, label: cat.label, cardCount: count })
+                      }}
+                      aria-label={`Delete ${cat.label} category`}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-co-muted hover:text-red-500 text-sm leading-none focus:opacity-100 focus:outline-none cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
       )}
@@ -423,7 +431,7 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
                 role="status"
                 aria-live="polite"
                 aria-atomic="true"
-                className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest"
+                className="text-xs font-semibold text-co-muted dark:text-gray-400"
               >
                 {learnedCount > 0
                   ? `${learnedCount} / ${cards.length} learned`
@@ -453,11 +461,15 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {filteredCards.map(card => {
               const cardTags = card.source || []
+              // Suppress the active filter tag from badges — it's already communicated by the filter
+              const displayTags = (sourceFilter !== 'all' && sourceFilter !== 'untagged')
+                ? cardTags.filter(t => t !== sourceFilter)
+                : cardTags
               return (
                 <button
                   key={card.id}
                   aria-label={`${card.vietnamese} — ${card.english}${cardTags.length ? `, ${cardTags.join(', ')}` : ''}`}
-                  className={`relative flex flex-col w-full min-h-28 text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 ${isOwner ? 'cursor-pointer' : 'cursor-default'} ${
+                  className={`relative flex flex-col w-full min-h-36 text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 ${isOwner ? 'cursor-pointer' : 'cursor-default'} ${
                     card.status === 'learned' ? 'border-l-4 border-l-co-fern' :
                     card.status === 'learning' ? 'border-l-4 border-l-co-gold' : ''
                   }`}
@@ -473,9 +485,9 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
                   <div className="text-co-muted dark:text-gray-300 text-sm line-clamp-2 mb-2">
                     {card.english}
                   </div>
-                  {cardTags.length > 0 && (
+                  {displayTags.length > 0 && (
                     <div aria-hidden="true" className="mt-auto flex flex-wrap gap-1">
-                      {cardTags.map(tagId => (
+                      {displayTags.map(tagId => (
                         <span
                           key={tagId}
                           className="text-xs px-2 py-0.5 rounded-full font-semibold leading-tight"
@@ -511,6 +523,41 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
           onBreakdownReady={handleBreakdownReady}
           triggerRef={lastClickedRef}
         />
+      )}
+      {deletingCat && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-cat-title"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+        >
+          <div className="absolute inset-0 bg-black/50" onClick={() => setDeletingCat(null)} aria-hidden="true" />
+          <div className="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 flex flex-col gap-4">
+            <h2 id="delete-cat-title" className="font-display font-bold text-lg text-co-ink dark:text-gray-100">
+              Delete "{deletingCat.label}"?
+            </h2>
+            <p className="text-sm text-co-muted dark:text-gray-400 leading-relaxed">
+              {deletingCat.cardCount > 0
+                ? <>This tag will be removed from <span className="font-semibold text-co-ink dark:text-gray-200">{deletingCat.cardCount} {deletingCat.cardCount === 1 ? 'card' : 'cards'}</span>. The cards themselves won't be deleted.</>
+                : <>This tag isn't used on any cards yet.</>
+              }
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeletingCat(null)}
+                className="px-4 py-2 rounded-full text-sm font-semibold text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { handleDeleteCategory(deletingCat.id); setDeletingCat(null) }}
+                className="px-4 py-2 rounded-full text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              >
+                Delete tag
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {showPdfImport && isOwner && (
         <PdfImportModal
