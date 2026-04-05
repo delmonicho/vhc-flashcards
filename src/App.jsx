@@ -90,7 +90,7 @@ function AppInner() {
   return (
     <div className={`${dark ? 'dark' : ''} min-h-screen bg-co-warm dark:bg-gray-950 transition-colors duration-200`}>
       <AuthGuard onNavigate={navigate} loginError={view.loginError}>
-        <Header dark={dark} onToggleDark={toggleDark} onNavigate={navigate} />
+        <Header dark={dark} onToggleDark={toggleDark} onNavigate={navigate} currentPage={view.page} />
         {view.page === 'deck' ? (
           <Deck deckId={view.deckId} onNavigate={navigate} {...themeProps} categories={categories} onCategoriesChange={setCategories} justCopied={view.justCopied} />
         ) : view.page === 'study' ? (

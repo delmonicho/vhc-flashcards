@@ -4,6 +4,7 @@ import { getCategoryColor, deleteCategory, upsertCategories, nextColor } from '.
 import { logError } from '../lib/logger'
 import { stripDiacritics, getOrCreateBreakdown, batchGetOrCreateBreakdowns } from '../lib/breakdown'
 import { useAuth } from '../context/AuthContext'
+import { speakVietnamese } from '../lib/speak'
 import VocabInput from '../components/VocabInput'
 import CardEditModal from '../components/CardEditModal'
 import PdfImportModal from '../components/PdfImportModal'
@@ -466,42 +467,53 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
                 ? cardTags.filter(t => t !== sourceFilter)
                 : cardTags
               return (
-                <button
-                  key={card.id}
-                  aria-label={`${card.vietnamese} — ${card.english}${cardTags.length ? `, ${cardTags.join(', ')}` : ''}`}
-                  className={`relative flex flex-col w-full min-h-36 text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 ${isOwner ? 'cursor-pointer' : 'cursor-default'} ${
-                    card.status === 'learned' ? 'border-l-4 border-l-co-fern' :
-                    card.status === 'learning' ? 'border-l-4 border-l-co-gold' : ''
-                  }`}
-                  onClick={e => {
-                    if (!isOwner) return
-                    lastClickedRef.current = e.currentTarget
-                    setEditingCard(card)
-                  }}
-                >
-                  <div lang="vi" className="flex-1 font-display font-semibold text-co-ink dark:text-gray-100 mb-1.5 line-clamp-3 text-base leading-snug">
-                    {card.vietnamese}
-                  </div>
-                  <div className="text-co-muted dark:text-gray-300 text-sm line-clamp-2 mb-2">
-                    {card.english}
-                  </div>
-                  {displayTags.length > 0 && (
-                    <div aria-hidden="true" className="mt-auto flex flex-wrap gap-1">
-                      {displayTags.map(tagId => (
-                        <span
-                          key={tagId}
-                          className="text-xs px-2 py-0.5 rounded-full font-semibold leading-tight"
-                          style={{ backgroundColor: getCategoryColor(categories, tagId), color: '#2D1B12' }}
-                        >
-                          {categories.find(c => c.id === tagId)?.label ?? tagId}
-                        </span>
-                      ))}
+                <div key={card.id} className="relative">
+                  <button
+                    aria-label={`${card.vietnamese} — ${card.english}${cardTags.length ? `, ${cardTags.join(', ')}` : ''}`}
+                    className={`relative flex flex-col w-full h-full min-h-36 text-left bg-white dark:bg-gray-900 border border-co-border dark:border-gray-700 rounded-2xl p-4 pb-9 hover:border-co-primary dark:hover:border-co-primary hover:shadow-md transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 ${isOwner ? 'cursor-pointer' : 'cursor-default'} ${
+                      card.status === 'learned' ? 'border-l-4 border-l-co-fern' :
+                      card.status === 'learning' ? 'border-l-4 border-l-co-gold' : ''
+                    }`}
+                    onClick={e => {
+                      if (!isOwner) return
+                      lastClickedRef.current = e.currentTarget
+                      setEditingCard(card)
+                    }}
+                  >
+                    <div lang="vi" className="flex-1 font-display font-semibold text-co-ink dark:text-gray-100 mb-1.5 line-clamp-3 text-base leading-snug">
+                      {card.vietnamese}
                     </div>
-                  )}
-                  {pendingBreakdowns.has(card.id) && (
-                    <span aria-hidden="true" className="absolute top-2 right-2 w-2 h-2 rounded-full bg-co-primary animate-pulse" />
-                  )}
-                </button>
+                    <div className="text-co-muted dark:text-gray-300 text-sm line-clamp-2 mb-2">
+                      {card.english}
+                    </div>
+                    {displayTags.length > 0 && (
+                      <div aria-hidden="true" className="mt-auto flex flex-wrap gap-1">
+                        {displayTags.map(tagId => (
+                          <span
+                            key={tagId}
+                            className="text-xs px-2 py-0.5 rounded-full font-semibold leading-tight"
+                            style={{ backgroundColor: getCategoryColor(categories, tagId), color: '#2D1B12' }}
+                          >
+                            {categories.find(c => c.id === tagId)?.label ?? tagId}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {pendingBreakdowns.has(card.id) && (
+                      <span aria-hidden="true" className="absolute top-2 right-2 w-2 h-2 rounded-full bg-co-primary animate-pulse" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => speakVietnamese(card.vietnamese)}
+                    aria-label={`Pronounce ${card.vietnamese}`}
+                    className="absolute bottom-2.5 right-2.5 w-7 h-7 flex items-center justify-center rounded-full text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-700 opacity-50 hover:opacity-100 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5" aria-hidden="true">
+                      <path d="M10 3.75a.75.75 0 0 0-1.264-.546L4.703 7H3.167a.75.75 0 0 0-.7.48A6.985 6.985 0 0 0 2 10c0 .887.165 1.737.468 2.52.111.29.39.48.7.48h1.535l4.033 3.796A.75.75 0 0 0 10 16.25V3.75ZM15.95 5.05a.75.75 0 0 0-1.06 1.061 5.5 5.5 0 0 1 0 7.778.75.75 0 0 0 1.06 1.06 7 7 0 0 0 0-9.899Z" />
+                      <path d="M13.829 7.172a.75.75 0 0 0-1.061 1.06 2.5 2.5 0 0 1 0 3.536.75.75 0 0 0 1.06 1.06 4 4 0 0 0 0-5.656Z" />
+                    </svg>
+                  </button>
+                </div>
               )
             })}
           </div>
