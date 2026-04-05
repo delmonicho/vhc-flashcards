@@ -75,7 +75,7 @@ export default function Login({ onNavigate, loginError }) {
     <div className="flex flex-col items-center mb-8">
       <Logo size="lg" />
       <h1 className="mt-4 text-4xl" style={{ fontFamily: 'var(--font-pixel-ui)', color: 'var(--color-co-primary)' }}>
-        LearnLang
+        Learn Làng
       </h1>
       <p className="mt-1 text-sm text-gray-400">your daily language companion</p>
     </div>
@@ -201,10 +201,10 @@ export default function Login({ onNavigate, loginError }) {
             {loading
               ? '…'
               : isMagicLink
-              ? 'Send magic link →'
-              : isSignup
-              ? 'Create account →'
-              : 'Sign in →'}
+                ? 'Send magic link →'
+                : isSignup
+                  ? 'Create account →'
+                  : 'Sign in →'}
           </button>
         </form>
 
