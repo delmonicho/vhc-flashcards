@@ -11,12 +11,13 @@ import Deck from './pages/Deck'
 import Study from './pages/Study'
 import Quiz from './pages/Quiz'
 import LotusQuest from './pages/LotusQuest'
+import HomeworkMode from './pages/HomeworkMode'
 import Diagnostics from './pages/Diagnostics'
 import { loadCategories } from './lib/categories'
 import { logError } from './lib/logger'
 
 function buildPath(page, deckId) {
-  if (['deck', 'study', 'quiz', 'lotus-quest'].includes(page)) return `/${page}/${deckId}`
+  if (['deck', 'study', 'quiz', 'lotus-quest', 'homework'].includes(page)) return `/${page}/${deckId}`
   if (page === 'home') return '/'
   return `/${page}`
 }
@@ -24,7 +25,7 @@ function buildPath(page, deckId) {
 function parsePath(pathname) {
   const parts = pathname.replace(/^\//, '').split('/')
   const page = parts[0] || 'home'
-  if (['deck', 'study', 'quiz', 'lotus-quest'].includes(page) && parts[1]) return { page, deckId: parts[1] }
+  if (['deck', 'study', 'quiz', 'lotus-quest', 'homework'].includes(page) && parts[1]) return { page, deckId: parts[1] }
   if (page === 'auth' && parts[1] === 'callback') return { page: 'auth/callback', deckId: null }
   if (['profile', 'login', 'auth', 'privacy', 'diagnostics'].includes(page)) return { page, deckId: null }
   return { page: 'home', deckId: null }
@@ -99,6 +100,8 @@ function AppInner() {
           <Quiz deckId={view.deckId} onNavigate={navigate} {...themeProps} />
         ) : view.page === 'lotus-quest' ? (
           <LotusQuest deckId={view.deckId} onNavigate={navigate} />
+        ) : view.page === 'homework' ? (
+          <HomeworkMode deckId={view.deckId} onNavigate={navigate} />
         ) : view.page === 'profile' ? (
           <Profile onNavigate={navigate} {...themeProps} />
         ) : view.page === 'diagnostics' && import.meta.env.DEV ? (

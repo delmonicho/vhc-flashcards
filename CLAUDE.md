@@ -10,7 +10,7 @@
 
 No React Router. App.jsx uses a custom `view` state (`{ page, deckId }`). Pages receive `onNavigate(page, id?)` as a prop. There is no browser history — navigating always re-fetches data from Supabase.
 
-Valid `view.page` values: `'home'`, `'deck'`, `'study'`, `'quiz'`, `'lotus-quest'`, `'diagnostics'` (dev-only, guarded by `import.meta.env.DEV`), `'login'`, `'auth/callback'`, `'profile'`, `'privacy'`.
+Valid `view.page` values: `'home'`, `'deck'`, `'study'`, `'quiz'`, `'lotus-quest'`, `'homework'`, `'diagnostics'` (dev-only, guarded by `import.meta.env.DEV`), `'login'`, `'auth/callback'`, `'profile'`, `'privacy'`.
 
 `navigate(page, deckId, loginError)` — third param passes an error string to the Login page (used by AuthCallback on failure).
 
@@ -117,3 +117,4 @@ Before starting any new feature or touching AI/API paths, check the relevant pla
 | `'quiz-mastery'` | `src/lib/mastery.js` | JSON mastery store `{ cardId: { correct, incorrect, streak, lastSeen } }` |
 | `'quiz-xp'` | `src/lib/mastery.js` | JSON `{ totalXP: number }` — cumulative lifetime XP, never resets |
 | `'practice-streak'` | `src/lib/mastery.js` | JSON `{ current, longest, lastDate }` — global daily practice streak across all decks |
+| `'homework-session-${deckId}'` | `src/pages/HomeworkMode.jsx` | JSON `{ answers: [], cardCount: number }` — cleared by user action only |
