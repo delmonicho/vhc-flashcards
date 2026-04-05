@@ -266,6 +266,14 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
             </p>
           )}
         </div>
+        {isOwner && (
+          <button
+            onClick={() => onNavigate('homework', deckId)}
+            className="bg-co-primary/10 text-co-primary border border-co-primary/30 px-4 py-2 rounded-full font-semibold text-sm hover:bg-co-primary/20 hover:scale-105 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 cursor-pointer"
+          >
+            Homework
+          </button>
+        )}
         <button
           onClick={() => onNavigate('study', deckId)}
           disabled={cards.length === 0}
