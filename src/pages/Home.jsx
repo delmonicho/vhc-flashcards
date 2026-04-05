@@ -223,10 +223,10 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       <div className="flex flex-col items-center text-center mb-10 pt-4">
         <Logo size="lg" />
         <h1 className="font-display text-5xl font-bold text-co-primary mt-4 mb-1">
-          Cô Ơi
+          LearnLang
         </h1>
         <p className="text-co-muted dark:text-gray-400 text-base">
-          Your Vietnamese class companion
+          Your daily language companion
         </p>
         {streak.current >= 2 && (
           <p className="text-sm text-co-muted dark:text-gray-400 mt-1">

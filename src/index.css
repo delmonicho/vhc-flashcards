@@ -7,8 +7,8 @@
   --color-co-warm: #FFFAF5;
   --color-co-surface: #FFF0E6;
   --color-co-border: #F5D5C0;
-  --color-co-primary: #E8526A;
-  --color-co-blush: #FFCCD5;
+  --color-co-primary: #FF6B47;
+  --color-co-blush: #FFD0C0;
   --color-co-gold: #F5A623;
   --color-co-cream: #FFF0C0;
   --color-co-ink: #2D1B12;
@@ -60,7 +60,7 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #E8526A;
+  background-color: #FF6B47;
   animation: dot-pulse 1.2s ease-in-out infinite;
 }
 .loading-dot:nth-child(2) { animation-delay: 0.2s; }

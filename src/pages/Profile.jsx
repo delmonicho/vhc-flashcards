@@ -6,7 +6,7 @@ import { getMasteryStage, getMasteryStats, loadMasteryFromSupabase, migrateLocal
 import MasteryBar, { STAGES } from '../components/MasteryBar'
 
 const AVATAR_COLORS = [
-  { value: '#E8526A', label: 'Coral' },
+  { value: '#FF6B47', label: 'Coral' },
   { value: '#F5A623', label: 'Gold' },
   { value: '#5BAF7A', label: 'Green' },
   { value: '#6090D0', label: 'Blue' },
@@ -42,7 +42,7 @@ export default function Profile({ onNavigate }) {
 
   const [displayName, setDisplayName] = useState('')
   const [className, setClassName] = useState('')
-  const [avatarColor, setAvatarColor] = useState('#E8526A')
+  const [avatarColor, setAvatarColor] = useState('#FF6B47')
   const [avatarIcon, setAvatarIcon] = useState(null)
   const [nativeLanguage, setNativeLanguage] = useState('en')
   const [learningLanguage, setLearningLanguage] = useState('vi')
@@ -67,7 +67,7 @@ export default function Profile({ onNavigate }) {
     if (profile) {
       setDisplayName(profile.display_name ?? '')
       setClassName(profile.class_name ?? '')
-      setAvatarColor(profile.avatar_color ?? '#E8526A')
+      setAvatarColor(profile.avatar_color ?? '#FF6B47')
       setNativeLanguage(profile.native_language ?? 'en')
       setLearningLanguage(profile.learning_language ?? 'vi')
     }

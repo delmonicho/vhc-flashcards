@@ -25,7 +25,7 @@ function UserMenu({ onNavigate }) {
   }
 
   const initial = profile?.display_name?.[0]?.toUpperCase() ?? '?'
-  const color = profile?.avatar_color ?? '#E8526A'
+  const color = profile?.avatar_color ?? '#FF6B47'
   const icon = user ? (localStorage.getItem(`avatar-icon-${user.id}`) ?? null) : null
 
   return (

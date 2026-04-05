@@ -268,7 +268,7 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark, categori
                 className="h-full rounded-full"
                 style={{
                   width: `${progress * 100}%`,
-                  background: 'linear-gradient(to right, #E8526A, #F5A623)',
+                  background: 'linear-gradient(to right, #FF6B47, #F5A623)',
                 }}
               />
             </div>
@@ -277,7 +277,7 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark, categori
               className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full shadow-md pointer-events-none ring-2 ring-white dark:ring-gray-900"
               style={{
                 left: `${progress * 100}%`,
-                background: 'linear-gradient(to right, #E8526A, #F5A623)',
+                background: 'linear-gradient(to right, #FF6B47, #F5A623)',
               }}
             />
           </div>
