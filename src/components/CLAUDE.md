@@ -60,6 +60,8 @@ Wraps protected views. Loading → pulse-Logo spinner; no user → `<Login>`; us
 
 ## Game components (`src/components/game/`)
 
+> Full spec: `plans/wordwarrior.md`
+
 All live under `.pixel-mode` styling from the parent LotusQuest page.
 
 **WordWarrior** — 5-life card battle. Flip card reveals English; "GOT IT" removes card from queue, "REVIEW" re-queues it. Loses 1 life per REVIEW. Calls `onDone({ defeated, escaped, xp })` on game over or last card cleared. Audio via `src/lib/sounds.js`.
@@ -69,6 +71,8 @@ All live under `.pixel-mode` styling from the parent LotusQuest page.
 **LotusSpirit** — pixel sprite component. Accepts `phase` (`'idle'|'attack'|'hurt'|'victory'`) and `animating` (boolean) props. Pure presentational — no state, no side effects.
 
 ## Quiz components (`src/components/quiz/`)
+
+> Full spec: `plans/quiz.md`
 
 All four components share the same `onDone({ score, total, results })` contract. `results` is a `Map<cardId, boolean>` — mutated in place via `useState(() => new Map())`, never replaced.
 

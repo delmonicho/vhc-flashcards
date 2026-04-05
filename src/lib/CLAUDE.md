@@ -2,6 +2,8 @@
 
 Utility and service modules. Each has sharp edges worth knowing before editing.
 
+> **Cost & legal rules apply to all API-touching modules.** Before modifying `breakdown.js`, `translate.js`, or `pdfImport.js`, check `plans/cost-legal.md` — it defines caching requirements, Haiku vs Sonnet routing, and client-side PDF processing constraints.
+
 ## logger.js
 
 **Three exports:** `logError(message, meta?)`, `logEvent(message, meta?)`, `logPerf(message, meta?)`. All write to the Supabase `logs` table as fire-and-forget inserts (never awaited, never throws).

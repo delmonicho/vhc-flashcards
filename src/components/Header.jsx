@@ -1,6 +1,28 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
+import BugReportModal from './BugReportModal'
+
+function MantisIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="w-[18px] h-[18px]" aria-hidden="true">
+      {/* Antennae */}
+      <line x1="9" y1="2.5" x2="5" y2="0.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+      <line x1="11" y1="2.5" x2="15" y2="0.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+      {/* Head */}
+      <circle cx="10" cy="4" r="2" />
+      {/* Body */}
+      <rect x="9" y="6" width="2" height="10" rx="1" />
+      {/* Left raised foreleg */}
+      <path d="M9.5 8 L4 6 L3.5 8.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      {/* Right raised foreleg */}
+      <path d="M10.5 8 L16 6 L16.5 8.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      {/* Hind legs */}
+      <line x1="9.5" y1="13" x2="6" y2="16" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+      <line x1="10.5" y1="13" x2="14" y2="16" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 function UserMenu({ onNavigate }) {
   const { user, profile, signOut } = useAuth()
@@ -82,11 +104,20 @@ function UserMenu({ onNavigate }) {
   )
 }
 
-export default function Header({ dark, onToggleDark, onNavigate }) {
+export default function Header({ dark, onToggleDark, onNavigate, currentPage }) {
+  const [bugOpen, setBugOpen] = useState(false)
   return (
     <header className="flex items-center justify-end gap-2 px-4 py-3 md:px-8">
       <ThemeToggle dark={dark} onToggle={onToggleDark} />
+      <button
+        onClick={() => setBugOpen(true)}
+        aria-label="Report a bug"
+        className="w-9 h-9 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary dark:hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-800 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2"
+      >
+        <MantisIcon />
+      </button>
       <UserMenu onNavigate={onNavigate} />
+      {bugOpen && <BugReportModal currentPage={currentPage} onClose={() => setBugOpen(false)} />}
     </header>
   )
 }

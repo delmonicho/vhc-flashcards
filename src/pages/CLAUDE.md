@@ -74,6 +74,8 @@ Any new card creation path (bulk import, etc.) must also wire `handleBreakdownRe
 
 ## LotusQuest.jsx
 
+> Full spec: `plans/wordwarrior.md`
+
 16-bit pixel game hub. Receives `deckId` and `onNavigate` props.
 
 **Phase machine:** `'hub' → 'word-warrior' | 'chunk-builder' → 'score' → 'hub'`
@@ -91,6 +93,8 @@ Loads `cards` (for the given `deckId`) and `game_stats` from Supabase on mount. 
 **Vocabulary dashboard** loads four things in parallel: own decks, own cards, mastery store (`loadMasteryFromSupabase`), and all `card_mastery.deck_id` rows for the user. After resolving own decks, it diffs the tracked deck IDs against `ownDeckIds` to find public decks the user has practiced. Those are fetched in a second parallel call (`decks` + `flashcards` by deck ID) and appended to `deckMastery` with `isPublic: true`. Public deck rows render a small "Public" badge next to the title. `totalMastered` iterates all rows (own + public). Collapse threshold is 6 — a "Show all N decks" / "Show less" toggle is rendered when exceeded.
 
 ## Quiz.jsx
+
+> Full spec: `plans/quiz.md`
 
 Phase machine: `phase` state cycles `'pick' → 'playing' → 'score'`. Single page — no separate QuizScore route. Navigation: `Deck → Quiz (pick) → Quiz (playing) → Quiz (score) → Deck or pick`.
 
