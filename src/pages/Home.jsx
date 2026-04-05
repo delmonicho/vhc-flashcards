@@ -223,7 +223,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       <div className="flex flex-col items-center text-center mb-10 pt-4">
         <Logo size="lg" />
         <h1 className="font-display text-5xl font-bold text-co-primary mt-4 mb-1">
-          LearnLang
+          Learn Làng
         </h1>
         <p className="text-co-muted dark:text-gray-400 text-base">
           Your daily language companion
@@ -239,11 +239,10 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       <div className="flex gap-1 bg-co-surface dark:bg-gray-800 rounded-2xl p-1 mb-6">
         <button
           onClick={() => setTab('mine')}
-          className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
-            tab === 'mine'
-              ? 'bg-white dark:bg-gray-900 text-co-ink dark:text-gray-100 shadow-sm'
-              : 'text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
-          }`}
+          className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${tab === 'mine'
+            ? 'bg-white dark:bg-gray-900 text-co-ink dark:text-gray-100 shadow-sm'
+            : 'text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
+            }`}
         >
           My Decks
         </button>
@@ -252,11 +251,10 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
             setTab('shared')
             if (!sharedFetched && !sharedDecksLoading) fetchSharedDecks()
           }}
-          className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
-            tab === 'shared'
-              ? 'bg-white dark:bg-gray-900 text-co-ink dark:text-gray-100 shadow-sm'
-              : 'text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
-          }`}
+          className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${tab === 'shared'
+            ? 'bg-white dark:bg-gray-900 text-co-ink dark:text-gray-100 shadow-sm'
+            : 'text-co-muted dark:text-gray-400 hover:text-co-ink dark:hover:text-gray-200'
+            }`}
         >
           Shared Decks
         </button>
