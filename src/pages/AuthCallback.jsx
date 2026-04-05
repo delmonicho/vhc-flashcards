@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import Logo from '../components/Logo'
+import LotusLoader from '../components/LotusLoader'
 
 export default function AuthCallback({ onNavigate }) {
   useEffect(() => {
@@ -17,13 +17,7 @@ export default function AuthCallback({ onNavigate }) {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: '#0d1018' }}>
-      <Logo size="md" />
-      <p
-        className="text-gray-300 animate-pulse"
-        style={{ fontFamily: 'var(--font-pixel-ui)' }}
-      >
-        Signing you in…
-      </p>
+      <LotusLoader size={80} />
     </div>
   )
 }

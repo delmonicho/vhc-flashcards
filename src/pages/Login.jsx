@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Logo from '../components/Logo'
+import Logo from '../components/Logo.old'
 import { signInWithMagicLink, signInWithGoogle, signInWithPassword, signUpWithPassword } from '../lib/auth'
 
 function GoogleIcon() {
