@@ -10,6 +10,8 @@ Edge Functions (Deno runtime) and database migrations for the remote Supabase pr
 - No `package.json` or `node_modules` in the functions directory
 - `fetch` is a global — no import needed
 
+> **Before modifying Edge Functions that call Anthropic:** check `plans/cost-legal.md` for Haiku vs Sonnet routing rules and caching requirements.
+
 ## Edge Function: batch-breakdown
 
 **Purpose:** Generates morpheme breakdowns for multiple Vietnamese words in a single Claude call. Used by `batchGetOrCreateBreakdowns()` during PDF import to avoid rate-limiting from N concurrent requests.

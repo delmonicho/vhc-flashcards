@@ -97,6 +97,16 @@ Local Supabase stack is not used. Available inspect subcommands: `bloat`, `calls
 - **`pdf-parse` import path**: Use `import pdfParse from 'pdf-parse/lib/pdf-parse.js'` (direct subpath) — the package's top-level entry tries to load test fixtures that don't exist in Vercel's serverless environment.
 - **`source` column has no enum constraint** — the old `('class'|'homework')` check was dropped in migration `20260326044509`. Any string is valid; the category system in Supabase (`categories` table) is the source of truth for valid values.
 
+## Dev Plans
+
+Before starting any new feature or touching AI/API paths, check the relevant plan:
+
+| Plan | When to check |
+|------|---------------|
+| `plans/cost-legal.md` | Any AI call, translation, PDF/media import, or new data storage |
+| `plans/roadmap.md` | Starting a new feature — check priority order first |
+| `plans/decisions.md` | Making an architectural decision or wondering "why does X work this way?" |
+
 ## localStorage Keys
 
 | Key | Owner | Value |
