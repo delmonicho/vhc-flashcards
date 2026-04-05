@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Logo from '../components/Logo'
+import Logo from '../components/Logo.old'
 import { signInWithMagicLink, signInWithGoogle, signInWithPassword, signUpWithPassword } from '../lib/auth'
 
 function GoogleIcon() {
@@ -74,10 +74,10 @@ export default function Login({ onNavigate, loginError }) {
   const branding = (
     <div className="flex flex-col items-center mb-8">
       <Logo size="lg" />
-      <h1 className="mt-4 text-4xl" style={{ fontFamily: 'var(--font-pixel-ui)', color: '#E8526A' }}>
-        Cô Ơi
+      <h1 className="mt-4 text-4xl" style={{ fontFamily: 'var(--font-pixel-ui)', color: 'var(--color-co-primary)' }}>
+        LearnLang
       </h1>
-      <p className="mt-1 text-sm text-gray-400">your Vietnamese class companion</p>
+      <p className="mt-1 text-sm text-gray-400">your daily language companion</p>
     </div>
   )
 
@@ -173,7 +173,7 @@ export default function Login({ onNavigate, loginError }) {
             value={email}
             onChange={e => setEmail(e.target.value)}
             disabled={loading}
-            className="w-full rounded-xl border border-gray-600 bg-gray-800 px-4 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#E8526A] focus:border-transparent disabled:opacity-50 transition-shadow"
+            className="w-full rounded-xl border border-gray-600 bg-gray-800 px-4 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF6B47] focus:border-transparent disabled:opacity-50 transition-shadow"
             style={{ minHeight: '48px' }}
           />
 
@@ -185,7 +185,7 @@ export default function Login({ onNavigate, loginError }) {
               value={password}
               onChange={e => setPassword(e.target.value)}
               disabled={loading}
-              className="w-full rounded-xl border border-gray-600 bg-gray-800 px-4 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#E8526A] focus:border-transparent disabled:opacity-50 transition-shadow"
+              className="w-full rounded-xl border border-gray-600 bg-gray-800 px-4 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF6B47] focus:border-transparent disabled:opacity-50 transition-shadow"
               style={{ minHeight: '48px' }}
             />
           )}
@@ -196,7 +196,7 @@ export default function Login({ onNavigate, loginError }) {
             type="submit"
             disabled={loading || !email.trim() || (!isMagicLink && !password)}
             className="w-full rounded-xl py-3 text-white font-semibold disabled:opacity-50 hover:enabled:opacity-90 active:enabled:scale-95 transition-all cursor-pointer disabled:cursor-default"
-            style={{ background: '#E8526A', fontFamily: 'var(--font-pixel-ui)' }}
+            style={{ background: 'var(--color-co-primary)', fontFamily: 'var(--font-pixel-ui)' }}
           >
             {loading
               ? '…'

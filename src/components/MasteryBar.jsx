@@ -12,7 +12,7 @@ export const STAGES = [
 // Pixel-mode color map for LotusQuest (maps stage keys to hex)
 const PIXEL_COLORS = {
   unseen:    '#3a3a4a',
-  learning:  '#E8526A',
+  learning:  '#FF6B47',
   familiar:  '#F5A623',
   confident: '#6090D0',
   mastered:  '#5BAF7A',

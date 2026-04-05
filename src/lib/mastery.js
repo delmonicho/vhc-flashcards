@@ -146,7 +146,7 @@ export function addXP(amount) {
   return data.totalXP
 }
 
-export const XP_RATES = { mc: 1, match: 2, quickfire: 1, tiles: 1.5 }
+export const XP_RATES = { mc: 1, match: 2, quickfire: 1, tiles: 1.5, pronunciation: 3 }
 
 // ─── Streak ────────────────────────────────────────────────────────────────
 

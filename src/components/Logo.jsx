@@ -14,7 +14,7 @@ export default function Logo({ size = 'sm' }) {
       height={dim}
       viewBox="0 0 100 100"
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="Cô Ơi lotus logo"
+      aria-label="LearnLang lotus logo"
       role="img"
     >
       {/* Golden background */}
@@ -32,7 +32,7 @@ export default function Logo({ size = 'sm' }) {
         const [d2x, d2y] = pt(a + 15,  36)
         const op = i % 2 === 0 ? 0.55 : 0.35
         return (
-          <g key={i} opacity={op} stroke="#C9607A" fill="none">
+          <g key={i} opacity={op} stroke="#CC6040" fill="none">
             <line x1={C}   y1={C}   x2={sx}  y2={sy}  strokeWidth="0.5" />
             <line x1={sx}  y1={sy}  x2={a1x} y2={a1y} strokeWidth="0.38" />
             <line x1={sx}  y1={sy}  x2={b1x} y2={b1y} strokeWidth="0.38" />
@@ -51,7 +51,7 @@ export default function Logo({ size = 'sm' }) {
           <line
             key={i}
             x1={C} y1={C} x2={x} y2={y}
-            stroke="#C04060"
+            stroke="#CC4830"
             strokeWidth="0.6"
             opacity="0.6"
           />
@@ -65,7 +65,7 @@ export default function Logo({ size = 'sm' }) {
           cx={C} cy={25}
           rx={6.5} ry={12}
           fill="#F9A8C9"
-          stroke="#E8526A"
+          stroke="#FF6B47"
           strokeWidth="0.5"
           opacity="0.9"
           transform={`rotate(${i * 30} ${C} ${C})`}
@@ -92,8 +92,8 @@ export default function Logo({ size = 'sm' }) {
           key={i}
           cx={C} cy={41}
           rx={3.8} ry={7}
-          fill="#E8526A"
-          stroke="#C03050"
+          fill="#FF6B47"
+          stroke="#CC4A28"
           strokeWidth="0.5"
           opacity="0.95"
           transform={`rotate(${i * 60} ${C} ${C})`}

@@ -16,14 +16,16 @@ import MultipleChoice from '../components/quiz/MultipleChoice'
 import QuickFire from '../components/quiz/QuickFire'
 import PairMatch from '../components/quiz/PairMatch'
 import TileAssembly from '../components/quiz/TileAssembly'
+import PronunciationQuiz from '../components/quiz/PronunciationQuiz'
 
-const ROUND_SIZES = { mc: 10, quickfire: 20, match: 6, tiles: 8 }
+const ROUND_SIZES = { mc: 10, quickfire: 20, match: 6, tiles: 8, pronunciation: 5 }
 
 const QUIZ_TYPES = [
-  { id: 'mc',        title: 'Multiple Choice', description: 'Pick the correct English translation.',              minCards: 4, roundSize: ROUND_SIZES.mc },
-  { id: 'quickfire', title: 'Quick Fire',       description: 'Flip cards, mark what you know.',                  minCards: 1, roundSize: ROUND_SIZES.quickfire },
-  { id: 'match',     title: 'Pair Match',       description: 'Match Vietnamese words to their English meanings.', minCards: 4, roundSize: ROUND_SIZES.match },
-  { id: 'tiles',     title: 'Word Builder',     description: 'Arrange Vietnamese tiles to match the English. 60s timer — earn +5s per correct answer.', minCards: 2, roundSize: ROUND_SIZES.tiles },
+  { id: 'mc',           title: 'Multiple Choice', description: 'Pick the correct English translation.',              minCards: 4, roundSize: ROUND_SIZES.mc },
+  { id: 'quickfire',    title: 'Quick Fire',       description: 'Flip cards, mark what you know.',                  minCards: 1, roundSize: ROUND_SIZES.quickfire, devOnly: true },
+  { id: 'match',        title: 'Pair Match',       description: 'Match Vietnamese words to their English meanings.', minCards: 4, roundSize: ROUND_SIZES.match },
+  { id: 'tiles',        title: 'Word Builder',     description: 'Arrange Vietnamese tiles to match the English. 60s timer — earn +5s per correct answer.', minCards: 2, roundSize: ROUND_SIZES.tiles },
+  { id: 'pronunciation', title: 'Pronunciation',   description: 'Record yourself saying each word and get tone-by-tone feedback.', minCards: 1, roundSize: ROUND_SIZES.pronunciation, requiresMic: true, devOnly: true },
 ]
 
 const STAGE_NAMES = ['Unseen', 'Learning', 'Familiar', 'Confident', 'Mastered']
@@ -172,13 +174,17 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
         </div>
 
         <div className="space-y-3">
-          {QUIZ_TYPES.map(qt => {
+          {QUIZ_TYPES.filter(qt => !qt.devOnly || import.meta.env.DEV).map(qt => {
             let eligible = cards.length >= qt.minCards
             let notEligibleReason = `Need ≥${qt.minCards} cards`
             if (qt.id === 'tiles') {
               const multiWord = cards.filter(c => c.vietnamese.trim().split(/\s+/).length >= 2)
               eligible = multiWord.length >= 2
               notEligibleReason = 'Need ≥2 multi-word cards'
+            }
+            if (qt.requiresMic && !navigator.mediaDevices?.getUserMedia) {
+              eligible = false
+              notEligibleReason = 'Microphone not available'
             }
             return (
               <button
@@ -203,15 +209,17 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
           })}
         </div>
 
-        <button
-          onClick={() => onNavigate('lotus-quest', deckId)}
-          disabled={cards.length === 0}
-          className="mt-4 w-full text-left bg-[#0d1018] dark:bg-[#0d1018] border-2 border-[#444] rounded-2xl p-5 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 disabled:opacity-40 hover:enabled:border-[#888] active:scale-[0.98] cursor-pointer disabled:cursor-not-allowed"
-          style={{ boxShadow: '2px 2px 0 #000' }}
-        >
-          <div className="font-mono font-semibold text-[#e0e0e0] text-lg">▶ QUEST</div>
-          <div className="text-[#888] text-sm mt-0.5">16-bit vocabulary adventure mode.</div>
-        </button>
+        {import.meta.env.DEV && (
+          <button
+            onClick={() => onNavigate('lotus-quest', deckId)}
+            disabled={cards.length === 0}
+            className="mt-4 w-full text-left bg-[#0d1018] dark:bg-[#0d1018] border-2 border-[#444] rounded-2xl p-5 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2 disabled:opacity-40 hover:enabled:border-[#888] active:scale-[0.98] cursor-pointer disabled:cursor-not-allowed"
+            style={{ boxShadow: '2px 2px 0 #000' }}
+          >
+            <div className="font-mono font-semibold text-[#e0e0e0] text-lg">▶ QUEST</div>
+            <div className="text-[#888] text-sm mt-0.5">16-bit vocabulary adventure mode.</div>
+          </button>
+        )}
       </div>
     )
   }
@@ -237,10 +245,11 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
           </h2>
         </div>
 
-        {quizType === 'mc'        && <MultipleChoice {...quizProps} allCards={cards} />}
-        {quizType === 'quickfire' && <QuickFire {...quizProps} />}
-        {quizType === 'match'     && <PairMatch {...quizProps} />}
-        {quizType === 'tiles'     && <TileAssembly {...quizProps} />}
+        {quizType === 'mc'           && <MultipleChoice {...quizProps} allCards={cards} />}
+        {quizType === 'quickfire'    && <QuickFire {...quizProps} />}
+        {quizType === 'match'        && <PairMatch {...quizProps} />}
+        {quizType === 'tiles'        && <TileAssembly {...quizProps} />}
+        {quizType === 'pronunciation' && <PronunciationQuiz {...quizProps} />}
       </div>
     )
   }
