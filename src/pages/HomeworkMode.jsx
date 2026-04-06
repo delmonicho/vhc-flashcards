@@ -11,9 +11,9 @@ import BreakdownDisplay from '../components/BreakdownDisplay'
 function loadSession(deckId) {
   try {
     const raw = localStorage.getItem(`homework-session-${deckId}`)
-    return raw ? JSON.parse(raw) : { answers: [], cardCount: 0 }
+    return raw ? JSON.parse(raw) : { answers: [], cardCount: 0, addedCards: [] }
   } catch {
-    return { answers: [], cardCount: 0 }
+    return { answers: [], cardCount: 0, addedCards: [] }
   }
 }
 
@@ -53,7 +53,7 @@ async function fetchBreakdownForDisplay(vi, en) {
 }
 
 // --- VocabPanel ---
-function VocabPanel({ deckId, userId, onCardAdded, onAddToSubmission }) {
+function VocabPanel({ deckId, userId, onCardAdded, onBreakdownReady, onAddToSubmission }) {
   // Input
   const [viText, setViText] = useState('')
   const [enText, setEnText] = useState('')
@@ -75,6 +75,14 @@ function VocabPanel({ deckId, userId, onCardAdded, onAddToSubmission }) {
 
   const viInputRef = useRef(null)
   const enInputRef = useRef(null)
+  const lastAddedCardIdRef = useRef(null)
+
+  // When breakdown loads after card was already saved, patch the stack entry
+  useEffect(() => {
+    const id = lastAddedCardIdRef.current
+    if (!id || !Array.isArray(breakdown)) return
+    onBreakdownReady(id, breakdown)
+  }, [breakdown, onBreakdownReady])
 
   // When submission form opens, focus the Q# field
   useEffect(() => {
@@ -120,7 +128,8 @@ function VocabPanel({ deckId, userId, onCardAdded, onAddToSubmission }) {
         .single()
       if (insertError) throw insertError
       setSavedToDeck(true)
-      onCardAdded()
+      lastAddedCardIdRef.current = data.id
+      onCardAdded({ id: data.id, vietnamese: vi, english: en, breakdown: Array.isArray(breakdown) ? breakdown : null })
       // Breakdown is already in cache from fetchBreakdownForDisplay — this will find it instantly
       if (Array.isArray(breakdown)) {
         supabase.from('flashcards').update({ breakdown }).eq('id', data.id).catch(() => {})
@@ -139,6 +148,7 @@ function VocabPanel({ deckId, userId, onCardAdded, onAddToSubmission }) {
 
   function handleNext() {
     cancelSpeech()
+    lastAddedCardIdRef.current = null
     setViText('')
     setEnText('')
     setTranslateState('idle')
@@ -481,7 +491,12 @@ function SubmissionPanel({ answers, cardCount, onAdd, onDelete, onClear }) {
 export default function HomeworkMode({ deckId, onNavigate }) {
   const { user } = useAuth()
   const [deck, setDeck] = useState(null)
-  const [session, setSession] = useState(() => loadSession(deckId))
+  const [session, setSession] = useState(() => {
+    const s = loadSession(deckId)
+    return { addedCards: [], ...s }
+  })
+  const [speakingCardId, setSpeakingCardId] = useState(null)
+  const [speakingKey, setSpeakingKey] = useState(null)
 
   useEffect(() => {
     saveSession(deckId, session)
@@ -496,8 +511,19 @@ export default function HomeworkMode({ deckId, onNavigate }) {
       })
   }, [deckId, onNavigate])
 
-  function handleCardAdded() {
-    setSession(s => ({ ...s, cardCount: s.cardCount + 1 }))
+  function handleCardAdded(card) {
+    setSession(s => ({
+      ...s,
+      cardCount: s.cardCount + 1,
+      addedCards: [...(s.addedCards ?? []), card],
+    }))
+  }
+
+  function handleBreakdownReady(cardId, breakdown) {
+    setSession(s => ({
+      ...s,
+      addedCards: (s.addedCards ?? []).map(c => c.id === cardId ? { ...c, breakdown } : c),
+    }))
   }
 
   function handleAddAnswer(entry) {
@@ -509,8 +535,19 @@ export default function HomeworkMode({ deckId, onNavigate }) {
   }
 
   function handleClearSession() {
-    setSession({ answers: [], cardCount: 0 })
+    setSession({ answers: [], cardCount: 0, addedCards: [] })
   }
+
+  function handleStackSpeak(cardId, text, key) {
+    cancelSpeech()
+    setSpeakingCardId(cardId)
+    setSpeakingKey(key)
+    speakVietnamese(text)
+      .then(() => { setSpeakingCardId(null); setSpeakingKey(null) })
+      .catch(() => { setSpeakingCardId(null); setSpeakingKey(null) })
+  }
+
+  const addedCards = session.addedCards ?? []
 
   return (
     <div className="page-fade-in max-w-5xl mx-auto px-4 py-6 md:px-8">
@@ -536,6 +573,7 @@ export default function HomeworkMode({ deckId, onNavigate }) {
           deckId={deckId}
           userId={user?.id}
           onCardAdded={handleCardAdded}
+          onBreakdownReady={handleBreakdownReady}
           onAddToSubmission={handleAddAnswer}
         />
         <SubmissionPanel
@@ -546,6 +584,61 @@ export default function HomeworkMode({ deckId, onNavigate }) {
           onClear={handleClearSession}
         />
       </div>
+
+      {/* Added cards stack */}
+      {addedCards.length > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-px flex-1 bg-co-border dark:bg-gray-700" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-co-muted dark:text-gray-500">
+              Added to deck this session ({addedCards.length})
+            </span>
+            <div className="h-px flex-1 bg-co-border dark:bg-gray-700" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...addedCards].reverse().map(card => (
+              <div
+                key={card.id}
+                className="bg-co-surface dark:bg-gray-800/50 rounded-xl border border-co-border dark:border-gray-700 p-4"
+              >
+                {/* Vietnamese + speak */}
+                <div className="flex items-start gap-2 mb-1">
+                  <p className="flex-1 font-display font-semibold text-sm text-co-ink dark:text-gray-100 leading-snug">
+                    {card.vietnamese}
+                  </p>
+                  <button
+                    onClick={() => handleStackSpeak(card.id, card.vietnamese, 'full')}
+                    aria-label="Pronounce Vietnamese"
+                    className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-primary/10 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+                      className={`w-3.5 h-3.5 ${speakingCardId === card.id && speakingKey === 'full' ? 'animate-pulse text-co-primary' : ''}`}>
+                      <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 001.5 12c0 .898.121 1.768.35 2.595.341 1.241 1.518 1.905 2.659 1.905H6.44l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06zM18.584 5.106a.75.75 0 011.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 11-1.06-1.06 8.25 8.25 0 000-11.668.75.75 0 010-1.06z" />
+                      <path d="M15.932 7.757a.75.75 0 011.061 0 6 6 0 010 8.486.75.75 0 01-1.06-1.061 4.5 4.5 0 000-6.364.75.75 0 010-1.06z" />
+                    </svg>
+                  </button>
+                </div>
+                {/* English */}
+                <p className="text-xs text-co-muted dark:text-gray-400 mb-3">{card.english}</p>
+                {/* Breakdown */}
+                {card.breakdown === null ? (
+                  <p className="text-xs text-co-muted dark:text-gray-500 flex items-center gap-1.5">
+                    <span className="loading-dot" /><span className="loading-dot" /><span className="loading-dot" />
+                    <span className="ml-1">Generating…</span>
+                  </p>
+                ) : (
+                  <BreakdownDisplay
+                    breakdown={card.breakdown}
+                    speakingKey={speakingCardId === card.id ? speakingKey : null}
+                    onSpeakChunk={(i, text) => handleStackSpeak(card.id, text, `chunk-${i}`)}
+                    onSpeakFull={() => handleStackSpeak(card.id, card.vietnamese, 'full')}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
