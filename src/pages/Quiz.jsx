@@ -178,9 +178,9 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
             let eligible = cards.length >= qt.minCards
             let notEligibleReason = `Need ≥${qt.minCards} cards`
             if (qt.id === 'tiles') {
-              const multiWord = cards.filter(c => c.vietnamese.trim().split(/\s+/).length >= 2)
+              const multiWord = cards.filter(c => c.vietnamese.trim().split(/\s+/).length >= 4)
               eligible = multiWord.length >= 2
-              notEligibleReason = 'Need ≥2 multi-word cards'
+              notEligibleReason = 'Need ≥2 phrases (4+ words)'
             }
             if (qt.requiresMic && !navigator.mediaDevices?.getUserMedia) {
               eligible = false
@@ -227,7 +227,7 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
   // ─── Playing phase ────────────────────────────────────────────────────────
   if (phase === 'playing') {
     const quizCards = quizType === 'tiles'
-      ? cards.filter(c => c.vietnamese.trim().split(/\s+/).length >= 2)
+      ? cards.filter(c => c.vietnamese.trim().split(/\s+/).length >= 4)
       : cards
     const sampledCards = selectQuizCards(quizCards, ROUND_SIZES[quizType], masteryData)
     const quizProps = { cards: sampledCards, onDone: handleDone }
@@ -247,7 +247,7 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
 
         {quizType === 'mc'           && <MultipleChoice {...quizProps} allCards={cards} />}
         {quizType === 'quickfire'    && <QuickFire {...quizProps} />}
-        {quizType === 'match'        && <PairMatch {...quizProps} />}
+        {quizType === 'match'        && <PairMatch {...quizProps} allPairCards={cards} />}
         {quizType === 'tiles'        && <TileAssembly {...quizProps} />}
         {quizType === 'pronunciation' && <PronunciationQuiz {...quizProps} />}
       </div>

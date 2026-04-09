@@ -9,10 +9,55 @@ function shuffle(arr) {
   return a
 }
 
-export default function PairMatch({ cards, onDone }) {
-  const pool = useMemo(() => cards, [cards])
-  const [leftItems] = useState(() => shuffle(pool.map(c => ({ id: c.id, text: c.vietnamese }))))
-  const [rightItems] = useState(() => shuffle(pool.map(c => ({ id: c.id, text: c.english }))))
+function wordCount(str) {
+  return str.trim().split(/\s+/).length
+}
+
+// Builds a pool of pair items with uniform length.
+// Prefers single-vocab cards (≤2 words); substitutes long cards with their
+// short breakdown chunks when the deck doesn't have enough short cards.
+function buildPairPool(sampledCards, allCards) {
+  const SHORT_WC = 2
+  const allShort = allCards.filter(c => wordCount(c.vietnamese) <= SHORT_WC)
+
+  if (allShort.length >= 4) {
+    // Enough short cards in the deck: prefer them, mastery-sampled short ones first
+    const sampledShortIds = new Set(
+      sampledCards.filter(c => wordCount(c.vietnamese) <= SHORT_WC).map(c => c.id)
+    )
+    const pool = sampledCards.filter(c => sampledShortIds.has(c.id))
+    if (pool.length < sampledCards.length) {
+      for (const c of shuffle(allShort.filter(c => !sampledShortIds.has(c.id)))) {
+        if (pool.length >= sampledCards.length) break
+        pool.push(c)
+      }
+    }
+    return pool.map(c => ({ id: c.id, vi: c.vietnamese, en: c.english, isReal: true }))
+  }
+
+  // Not enough short cards: replace long cards with a short breakdown chunk if available
+  return sampledCards.map(c => {
+    if (wordCount(c.vietnamese) <= SHORT_WC) {
+      return { id: c.id, vi: c.vietnamese, en: c.english, isReal: true }
+    }
+    if (Array.isArray(c.breakdown) && c.breakdown.length > 0) {
+      const shortChunks = c.breakdown
+        .map((ch, i) => ({ ...ch, origIdx: i }))
+        .filter(ch => ch.vi && ch.en && wordCount(ch.vi) <= SHORT_WC)
+      if (shortChunks.length > 0) {
+        const ch = shortChunks[Math.floor(Math.random() * shortChunks.length)]
+        return { id: `_chunk_${c.id}_${ch.origIdx}`, vi: ch.vi, en: ch.en, isReal: false }
+      }
+    }
+    // No short chunks: keep the full card as-is
+    return { id: c.id, vi: c.vietnamese, en: c.english, isReal: true }
+  })
+}
+
+export default function PairMatch({ cards, allPairCards, onDone }) {
+  const pool = useMemo(() => buildPairPool(cards, allPairCards ?? cards), [cards, allPairCards])
+  const [leftItems] = useState(() => shuffle(pool.map(p => ({ id: p.id, text: p.vi }))))
+  const [rightItems] = useState(() => shuffle(pool.map(p => ({ id: p.id, text: p.en }))))
   const [selectedLeft, setSelectedLeft] = useState(null)
   const [selectedRight, setSelectedRight] = useState(null)
   const [matched, setMatched] = useState(() => new Set())
@@ -49,8 +94,10 @@ export default function PairMatch({ cards, onDone }) {
       setSelectedRight(null)
       if (newMatched.size === total) {
         setTimeout(() => {
-          const score = [...results.values()].filter(Boolean).length
-          onDone({ score, total, results })
+          // Filter synthetic chunk IDs — only real card IDs go to mastery/Supabase
+          const realResults = new Map([...results].filter(([id]) => !id.startsWith('_chunk_')))
+          const score = [...realResults.values()].filter(Boolean).length
+          onDone({ score, total: realResults.size, results: realResults })
         }, 400)
       }
     } else {

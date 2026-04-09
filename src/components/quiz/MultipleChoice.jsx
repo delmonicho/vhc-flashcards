@@ -9,8 +9,48 @@ function shuffle(arr) {
   return a
 }
 
+function wordCount(str) {
+  return str.trim().split(/\s+/).length
+}
+
 function buildOptions(card, allCards) {
-  const distractors = shuffle(allCards.filter(c => c.id !== card.id)).slice(0, 3)
+  const promptWc = wordCount(card.vietnamese)
+  const others = allCards.filter(c => c.id !== card.id)
+
+  // Partition other cards into similar-length and everything else
+  const similar = [], other = []
+  for (const c of others) {
+    if (Math.abs(wordCount(c.vietnamese) - promptWc) <= 2) similar.push(c)
+    else other.push(c)
+  }
+
+  // For short prompts (≤2 words): harvest breakdown chunks from other cards as short distractors
+  const chunks = []
+  if (promptWc <= 2) {
+    for (const c of others) {
+      if (!Array.isArray(c.breakdown)) continue
+      c.breakdown.forEach((chunk, i) => {
+        if (chunk.vi && chunk.en && wordCount(chunk.vi) <= 3) {
+          chunks.push({ id: `_chunk_${c.id}_${i}`, english: chunk.en, vietnamese: chunk.vi })
+        }
+      })
+    }
+  }
+
+  // Priority: similar-length cards → breakdown chunks → anything else
+  const candidates = [...shuffle(similar), ...shuffle(chunks), ...shuffle(other)]
+
+  // Walk candidates, dedup by English text, pick first 3
+  const usedEng = new Set([card.english])
+  const distractors = []
+  for (const c of candidates) {
+    if (distractors.length >= 3) break
+    if (c.english && !usedEng.has(c.english)) {
+      usedEng.add(c.english)
+      distractors.push(c)
+    }
+  }
+
   return shuffle([card, ...distractors])
 }
 
