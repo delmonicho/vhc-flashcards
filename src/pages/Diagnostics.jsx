@@ -36,8 +36,10 @@ export default function Diagnostics({ onNavigate, dark, onToggleDark }) {
   const [stats, setStats] = useState(null)
   const [recentErrors, setRecentErrors] = useState([])
   const [errorSummary, setErrorSummary] = useState([])
+  const [bugReports, setBugReports] = useState([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState(null)
+  const [expandedBugId, setExpandedBugId] = useState(null)
 
   const loadedAt = new Date().toISOString()
 
@@ -46,7 +48,7 @@ export default function Diagnostics({ onNavigate, dark, onToggleDark }) {
       const [
         weeksRes, cardsRes, breakdownsRes, categoriesRes, gameStatsRes, logsRes,
         withBdRes, withoutBdRes,
-        errorsRes,
+        errorsRes, bugReportsRes,
       ] = await Promise.all([
         supabase.from('decks').select('*', { count: 'exact', head: true }),
         supabase.from('flashcards').select('*', { count: 'exact', head: true }),
@@ -57,6 +59,7 @@ export default function Diagnostics({ onNavigate, dark, onToggleDark }) {
         supabase.from('flashcards').select('*', { count: 'exact', head: true }).not('breakdown', 'is', null),
         supabase.from('flashcards').select('*', { count: 'exact', head: true }).is('breakdown', null),
         supabase.from('logs').select('created_at, page, action, message, details').eq('type', 'error').order('created_at', { ascending: false }).limit(200),
+        supabase.from('logs').select('created_at, page, message, details').eq('type', 'bug-report').order('created_at', { ascending: false }).limit(50),
       ])
 
       setStats({
@@ -69,6 +72,8 @@ export default function Diagnostics({ onNavigate, dark, onToggleDark }) {
         withBreakdown: withBdRes.count ?? 0,
         withoutBreakdown: withoutBdRes.count ?? 0,
       })
+
+      setBugReports(bugReportsRes.data || [])
 
       const errors = errorsRes.data || []
       setRecentErrors(errors.slice(0, 25))
@@ -223,7 +228,64 @@ export default function Diagnostics({ onNavigate, dark, onToggleDark }) {
             )}
           </Section>
 
-          {/* Section 5: Environment */}
+          {/* Section 5: Bug Reports */}
+          <Section title={`Bug Reports${bugReports.length > 0 ? ` (${bugReports.length})` : ''}`}>
+            {bugReports.length === 0 ? (
+              <p className="text-sm text-co-muted dark:text-gray-400">No bug reports yet.</p>
+            ) : (
+              <div className="space-y-1">
+                {bugReports.map((report, i) => {
+                  const isOpen = expandedBugId === i
+                  return (
+                    <div key={i} className="bg-co-surface dark:bg-gray-800 rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => setExpandedBugId(isOpen ? null : i)}
+                        className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-co-border/40 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                      >
+                        <span className="text-xs text-co-muted dark:text-gray-500 whitespace-nowrap mt-0.5 min-w-[60px]">
+                          {timeAgo(report.created_at)}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs text-co-muted dark:text-gray-400 mb-0.5">
+                            {report.page || '—'}
+                          </div>
+                          <div className="text-sm text-co-ink dark:text-gray-100 truncate">{report.message}</div>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                          className={`w-4 h-4 text-co-muted dark:text-gray-500 shrink-0 mt-0.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true">
+                          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                      {isOpen && (
+                        <div className="px-4 pb-4 pt-1 border-t border-co-border dark:border-gray-700 space-y-3">
+                          {report.details?.steps && (
+                            <div>
+                              <div className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-wide mb-1">Steps to reproduce</div>
+                              <p className="text-sm text-co-ink dark:text-gray-200 whitespace-pre-wrap">{report.details.steps}</p>
+                            </div>
+                          )}
+                          {report.details?.url && (
+                            <div>
+                              <div className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-wide mb-1">URL</div>
+                              <p className="text-xs font-mono text-co-ink dark:text-gray-300 break-all">{report.details.url}</p>
+                            </div>
+                          )}
+                          {report.details?.userAgent && (
+                            <div>
+                              <div className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-wide mb-1">User Agent</div>
+                              <p className="text-xs font-mono text-co-muted dark:text-gray-500 break-all">{report.details.userAgent}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </Section>
+
+          {/* Section 6: Environment */}
           <Section title="Environment">
             <div className="bg-co-surface dark:bg-gray-800 rounded-xl p-4 font-mono text-xs space-y-1">
               {[
