@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Disallow: /auth/
+Disallow: /profile
+Disallow: /diagnostics
+
+Sitemap: https://learnlang.day/sitemap.xml
