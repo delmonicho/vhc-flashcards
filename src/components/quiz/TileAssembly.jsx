@@ -17,7 +17,7 @@ export default function TileAssembly({ cards, onDone }) {
   const [index, setIndex] = useState(0)
   const [bank, setBank] = useState(() => makeTiles(cards[0].vietnamese))
   const [answer, setAnswer] = useState([])
-  const [secondsLeft, setSecondsLeft] = useState(60)
+  const [secondsLeft, setSecondsLeft] = useState(180)
   const [attempts, setAttempts] = useState(0)
   const [shaking, setShaking] = useState(false)
   const [flashing, setFlashing] = useState(false)
@@ -92,7 +92,7 @@ export default function TileAssembly({ cards, onDone }) {
     if (assembled === correctWords.join(' ')) {
       results.set(card.id, attempts === 0)
       setFlashing(true)
-      setSecondsLeft(s => Math.min(s + 5, 60))
+      setSecondsLeft(s => Math.min(s + 10, 180))
       setTimeout(() => {
         setFlashing(false)
         advance()
@@ -142,7 +142,7 @@ export default function TileAssembly({ cards, onDone }) {
       <div aria-hidden="true" className="bg-co-border dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
         <div
           className={`h-1.5 rounded-full transition-all duration-1000 ${secondsLeft <= 10 ? 'bg-red-500' : 'bg-co-primary'}`}
-          style={{ width: `${(secondsLeft / 60) * 100}%` }}
+          style={{ width: `${(secondsLeft / 180) * 100}%` }}
         />
       </div>
       <div aria-hidden="true" className="text-right text-xs text-co-muted dark:text-gray-500 -mt-2">{secondsLeft}s</div>
