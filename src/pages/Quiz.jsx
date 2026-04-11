@@ -24,7 +24,7 @@ const QUIZ_TYPES = [
   { id: 'mc',           title: 'Multiple Choice', description: 'Pick the correct English translation.',              minCards: 4, roundSize: ROUND_SIZES.mc },
   { id: 'quickfire',    title: 'Quick Fire',       description: 'Flip cards, mark what you know.',                  minCards: 1, roundSize: ROUND_SIZES.quickfire },
   { id: 'match',        title: 'Pair Match',       description: 'Match Vietnamese words to their English meanings.', minCards: 4, roundSize: ROUND_SIZES.match },
-  { id: 'tiles',        title: 'Word Builder',     description: 'Arrange Vietnamese tiles to match the English. 60s timer — earn +5s per correct answer.', minCards: 2, roundSize: ROUND_SIZES.tiles },
+  { id: 'tiles',        title: 'Word Builder',     description: 'Arrange Vietnamese tiles to match the English. 3 min timer — earn +10s per correct answer.', minCards: 2, roundSize: ROUND_SIZES.tiles },
   { id: 'pronunciation', title: 'Pronunciation',   description: 'Record yourself saying each word and get tone-by-tone feedback.', minCards: 1, roundSize: ROUND_SIZES.pronunciation, requiresMic: true, devOnly: true },
 ]
 
