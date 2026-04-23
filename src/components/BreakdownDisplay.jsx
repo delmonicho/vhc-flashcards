@@ -30,7 +30,7 @@ export default function BreakdownDisplay({
         breakdown
       </div>
       <div className="space-y-1.5">
-        {/* Vietnamese row — tappable if onSpeakChunk provided */}
+        {/* Target language row — tappable if onSpeakChunk provided */}
         <div className="flex flex-wrap gap-1.5">
           {breakdown.map((seg, i) => {
             const key = `chunk-${i}`
@@ -55,6 +55,20 @@ export default function BreakdownDisplay({
             )
           })}
         </div>
+
+        {/* Pinyin row — only for Chinese cards */}
+        {breakdown.some(s => s.pinyin) && (
+          <div className="flex flex-wrap gap-1.5">
+            {breakdown.map((seg, i) => (
+              <span
+                key={i}
+                className={`px-3 py-1 rounded-lg text-xs font-medium tracking-wide ${CHUNK_COLORS[i % CHUNK_COLORS.length].pill} opacity-80`}
+              >
+                {seg.pinyin ?? ''}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* English row — static */}
         <div className="flex flex-wrap gap-1.5">

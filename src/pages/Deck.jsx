@@ -4,7 +4,7 @@ import { getCategoryColor, deleteCategory, upsertCategories, nextColor } from '.
 import { logError } from '../lib/logger'
 import { stripDiacritics, getOrCreateBreakdown, batchGetOrCreateBreakdowns } from '../lib/breakdown'
 import { useAuth } from '../context/AuthContext'
-import { speakVietnamese } from '../lib/speak'
+import { speak, deckLangCode } from '../lib/speak'
 import VocabInput from '../components/VocabInput'
 import CardEditModal from '../components/CardEditModal'
 import PdfImportModal from '../components/PdfImportModal'
@@ -152,7 +152,7 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
     setCopyError(null)
     const { data: newDeck, error: deckErr } = await supabase
       .from('decks')
-      .insert({ title: deck.title, user_id: user.id, is_public: false })
+      .insert({ title: deck.title, user_id: user.id, is_public: false, language: deck.language ?? 'vi', script: deck.script ?? null })
       .select()
       .single()
     if (deckErr) {
@@ -257,9 +257,16 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
           ←
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="font-display text-2xl font-bold truncate text-co-ink dark:text-gray-100">
-            {deck?.title}
-          </h1>
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="font-display text-2xl font-bold truncate text-co-ink dark:text-gray-100">
+              {deck?.title}
+            </h1>
+            {deck?.language === 'zh' && (
+              <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 text-co-muted dark:text-gray-400">
+                {deck.script === 'traditional' ? '繁體' : '简体'}
+              </span>
+            )}
+          </div>
           {!isOwner && deck?.profiles?.display_name && (
             <p className="text-sm text-co-muted dark:text-gray-400 mt-0.5">
               by {deck.profiles.display_name}
@@ -315,6 +322,8 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
           onCardBreakdownReady={handleBreakdownReady}
           categories={categories}
           onCategoriesChange={onCategoriesChange}
+          deckLanguage={deck?.language ?? 'vi'}
+          deckScript={deck?.script ?? null}
         />
       )}
       {isOwner && (
@@ -512,7 +521,7 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
                     )}
                   </button>
                   <button
-                    onClick={() => speakVietnamese(card.vietnamese)}
+                    onClick={() => speak(card.vietnamese, deckLangCode(deck?.language, deck?.script))}
                     aria-label={`Pronounce ${card.vietnamese}`}
                     className="absolute bottom-2.5 right-2.5 w-7 h-7 flex items-center justify-center rounded-full text-co-muted dark:text-gray-500 hover:text-co-primary dark:hover:text-co-primary hover:bg-co-surface dark:hover:bg-gray-700 opacity-50 hover:opacity-100 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1"
                   >
@@ -542,6 +551,8 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
           onClose={() => setEditingCard(null)}
           onBreakdownReady={handleBreakdownReady}
           triggerRef={lastClickedRef}
+          deckLanguage={deck?.language ?? 'vi'}
+          deckScript={deck?.script ?? null}
         />
       )}
       {deletingCat && (

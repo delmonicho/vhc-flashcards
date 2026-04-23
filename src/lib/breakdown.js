@@ -2,15 +2,21 @@ import { supabase } from './supabase'
 import { logError } from './logger'
 
 export function normalizeVietnamese(text) {
-  return text.trim().replace(/\s+/g, ' ')
+  return normalizePhrase(text, 'vi')
+}
+
+// Returns a cache key prefixed with language to avoid collisions between languages.
+// e.g. 'vi:xin chào', 'zh-Hans:你好', 'zh-TW:你好'
+export function normalizePhrase(text, lang) {
+  return `${lang}:${text.trim().replace(/\s+/g, ' ')}`
 }
 
 export function stripDiacritics(str) {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  return str.normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
 
-export async function getOrCreateBreakdown(vietnameseText, cardId, englishText) {
-  const viKey = normalizeVietnamese(vietnameseText)
+export async function getOrCreateBreakdown(vietnameseText, cardId, englishText, lang = 'vi', script = null) {
+  const viKey = normalizePhrase(vietnameseText, lang === 'zh' ? (script === 'traditional' ? 'zh-TW' : 'zh-Hans') : lang)
 
   // 1. Cache lookup — reuse existing breakdown for this phrase
   const { data } = await supabase
@@ -26,7 +32,12 @@ export async function getOrCreateBreakdown(vietnameseText, cardId, englishText) 
 
   // 2. Generate via Edge Function (proxies Anthropic to avoid CORS)
   const { data: fnData, error: fnError } = await supabase.functions.invoke('generate-breakdown', {
-    body: { vietnamese: vietnameseText, ...(englishText && { english: englishText }) },
+    body: {
+      vietnamese: vietnameseText,
+      ...(englishText && { english: englishText }),
+      lang,
+      ...(script && { script }),
+    },
   })
 
   if (fnError) throw new Error(`Breakdown generation failed: ${fnError.message}`)
@@ -53,10 +64,11 @@ export async function getOrCreateBreakdown(vietnameseText, cardId, englishText) 
 // Reduces N cache reads + N cache writes + N flashcard updates → 1 + 1 + 1.
 // Claude API calls go from N concurrent to ceil(misses/20) sequential batch calls.
 // onCardReady(cardId, breakdown) is called as each breakdown becomes available.
-export async function batchGetOrCreateBreakdowns(cards, onCardReady) {
+export async function batchGetOrCreateBreakdowns(cards, onCardReady, lang = 'vi', script = null) {
   if (cards.length === 0) return
 
-  const viKeys = cards.map(c => normalizeVietnamese(c.vietnamese))
+  const langKey = lang === 'zh' ? (script === 'traditional' ? 'zh-TW' : 'zh-Hans') : lang
+  const viKeys = cards.map(c => normalizePhrase(c.vietnamese, langKey))
 
   // 1. Single batch cache lookup
   const { data: cached } = await supabase
@@ -65,15 +77,15 @@ export async function batchGetOrCreateBreakdowns(cards, onCardReady) {
     .in('vi_key', viKeys)
 
   const cacheMap = new Map((cached ?? []).map(r => [r.vi_key, r.breakdown]))
-  const hits = cards.filter(c => cacheMap.has(normalizeVietnamese(c.vietnamese)))
-  const misses = cards.filter(c => !cacheMap.has(normalizeVietnamese(c.vietnamese)))
+  const hits = cards.filter(c => cacheMap.has(normalizePhrase(c.vietnamese, langKey)))
+  const misses = cards.filter(c => !cacheMap.has(normalizePhrase(c.vietnamese, langKey)))
 
   // Notify UI for cache hits immediately
-  hits.forEach(card => onCardReady(card.id, cacheMap.get(normalizeVietnamese(card.vietnamese))))
+  hits.forEach(card => onCardReady(card.id, cacheMap.get(normalizePhrase(card.vietnamese, langKey))))
 
   // 2. Batch generate for cache misses — one Claude call per chunk of 20 (sequential)
   // De-duplicate by vi_key first so identical words only get generated once
-  const uniqueMisses = [...new Map(misses.map(c => [normalizeVietnamese(c.vietnamese), c])).values()]
+  const uniqueMisses = [...new Map(misses.map(c => [normalizePhrase(c.vietnamese, langKey), c])).values()]
   const batchResultMap = new Map() // vi_key → breakdown
 
   const CHUNK_SIZE = 20
@@ -81,7 +93,11 @@ export async function batchGetOrCreateBreakdowns(cards, onCardReady) {
     const chunk = uniqueMisses.slice(i, i + CHUNK_SIZE)
     try {
       const { data: fnData, error: fnError } = await supabase.functions.invoke('batch-breakdown', {
-        body: { cards: chunk.map(c => ({ vietnamese: c.vietnamese, english: c.english })) },
+        body: {
+          cards: chunk.map(c => ({ vietnamese: c.vietnamese, english: c.english })),
+          lang,
+          ...(script && { script }),
+        },
       })
       if (fnError) throw new Error(fnError.message)
       const { results } = fnData ?? {}
@@ -89,7 +105,7 @@ export async function batchGetOrCreateBreakdowns(cards, onCardReady) {
         results.forEach((item, idx) => {
           const bd = item?.breakdown
           if (Array.isArray(bd) && bd[0]?.vi) {
-            batchResultMap.set(normalizeVietnamese(chunk[idx].vietnamese), bd)
+            batchResultMap.set(normalizePhrase(chunk[idx].vietnamese, langKey), bd)
           }
         })
       }
@@ -101,7 +117,7 @@ export async function batchGetOrCreateBreakdowns(cards, onCardReady) {
   // Apply results to all miss cards (including any with duplicate vi_keys)
   const generated = []
   for (const card of misses) {
-    const vk = normalizeVietnamese(card.vietnamese)
+    const vk = normalizePhrase(card.vietnamese, langKey)
     const bd = batchResultMap.get(vk)
     if (bd) {
       generated.push({ vi_key: vk, breakdown: bd, cardId: card.id })
@@ -120,7 +136,7 @@ export async function batchGetOrCreateBreakdowns(cards, onCardReady) {
 
   // 4. Bulk update flashcard.breakdown — single RPC call for all cards (hits + generated)
   const flashcardUpdates = [
-    ...hits.map(card => ({ id: card.id, breakdown: cacheMap.get(normalizeVietnamese(card.vietnamese)) })),
+    ...hits.map(card => ({ id: card.id, breakdown: cacheMap.get(normalizePhrase(card.vietnamese, langKey)) })),
     ...generated.map(({ cardId, breakdown }) => ({ id: cardId, breakdown })),
   ]
   if (flashcardUpdates.length > 0) {

@@ -4,7 +4,7 @@ import { CHUNK_COLORS } from '../lib/colors'
 import { getOrCreateBreakdown } from '../lib/breakdown'
 import { logError } from '../lib/logger'
 
-export default function CardEditModal({ card, categories = [], onSave, onDelete, onClose, onBreakdownReady, triggerRef }) {
+export default function CardEditModal({ card, categories = [], onSave, onDelete, onClose, onBreakdownReady, triggerRef, deckLanguage = 'vi', deckScript = null }) {
   const [vietnamese, setVietnamese] = useState(card.vietnamese)
   const [english, setEnglish] = useState(card.english)
   const [tags, setTags] = useState(card.source || [])
@@ -102,10 +102,10 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
         <div className="p-5 overflow-y-auto space-y-5 flex-1">
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest">
-              Vietnamese
+              {deckLanguage === 'zh' ? 'Chinese' : 'Vietnamese'}
             </label>
             <input
-              lang="vi"
+              lang={deckLanguage === 'zh' ? (deckScript === 'traditional' ? 'zh-TW' : 'zh-Hans') : 'vi'}
               spellCheck="false"
               className="w-full border border-co-border dark:border-gray-700 rounded-xl px-3 py-2 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-co-primary"
               value={vietnamese}

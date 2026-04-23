@@ -1,4 +1,4 @@
-# Cô Ơi — Claude Notes
+# Learn Lang — Claude Notes
 
 ## Tech Stack
 

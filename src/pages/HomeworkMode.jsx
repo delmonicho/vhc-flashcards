@@ -4,7 +4,7 @@ import { translateToEnglish } from '../lib/translate'
 import { normalizeVietnamese } from '../lib/breakdown'
 import { logError } from '../lib/logger'
 import { useAuth } from '../context/AuthContext'
-import { speakVietnamese, cancelSpeech } from '../lib/speak'
+import { speak, cancelSpeech, deckLangCode } from '../lib/speak'
 import BreakdownDisplay from '../components/BreakdownDisplay'
 
 // --- localStorage helpers ---
@@ -53,7 +53,7 @@ async function fetchBreakdownForDisplay(vi, en) {
 }
 
 // --- VocabPanel ---
-function VocabPanel({ deckId, userId, onCardAdded, onBreakdownReady, onAddToSubmission }) {
+function VocabPanel({ deckId, userId, onCardAdded, onBreakdownReady, onAddToSubmission, deckLanguage = 'vi', deckScript = null }) {
   // Input
   const [viText, setViText] = useState('')
   const [enText, setEnText] = useState('')
@@ -162,9 +162,12 @@ function VocabPanel({ deckId, userId, onCardAdded, onBreakdownReady, onAddToSubm
     viInputRef.current?.focus()
   }
 
+  const langCode = deckLangCode(deckLanguage, deckScript)
+  const langLabel = deckLanguage === 'zh' ? 'Chinese' : 'Vietnamese'
+
   function handleSpeak(text, key) {
     setSpeakingKey(key)
-    speakVietnamese(text)
+    speak(text, langCode)
       .then(() => setSpeakingKey(null))
       .catch(() => setSpeakingKey(null))
   }
@@ -209,7 +212,7 @@ function VocabPanel({ deckId, userId, onCardAdded, onBreakdownReady, onAddToSubm
           lang="vi"
           spellCheck={false}
           autoComplete="off"
-          placeholder="Type Vietnamese phrase…"
+          placeholder={`Type ${langLabel} phrase…`}
           className="flex-1 border border-co-border dark:border-gray-600 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-900 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary"
           // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
@@ -241,7 +244,7 @@ function VocabPanel({ deckId, userId, onCardAdded, onBreakdownReady, onAddToSubm
             </p>
             <button
               onClick={() => handleSpeak(viText, 'full')}
-              aria-label="Pronounce Vietnamese"
+              aria-label={`Pronounce ${langLabel}`}
               className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-co-muted dark:text-gray-400 hover:text-co-primary hover:bg-co-primary/10 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
@@ -504,7 +507,7 @@ export default function HomeworkMode({ deckId, onNavigate }) {
 
   useEffect(() => {
     if (!deckId) { onNavigate('home'); return }
-    supabase.from('decks').select('id, title').eq('id', deckId).single()
+    supabase.from('decks').select('id, title, language, script').eq('id', deckId).single()
       .then(({ data, error }) => {
         if (error || !data) { onNavigate('home'); return }
         setDeck(data)
@@ -542,7 +545,7 @@ export default function HomeworkMode({ deckId, onNavigate }) {
     cancelSpeech()
     setSpeakingCardId(cardId)
     setSpeakingKey(key)
-    speakVietnamese(text)
+    speak(text, deckLangCode(deck?.language, deck?.script))
       .then(() => { setSpeakingCardId(null); setSpeakingKey(null) })
       .catch(() => { setSpeakingCardId(null); setSpeakingKey(null) })
   }
@@ -575,6 +578,8 @@ export default function HomeworkMode({ deckId, onNavigate }) {
           onCardAdded={handleCardAdded}
           onBreakdownReady={handleBreakdownReady}
           onAddToSubmission={handleAddAnswer}
+          deckLanguage={deck?.language ?? 'vi'}
+          deckScript={deck?.script ?? null}
         />
         <SubmissionPanel
           answers={session.answers}

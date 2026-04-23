@@ -15,17 +15,24 @@ export function getAvailableVoices() {
   return [...vi, ...others]
 }
 
+export function isVoiceAvailable(langCode) {
+  const prefix = langCode.split('-')[0]
+  return cachedVoices.some(v => v.lang.startsWith(prefix))
+}
+
+// Legacy alias — kept for call sites not yet updated
 export function isVietnameseVoiceAvailable() {
-  return cachedVoices.some(v => v.lang.startsWith('vi'))
+  return isVoiceAvailable('vi')
 }
 
 export function cancelSpeech() {
   window.speechSynthesis?.cancel()
 }
 
-// speakVietnamese must be called synchronously from a user gesture (iOS requirement).
-// We use cachedVoices (pre-loaded at module init) so no await is needed before speak().
-export function speakVietnamese(text, options = {}) {
+// Must be called synchronously within a user gesture handler (iOS requirement).
+// Uses cachedVoices (pre-loaded at module init) so no await is needed before speak().
+// langCode: BCP 47 tag e.g. 'vi-VN', 'zh-CN', 'zh-TW'
+export function speak(text, langCode = 'vi-VN', options = {}) {
   return new Promise((resolve, reject) => {
     if (!window.speechSynthesis) {
       reject(new Error('Speech synthesis not supported'))
@@ -39,12 +46,24 @@ export function speakVietnamese(text, options = {}) {
     utterance.pitch = options.pitch ?? 1
     utterance.volume = options.volume ?? 1
 
-    const viVoice = cachedVoices.find(v => v.lang.startsWith('vi'))
-    if (viVoice) utterance.voice = viVoice
+    const prefix = langCode.split('-')[0]
+    const voice = cachedVoices.find(v => v.lang.startsWith(prefix))
+    if (voice) utterance.voice = voice
 
     utterance.onend = () => resolve()
     utterance.onerror = e => reject(e)
 
     speechSynthesis.speak(utterance)
   })
+}
+
+// Legacy alias
+export function speakVietnamese(text, options = {}) {
+  return speak(text, 'vi-VN', options)
+}
+
+// Returns the BCP 47 lang code for a deck's language/script
+export function deckLangCode(language, script) {
+  if (language === 'zh') return script === 'traditional' ? 'zh-TW' : 'zh-CN'
+  return 'vi-VN'
 }

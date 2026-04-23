@@ -1,8 +1,8 @@
-export async function translateToEnglish(text) {
+export async function translateToEnglish(text, sourceLang = 'vi') {
   const res = await fetch('/api/translate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ q: text, source: 'vi', target: 'en' }),
+    body: JSON.stringify({ q: text, source: sourceLang, target: 'en' }),
   })
   const json = await res.json()
   if (json.error) {

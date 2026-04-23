@@ -5,14 +5,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+function buildPrompt(vietnamese: string, english: string | undefined, lang: string, script: string | undefined): string {
+  const contextLine = english ? `\nEnglish translation: ${english}` : ''
+
+  if (lang === 'zh') {
+    const scriptLabel = script === 'traditional' ? 'Traditional Chinese' : 'Simplified Chinese'
+    return `You are a Chinese language tutor. Generate a word-by-word breakdown of the ${scriptLabel} phrase below, aligned with its English meaning. Return ONLY a valid JSON array — no markdown fences, no explanation. Use this exact format:\n\n[{ "vi": "<Chinese characters>", "pinyin": "<pinyin with tone marks>", "en": "<English meaning>" }]\n\nKeep chunks to 1–3 characters/words. Include accurate tone marks in pinyin (e.g. nǐ hǎo, not ni hao).${contextLine}\n\nPhrase: ${vietnamese}`
+  }
+
+  return `You are a Vietnamese language tutor. Generate a word-by-word breakdown of the Vietnamese phrase below, aligned with its English meaning. Return ONLY a valid JSON array — no markdown fences, no explanation. Use this exact format:\n\n[{ "vi": "<Vietnamese chunk>", "en": "<English chunk>" }]\n\nKeep chunks to 1–3 words. Use the English translation as context to pick the right meaning for ambiguous words.${contextLine}\n\nPhrase: ${vietnamese}`
+}
+
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { vietnamese, english } = await req.json()
+    const { vietnamese, english, lang = 'vi', script } = await req.json()
     if (!vietnamese) {
       return new Response(JSON.stringify({ error: 'Missing vietnamese field' }), {
         status: 400,
@@ -20,9 +30,7 @@ serve(async (req) => {
       })
     }
 
-    const contextLine = english ? `\nEnglish translation: ${english}` : ''
-    const prompt =
-      `You are a Vietnamese language tutor. Generate a word-by-word breakdown of the Vietnamese phrase below, aligned with its English meaning. Return ONLY a valid JSON array — no markdown fences, no explanation. Use this exact format:\n\n[{ "vi": "<Vietnamese chunk>", "en": "<English chunk>" }]\n\nKeep chunks to 1–3 words. Use the English translation as context to pick the right meaning for ambiguous words.${contextLine}\n\nPhrase: ${vietnamese}`
+    const prompt = buildPrompt(vietnamese, english, lang, script)
 
     let lastError = ''
     for (let attempt = 1; attempt <= 3; attempt++) {

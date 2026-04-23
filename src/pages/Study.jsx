@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { logError } from '../lib/logger'
 import { CHUNK_COLORS } from '../lib/colors'
-import { speakVietnamese, cancelSpeech, isVietnameseVoiceAvailable } from '../lib/speak'
+import { speak, cancelSpeech, isVoiceAvailable, deckLangCode } from '../lib/speak'
 
 const BANNER_KEY = 'viVoiceBannerDismissed'
 function SpeakerIcon({ active }) {
@@ -79,6 +79,7 @@ function InlineChunks({ breakdown, field, onSpeak, speakingKey }) {
 }
 
 export default function Study({ deckId, onNavigate, dark, onToggleDark, categories = [] }) {
+  const [deck, setDeck] = useState(null)
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
   const [index, setIndex] = useState(0)
@@ -92,28 +93,30 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark, categori
   const sliderRef = useRef(null)
   const isDragging = useRef(false)
 
+  const langCode = deckLangCode(deck?.language, deck?.script)
+  const langLabel = deck?.language === 'zh' ? 'Chinese' : 'Vietnamese'
+
   useEffect(() => {
-    supabase
-      .from('flashcards')
-      .select('*')
-      .eq('deck_id', deckId)
-      .order('created_at', { ascending: true })
-      .then(({ data, error }) => {
-        if (error) logError('Failed to load cards for study', { page: 'study', action: 'fetchData', err: error, details: { deckId } })
-        setCards(data || [])
-        setLoading(false)
-      })
+    Promise.all([
+      supabase.from('decks').select('language, script').eq('id', deckId).single(),
+      supabase.from('flashcards').select('*').eq('deck_id', deckId).order('created_at', { ascending: true }),
+    ]).then(([{ data: deckData }, { data: cardsData, error }]) => {
+      if (error) logError('Failed to load cards for study', { page: 'study', action: 'fetchData', err: error, details: { deckId } })
+      setDeck(deckData ?? { language: 'vi', script: null })
+      setCards(cardsData || [])
+      setLoading(false)
+    })
   }, [deckId])
 
   useEffect(() => {
-    if (localStorage.getItem(BANNER_KEY)) return
+    if (!deck || localStorage.getItem(BANNER_KEY)) return
     const check = () => {
-      if (!isVietnameseVoiceAvailable()) setShowVoiceBanner(true)
+      if (!isVoiceAvailable(langCode)) setShowVoiceBanner(true)
     }
     check()
     const timer = setTimeout(check, 600)
     return () => clearTimeout(timer)
-  }, [])
+  }, [deck])
 
   // Show hint briefly when cards first load
   useEffect(() => {
@@ -163,7 +166,7 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark, categori
     }
     setSpeakingKey(key)
     try {
-      await speakVietnamese(text, { rate })
+      await speak(text, langCode, { rate })
     } catch (err) {
       logError('Speech synthesis failed', { page: 'study', action: 'speak', err, details: { text } })
     } finally {
@@ -335,8 +338,8 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark, categori
       {showVoiceBanner && (
         <div className="flex items-start gap-3 bg-co-cream dark:bg-amber-900/20 border border-co-gold/40 rounded-2xl px-4 py-3 mb-4 text-sm text-co-ink dark:text-amber-300">
           <span className="flex-1">
-            No Vietnamese voice found. For best results on iPad, go to{' '}
-            <strong>Settings → Accessibility → Spoken Content → Voices → Vietnamese</strong>.
+            No {langLabel} voice found. For best results on iPad, go to{' '}
+            <strong>Settings → Accessibility → Spoken Content → Voices → {langLabel}</strong>.
           </span>
           <button
             onClick={dismissBanner}
@@ -464,7 +467,7 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark, categori
                   ? 'text-co-primary/60 hover:text-co-primary hover:bg-co-primary/10 dark:text-white/50 dark:hover:text-white/90 dark:hover:bg-white/10'
                   : 'text-co-primary/60 hover:text-co-primary hover:bg-co-primary/10'
               }`}
-              aria-label="Pronounce Vietnamese"
+              aria-label={`Pronounce ${langLabel}`}
             >
               <SpeakerIcon active={speakingKey === 'card'} />
             </button>

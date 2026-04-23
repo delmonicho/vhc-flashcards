@@ -54,7 +54,7 @@ function buildOptions(card, allCards) {
   return shuffle([card, ...distractors])
 }
 
-export default function MultipleChoice({ cards, allCards, onDone }) {
+export default function MultipleChoice({ cards, allCards, onDone, langLabel = 'Vietnamese' }) {
   const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState(null)
   const [results] = useState(() => new Map())
@@ -96,8 +96,8 @@ export default function MultipleChoice({ cards, allCards, onDone }) {
 
       {/* Card prompt */}
       <div className="bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 rounded-2xl p-6 text-center">
-        <div className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-3">Vietnamese</div>
-        <div lang="vi" className="font-display text-3xl font-bold text-co-ink dark:text-gray-100">{card.vietnamese}</div>
+        <div className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-3">{langLabel}</div>
+        <div className="font-display text-3xl font-bold text-co-ink dark:text-gray-100">{card.vietnamese}</div>
       </div>
 
       {/* Options */}

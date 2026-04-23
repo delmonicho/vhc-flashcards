@@ -5,9 +5,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Takes an array of {vietnamese, english?} and returns breakdowns for all in one Claude call.
-// Output array matches input order — matched by index, not by string key.
-const SYSTEM_PROMPT = `You are a Vietnamese language tutor. For each item in the input array, generate a word-by-word breakdown of the Vietnamese phrase aligned with its English meaning.
+function buildSystemPrompt(lang: string, script: string | undefined): string {
+  if (lang === 'zh') {
+    const scriptLabel = script === 'traditional' ? 'Traditional Chinese' : 'Simplified Chinese'
+    return `You are a Chinese language tutor. For each item in the input array, generate a word-by-word breakdown of the ${scriptLabel} phrase aligned with its English meaning.
+
+Return ONLY a valid JSON array — no markdown fences, no explanation.
+The output array MUST have the same length as the input, in the same order.
+
+Format: [{"breakdown": [{"vi": "<Chinese characters>", "pinyin": "<pinyin with tone marks>", "en": "<English meaning>"}]}]
+
+Keep chunks to 1–3 characters/words. Include accurate tone marks in pinyin (e.g. nǐ hǎo, not ni hao). Use the English translation as context to pick the right meaning for ambiguous characters.`
+  }
+
+  return `You are a Vietnamese language tutor. For each item in the input array, generate a word-by-word breakdown of the Vietnamese phrase aligned with its English meaning.
 
 Return ONLY a valid JSON array — no markdown fences, no explanation.
 The output array MUST have the same length as the input, in the same order.
@@ -15,6 +26,7 @@ The output array MUST have the same length as the input, in the same order.
 Format: [{"breakdown": [{"vi": "<Vietnamese chunk>", "en": "<English chunk>"}]}]
 
 Keep chunks to 1–3 words. Use the English translation as context to pick the right meaning for ambiguous words.`
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -22,8 +34,7 @@ serve(async (req) => {
   }
 
   try {
-    const { cards } = await req.json()
-    // cards: [{vietnamese: string, english?: string}]
+    const { cards, lang = 'vi', script } = await req.json()
     if (!Array.isArray(cards) || cards.length === 0) {
       return new Response(JSON.stringify({ error: 'Missing or empty cards array' }), {
         status: 400,
@@ -31,6 +42,7 @@ serve(async (req) => {
       })
     }
 
+    const systemPrompt = buildSystemPrompt(lang, script)
     const userMessage = JSON.stringify(
       cards.map(c => ({ vi: c.vietnamese, ...(c.english ? { en: c.english } : {}) }))
     )
@@ -45,7 +57,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 4096,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
     })
@@ -63,7 +75,7 @@ serve(async (req) => {
       .replace(/^```(?:json)?\s*/i, '')
       .replace(/\s*```\s*$/i, '')
 
-    let parsed: { breakdown: { vi: string; en: string }[] }[]
+    let parsed: { breakdown: { vi: string; pinyin?: string; en: string }[] }[]
     try {
       parsed = JSON.parse(raw)
     } catch {

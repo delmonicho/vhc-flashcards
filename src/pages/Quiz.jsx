@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { speakVietnamese, cancelSpeech } from '../lib/speak'
+import { speak, cancelSpeech, deckLangCode } from '../lib/speak'
 import { logError } from '../lib/logger'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -21,11 +21,11 @@ import PronunciationQuiz from '../components/quiz/PronunciationQuiz'
 const ROUND_SIZES = { mc: 10, quickfire: 20, match: 6, tiles: 8, pronunciation: 5 }
 
 const QUIZ_TYPES = [
-  { id: 'mc',           title: 'Multiple Choice', description: 'Pick the correct English translation.',              minCards: 4, roundSize: ROUND_SIZES.mc },
-  { id: 'quickfire',    title: 'Quick Fire',       description: 'Flip cards, mark what you know.',                  minCards: 1, roundSize: ROUND_SIZES.quickfire },
-  { id: 'match',        title: 'Pair Match',       description: 'Match Vietnamese words to their English meanings.', minCards: 4, roundSize: ROUND_SIZES.match },
-  { id: 'tiles',        title: 'Word Builder',     description: 'Arrange Vietnamese tiles to match the English. 3 min timer — earn +10s per correct answer.', minCards: 2, roundSize: ROUND_SIZES.tiles },
-  { id: 'pronunciation', title: 'Pronunciation',   description: 'Record yourself saying each word and get tone-by-tone feedback.', minCards: 1, roundSize: ROUND_SIZES.pronunciation, requiresMic: true, devOnly: true },
+  { id: 'mc',           title: 'Multiple Choice', description: lang => 'Pick the correct English translation.',              minCards: 4, roundSize: ROUND_SIZES.mc },
+  { id: 'quickfire',    title: 'Quick Fire',       description: lang => 'Flip cards, mark what you know.',                  minCards: 1, roundSize: ROUND_SIZES.quickfire },
+  { id: 'match',        title: 'Pair Match',       description: lang => `Match ${lang} words to their English meanings.`,   minCards: 4, roundSize: ROUND_SIZES.match },
+  { id: 'tiles',        title: 'Word Builder',     description: lang => `Arrange ${lang} tiles to match the English. 3 min timer — earn +10s per correct answer.`, minCards: 2, roundSize: ROUND_SIZES.tiles },
+  { id: 'pronunciation', title: 'Pronunciation',   description: lang => 'Record yourself saying each word and get tone-by-tone feedback.', minCards: 1, roundSize: ROUND_SIZES.pronunciation, requiresMic: true, devOnly: true },
 ]
 
 const STAGE_NAMES = ['Unseen', 'Learning', 'Familiar', 'Confident', 'Mastered']
@@ -44,6 +44,7 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
   const { user } = useAuth()
   const [phase, setPhase] = useState('pick')
   const [quizType, setQuizType] = useState(null)
+  const [deck, setDeck] = useState(null)
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
   const [result, setResult] = useState(null)
@@ -63,17 +64,18 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
     })
   }, [phase, result?.xpBarPct])
 
+  const langCode = deckLangCode(deck?.language, deck?.script)
+
   useEffect(() => {
-    supabase
-      .from('flashcards')
-      .select('*')
-      .eq('deck_id', deckId)
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) logError('Failed to load cards for quiz', { page: 'quiz', action: 'fetchData', err: error, details: { deckId } })
-        setCards(data || [])
-        setLoading(false)
-      })
+    Promise.all([
+      supabase.from('decks').select('language, script').eq('id', deckId).single(),
+      supabase.from('flashcards').select('*').eq('deck_id', deckId).order('created_at', { ascending: false }),
+    ]).then(([{ data: deckData }, { data, error }]) => {
+      if (error) logError('Failed to load cards for quiz', { page: 'quiz', action: 'fetchData', err: error, details: { deckId } })
+      setDeck(deckData ?? { language: 'vi', script: null })
+      setCards(data || [])
+      setLoading(false)
+    })
     // Merge Supabase mastery with localStorage so deck progress matches Profile
     if (user) {
       loadMasteryFromSupabase(user.id, supabase).then(remote => {
@@ -145,7 +147,7 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
 
   function handleSpeak(cardId, text) {
     setSpeakingKey(cardId)
-    speakVietnamese(text)
+    speak(text, langCode)
       .catch(err => logError('Speech synthesis failed', { page: 'quiz', action: 'speak', err, details: { text } }))
       .finally(() => setSpeakingKey(null))
   }
@@ -198,7 +200,7 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
                 }`}
               >
                 <div className="font-display font-semibold text-co-ink dark:text-gray-100 text-lg">{qt.title}</div>
-                <div className="text-co-muted dark:text-gray-400 text-sm mt-0.5">{qt.description}</div>
+                <div className="text-co-muted dark:text-gray-400 text-sm mt-0.5">{qt.description(deck?.language === 'zh' ? 'Chinese' : 'Vietnamese')}</div>
                 {eligible ? (
                   <div className="text-xs text-co-muted dark:text-gray-500 mt-1">Up to {qt.roundSize} cards per round</div>
                 ) : (
@@ -245,8 +247,8 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
           </h2>
         </div>
 
-        {quizType === 'mc'           && <MultipleChoice {...quizProps} allCards={cards} />}
-        {quizType === 'quickfire'    && <QuickFire {...quizProps} />}
+        {quizType === 'mc'           && <MultipleChoice {...quizProps} allCards={cards} langCode={langCode} langLabel={deck?.language === 'zh' ? 'Chinese' : 'Vietnamese'} />}
+        {quizType === 'quickfire'    && <QuickFire {...quizProps} langCode={langCode} langLabel={deck?.language === 'zh' ? 'Chinese' : 'Vietnamese'} />}
         {quizType === 'match'        && <PairMatch {...quizProps} allPairCards={cards} />}
         {quizType === 'tiles'        && <TileAssembly {...quizProps} />}
         {quizType === 'pronunciation' && <PronunciationQuiz {...quizProps} />}

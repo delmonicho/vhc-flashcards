@@ -60,6 +60,8 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
   const [weeks, setWeeks] = useState([])
   const [cardCounts, setCardCounts] = useState({})
   const [title, setTitle] = useState('')
+  const [deckLanguage, setDeckLanguage] = useState('vi')
+  const [deckScript, setDeckScript] = useState('simplified')
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [editingWeekId, setEditingWeekId] = useState(null)
@@ -151,6 +153,8 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       setWeeks([data, ...weeks])
       setCardCounts({ ...cardCounts, [data.id]: 0 })
       setTitle('')
+      setDeckLanguage('vi')
+      setDeckScript('simplified')
     } else if (error) {
       logError('Failed to create deck', { page: 'home', action: 'createWeek', err: error, details: { title } })
     }
@@ -264,21 +268,66 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
       {tab === 'mine' && (
         <>
           {/* Create deck */}
-          <form onSubmit={createWeek} className="flex gap-2 mb-8">
-            <input
-              className="flex-1 border border-co-border dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary transition-shadow"
-              placeholder='New deck, e.g. "Week 3 — Family"'
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              disabled={creating}
-            />
-            <button
-              type="submit"
-              disabled={creating || !title.trim()}
-              className="bg-co-primary text-white px-6 py-3 rounded-full font-semibold disabled:opacity-50 hover:enabled:scale-105 active:enabled:scale-95 transition-all duration-150 whitespace-nowrap cursor-pointer disabled:cursor-default"
-            >
-              {creating ? 'Creating…' : '+ Deck'}
-            </button>
+          <form onSubmit={createWeek} className="mb-8 space-y-2">
+            <div className="flex gap-2">
+              <input
+                className="flex-1 border border-co-border dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary transition-shadow"
+                placeholder='New deck, e.g. "Week 3 — Family"'
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                disabled={creating}
+              />
+              <button
+                type="submit"
+                disabled={creating || !title.trim()}
+                className="bg-co-primary text-white px-6 py-3 rounded-full font-semibold disabled:opacity-50 hover:enabled:scale-105 active:enabled:scale-95 transition-all duration-150 whitespace-nowrap cursor-pointer disabled:cursor-default"
+              >
+                {creating ? 'Creating…' : '+ Deck'}
+              </button>
+            </div>
+            {/* Language selector */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-co-muted dark:text-gray-400 font-medium">Language:</span>
+              {[
+                { value: 'vi', label: 'Vietnamese' },
+                { value: 'zh', label: '中文' },
+              ].map(lang => (
+                <button
+                  key={lang.value}
+                  type="button"
+                  onClick={() => setDeckLanguage(lang.value)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
+                    deckLanguage === lang.value
+                      ? 'bg-co-primary text-white'
+                      : 'bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-400 border border-co-border dark:border-gray-600 hover:border-co-primary'
+                  }`}
+                >
+                  {lang.label}
+                </button>
+              ))}
+              {deckLanguage === 'zh' && (
+                <>
+                  <span className="text-xs text-co-muted dark:text-gray-400 font-medium ml-2">Script:</span>
+                  {[
+                    { value: 'simplified', label: '简体' },
+                    { value: 'traditional', label: '繁體' },
+                  ].map(s => (
+                    <button
+                      key={s.value}
+                      type="button"
+                      onClick={() => setDeckScript(s.value)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
+                        deckScript === s.value
+                          ? 'bg-co-ink dark:bg-gray-200 text-white dark:text-gray-900'
+                          : 'bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-400 border border-co-border dark:border-gray-600 hover:border-co-primary'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
           </form>
 
           {/* Week list */}
@@ -318,11 +367,16 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
                         {week.title}
                       </div>
                     )}
-                    <div className="text-sm text-co-muted dark:text-gray-400 mt-0.5">
+                    <div className="text-sm text-co-muted dark:text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
                       {cardCounts[week.id] || 0}{' '}
                       {(cardCounts[week.id] || 0) === 1 ? 'card' : 'cards'}
+                      {week.language === 'zh' && (
+                        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-co-surface dark:bg-gray-800 border border-co-border dark:border-gray-700 text-co-muted dark:text-gray-400 leading-none">
+                          {week.script === 'traditional' ? '繁體' : '简体'}
+                        </span>
+                      )}
                       {week.is_public && (
-                        <span className="ml-2 text-co-fern dark:text-green-400 font-semibold">· Shared</span>
+                        <span className="text-co-fern dark:text-green-400 font-semibold">· Shared</span>
                       )}
                     </div>
                   </button>

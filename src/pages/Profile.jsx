@@ -36,6 +36,8 @@ const STAGE_DESCS = [
 
 const NATIVE_LANGUAGES = ['English', 'French', 'Spanish', 'Mandarin', 'Japanese', 'Korean', 'Other']
 const LEARNING_LANGUAGES = ['Vietnamese', 'French', 'Spanish', 'Mandarin', 'Japanese', 'Korean', 'Other']
+// Maps display label → profile DB code
+const LANG_CODES = { Vietnamese: 'vi', French: 'fr', Spanish: 'es', Mandarin: 'zh', Japanese: 'ja', Korean: 'ko', Other: 'other' }
 
 export default function Profile({ onNavigate }) {
   const { user, profile, refreshProfile } = useAuth()
@@ -298,6 +300,30 @@ export default function Profile({ onNavigate }) {
             placeholder="e.g. Vietnamese 101 — Spring 2026"
             className="w-full border border-co-border dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary transition-shadow"
           />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm text-co-muted dark:text-gray-400">I am learning</label>
+          <div className="flex flex-wrap gap-2">
+            {LEARNING_LANGUAGES.map(lang => {
+              const code = LANG_CODES[lang] ?? lang.toLowerCase().slice(0, 2)
+              const active = learningLanguage === code
+              return (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => setLearningLanguage(code)}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
+                    active
+                      ? 'bg-co-primary text-white'
+                      : 'bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-400 border border-co-border dark:border-gray-600 hover:border-co-primary'
+                  }`}
+                >
+                  {lang}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         <div className="space-y-1">

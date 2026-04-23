@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function QuickFire({ cards, onDone }) {
+export default function QuickFire({ cards, onDone, langLabel = 'Vietnamese' }) {
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [results] = useState(() => new Map())
@@ -41,8 +41,8 @@ export default function QuickFire({ cards, onDone }) {
         } focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-2`}
         aria-label={flipped ? undefined : 'Tap to reveal answer'}
       >
-        <div className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-3">Vietnamese</div>
-        <div lang="vi" className="font-display text-3xl font-bold text-co-ink dark:text-gray-100 mb-4">{card.vietnamese}</div>
+        <div className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-3">{langLabel}</div>
+        <div className="font-display text-3xl font-bold text-co-ink dark:text-gray-100 mb-4">{card.vietnamese}</div>
         {flipped ? (
           <div className="text-co-muted dark:text-gray-300 text-lg pop-in">{card.english}</div>
         ) : (

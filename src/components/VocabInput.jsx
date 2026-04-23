@@ -6,7 +6,7 @@ import { addCategory, getCategoryColor } from '../lib/categories'
 import { logError } from '../lib/logger'
 import { useAuth } from '../context/AuthContext'
 
-export default function VocabInput({ deckId, onCardCreated, onCardBreakdownReady, categories = [], onCategoriesChange }) {
+export default function VocabInput({ deckId, onCardCreated, onCardBreakdownReady, categories = [], onCategoriesChange, deckLanguage = 'vi', deckScript = null }) {
   const { user } = useAuth()
   const [tags, setTags] = useState([])           // array of category ids (optional)
   const [input, setInput] = useState('')
@@ -52,13 +52,18 @@ export default function VocabInput({ deckId, onCardCreated, onCardBreakdownReady
     ? categories.find(c => c.id === tags[0])?.color
     : null
 
+  function googleSourceLang() {
+    if (deckLanguage === 'zh') return deckScript === 'traditional' ? 'zh-TW' : 'zh-CN'
+    return 'vi'
+  }
+
   async function handleAdd() {
     const text = input.trim()
     if (!text) return
     setState('loading')
     setError('')
     try {
-      const english = await translateToEnglish(text)
+      const english = await translateToEnglish(text, googleSourceLang())
       setPreview({ vietnamese: text, english })
       setState('preview')
     } catch (err) {
@@ -89,7 +94,7 @@ export default function VocabInput({ deckId, onCardCreated, onCardBreakdownReady
       setInput('')
       setPreview(null)
       setState('idle')
-      getOrCreateBreakdown(data.vietnamese, data.id, data.english)
+      getOrCreateBreakdown(data.vietnamese, data.id, data.english, deckLanguage, deckScript)
         .then(breakdown => onCardBreakdownReady?.(data.id, breakdown))
         .catch(err => logError('Breakdown generation failed', { page: 'deck', action: 'breakdown', err, details: { cardId: data.id, vietnamese: data.vietnamese } }))
     } else {
@@ -118,13 +123,15 @@ export default function VocabInput({ deckId, onCardCreated, onCardBreakdownReady
       {/* Input row with inline multi-select category dropdown */}
       {state !== 'preview' && (
         <div className="flex gap-2">
-          <label htmlFor="vocab-input" className="sr-only">Type Vietnamese word or phrase</label>
+          <label htmlFor="vocab-input" className="sr-only">
+            {deckLanguage === 'zh' ? 'Type Chinese word or phrase' : 'Type Vietnamese word or phrase'}
+          </label>
           <input
             id="vocab-input"
-            lang="vi"
+            lang={deckLanguage === 'zh' ? (deckScript === 'traditional' ? 'zh-TW' : 'zh-Hans') : 'vi'}
             spellCheck="false"
             className="flex-1 border border-co-border dark:border-gray-600 rounded-xl px-4 py-3 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 placeholder-co-muted dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-co-primary transition-shadow"
-            placeholder="Type Vietnamese word or phrase…"
+            placeholder={deckLanguage === 'zh' ? 'Type Chinese word or phrase…' : 'Type Vietnamese word or phrase…'}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && state === 'idle' && handleAdd()}
@@ -237,7 +244,7 @@ export default function VocabInput({ deckId, onCardCreated, onCardBreakdownReady
           <div className="bg-co-cream dark:bg-gray-700/50 border border-co-gold/40 dark:border-gray-600 rounded-xl p-4 space-y-2">
             <div className="text-xs text-co-muted uppercase tracking-widest font-semibold mb-1">✨ Translation preview</div>
             <input
-              lang="vi"
+              lang={deckLanguage === 'zh' ? (deckScript === 'traditional' ? 'zh-TW' : 'zh-Hans') : 'vi'}
               spellCheck="false"
               className="w-full font-display text-lg font-semibold text-co-ink dark:text-gray-100 bg-white dark:bg-gray-700 border border-co-border dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-co-primary"
               value={preview.vietnamese}

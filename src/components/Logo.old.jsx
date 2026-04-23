@@ -6,7 +6,7 @@ export default function Logo({ size = 'sm' }) {
       height={dim}
       viewBox="0 0 100 100"
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="Cô Ơi lotus logo"
+      aria-label="Pink lotus"
       className="logo-lotus"
     >
       <style>{`
