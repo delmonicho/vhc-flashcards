@@ -4,7 +4,7 @@ import { logError } from '../lib/logger'
 import { CHUNK_COLORS } from '../lib/colors'
 import { speak, cancelSpeech, isVoiceAvailable, deckLangCode } from '../lib/speak'
 
-const BANNER_KEY = 'viVoiceBannerDismissed'
+const BANNER_KEY = 'voiceBannerDismissed'
 function SpeakerIcon({ active }) {
   return (
     <svg

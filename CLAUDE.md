@@ -37,9 +37,9 @@ Fonts: `font-display` = Baloo 2 (headings), `font-sans` = Nunito (body).
 ## Database Schema
 
 ```
-decks         id, user_id (FK → auth.users), title, is_public (boolean, default false), created_at
-flashcards    id, deck_id, user_id (FK → auth.users), vietnamese, english, source (any string), status, breakdown (JSONB nullable), created_at
-breakdowns    vi_key (PK), breakdown (JSONB)   ← cache table
+decks         id, user_id (FK → auth.users), title, is_public (boolean, default false), language (text, default 'vi'), script (text, nullable — 'simplified'|'traditional' for zh), created_at
+flashcards    id, deck_id, user_id (FK → auth.users), vietnamese, english, source (any string), status, breakdown (JSONB nullable), created_at  ← `vietnamese` field holds the phrase for any language
+breakdowns    vi_key (PK), breakdown (JSONB)   ← cache table; key is language-prefixed ('vi:...', 'zh-Hans:...', 'zh-TW:...')
 categories    id (text PK), label, color, created_at
 card_mastery  user_id, card_id, deck_id, correct, incorrect, streak, last_seen, sessions_count  ← PK (user_id, card_id)
 game_stats    id, user_id, deck_id (unique per user), xp, cards_mastered, streak_days, last_played, created_at
@@ -62,11 +62,16 @@ Deployed to Supabase Edge Runtime (Deno). The only function is `generate-breakdo
 ```bash
 # Deploy
 supabase functions deploy generate-breakdown --project-ref zmbfpwjbnqsqywdeymow
+supabase functions deploy batch-breakdown --project-ref zmbfpwjbnqsqywdeymow
 
 # Requires ANTHROPIC_API_KEY set in Supabase project secrets (not in .env)
 ```
 
-The Edge Function proxies Anthropic to avoid browser CORS. Never call the Anthropic API directly from the frontend.
+The Edge Functions proxy Anthropic to avoid browser CORS. Never call the Anthropic API directly from the frontend.
+
+Two functions are deployed:
+- `generate-breakdown` — single card; accepts `{ vietnamese, english, lang?, script? }`; returns `[{vi, pinyin?, en}]`
+- `batch-breakdown` — bulk import; accepts `{ cards: [{vietnamese, english?}], lang?, script? }`; returns pinyin for Chinese
 
 ## Supabase CLI
 

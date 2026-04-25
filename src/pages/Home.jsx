@@ -146,7 +146,7 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
     setCreating(true)
     const { data, error } = await supabase
       .from('decks')
-      .insert({ title: title.trim(), user_id: user.id, is_public: false })
+      .insert({ title: title.trim(), user_id: user.id, is_public: false, language: deckLanguage, script: deckLanguage === 'zh' ? deckScript : null })
       .select()
       .single()
     if (!error && data) {
