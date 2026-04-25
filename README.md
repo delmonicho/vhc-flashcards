@@ -60,37 +60,6 @@ See [QUIZ.md](./QUIZ.md) for the full design spec.
 
 ---
 
-## Pending database work
-
-### Chinese language support (migration not yet applied)
-
-The frontend code for Chinese deck support is complete, but the following database steps must be run before it is fully functional:
-
-**1. Apply the migration** (`supabase/migrations/20260422000000_add_deck_language.sql`):
-```bash
-supabase login
-supabase db push --linked
-```
-
-This adds two columns to the `decks` table:
-- `language text NOT NULL DEFAULT 'vi'` — language code (`'vi'` for Vietnamese, `'zh'` for Chinese)
-- `script text` — `'simplified'` or `'traditional'` for Chinese decks; `null` for Vietnamese
-
-Until this migration is applied, deck creation omits the `language`/`script` fields (all decks default to Vietnamese).
-
-**2. Deploy the updated edge functions** (now accept `lang`/`script` params and return pinyin for Chinese):
-```bash
-supabase functions deploy generate-breakdown --project-ref zmbfpwjbnqsqywdeymow
-supabase functions deploy batch-breakdown --project-ref zmbfpwjbnqsqywdeymow
-```
-
-**3. After migration:** restore the `language`/`script` fields in the `createWeek` insert in `src/pages/Home.jsx` (currently omitted to prevent insert errors):
-```js
-.insert({ title, user_id, is_public: false, language: deckLanguage, script: deckLanguage === 'zh' ? deckScript : null })
-```
-
----
-
 ## Getting started
 
 ```bash

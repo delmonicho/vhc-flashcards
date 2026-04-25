@@ -1,7 +1,7 @@
 {
-  "name": "LearnLang — Learn Vietnamese",
+  "name": "LearnLang — Learn Language",
   "short_name": "LearnLang",
-  "description": "Vietnamese language flashcards, quizzes, and homework mode for language learners.",
+  "description": "Learn language flashcards, quizzes, and homework mode for language learners.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFF8F3",
@@ -14,5 +14,8 @@
       "sizes": "any"
     }
   ],
-  "categories": ["education", "utilities"]
+  "categories": [
+    "education",
+    "utilities"
+  ]
 }

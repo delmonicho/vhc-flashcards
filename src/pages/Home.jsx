@@ -289,18 +289,17 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-co-muted dark:text-gray-400 font-medium">Language:</span>
               {[
-                { value: 'vi', label: 'Vietnamese' },
+                { value: 'vi', label: 'Tiếng Việt' },
                 { value: 'zh', label: '中文' },
               ].map(lang => (
                 <button
                   key={lang.value}
                   type="button"
                   onClick={() => setDeckLanguage(lang.value)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
-                    deckLanguage === lang.value
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${deckLanguage === lang.value
                       ? 'bg-co-primary text-white'
                       : 'bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-400 border border-co-border dark:border-gray-600 hover:border-co-primary'
-                  }`}
+                    }`}
                 >
                   {lang.label}
                 </button>
@@ -316,11 +315,10 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
                       key={s.value}
                       type="button"
                       onClick={() => setDeckScript(s.value)}
-                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
-                        deckScript === s.value
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${deckScript === s.value
                           ? 'bg-co-ink dark:bg-gray-200 text-white dark:text-gray-900'
                           : 'bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-400 border border-co-border dark:border-gray-600 hover:border-co-primary'
-                      }`}
+                        }`}
                     >
                       {s.label}
                     </button>
