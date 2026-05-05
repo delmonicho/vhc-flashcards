@@ -100,8 +100,6 @@ Single export: `supabase` client. Import directly everywhere — no wrapper, no 
 
 ## pdfImport.js
 
-Two async exports used by `PdfImportModal`:
+Single async export used by `PdfImportModal`:
 
-**`extractPdfText(file)`** — reads a `File` object via `FileReader`, base64-encodes it, POSTs to `/api/pdf-extract`, returns raw text string. Throws on HTTP error or read failure.
-
-**`parseVocabPairs(text)`** — calls the `parse-vocab` Supabase Edge Function via `supabase.functions.invoke()`, returns `{ pairs: [{vietnamese, english}], truncated: boolean }`. Uses the same `ANTHROPIC_API_KEY` secret as `generate-breakdown` — no Vercel env var needed.
+**`parsePdfToCards(file)`** — reads a `File` via `FileReader`, base64-encodes it (3MB max, validated client-side), invokes the `parse-vocab` Supabase Edge Function with `{ pdfBase64 }`. Returns `{ pairs: [{vietnamese, english, tag}], suggestedTags, truncated }`. Tags are kebab-case English derived per-slide by Claude (`dialogue`, `fill-in-the-blank`, `form-a-question`, `multiple-choice`, …) — they replace the older fixed semantic tags. Throws on size violation, read failure, or function error; the modal's `handleFileChange` catches and routes to the error phase.

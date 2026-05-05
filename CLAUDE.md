@@ -57,21 +57,21 @@ No Redux or Context. Each page owns its local state. Supabase client is imported
 
 ## Edge Functions
 
-Deployed to Supabase Edge Runtime (Deno). The only function is `generate-breakdown`:
+Deployed to Supabase Edge Runtime (Deno):
 
 ```bash
-# Deploy
 supabase functions deploy generate-breakdown --project-ref zmbfpwjbnqsqywdeymow
 supabase functions deploy batch-breakdown --project-ref zmbfpwjbnqsqywdeymow
+supabase functions deploy parse-vocab --project-ref zmbfpwjbnqsqywdeymow
 
 # Requires ANTHROPIC_API_KEY set in Supabase project secrets (not in .env)
 ```
 
 The Edge Functions proxy Anthropic to avoid browser CORS. Never call the Anthropic API directly from the frontend.
 
-Two functions are deployed:
 - `generate-breakdown` — single card; accepts `{ vietnamese, english, lang?, script? }`; returns `[{vi, pinyin?, en}]`
 - `batch-breakdown` — bulk import; accepts `{ cards: [{vietnamese, english?}], lang?, script? }`; returns pinyin for Chinese
+- `parse-vocab` — PDF import; accepts `{ pdfBase64 }` (≤3MB); sends PDF as Anthropic `document` content block; returns `{ pairs: [{vietnamese, english, tag}], suggestedTags, truncated? }` with kebab-case English slide tags
 
 ## Supabase CLI
 
@@ -98,8 +98,8 @@ Local Supabase stack is not used. Available inspect subcommands: `bloat`, `calls
 - **Breakdown regeneration**: If `vietnamese` text changes on a card, `breakdown` is wiped and re-queued. Preserve breakdown if only `english` or `source` changes.
 - **Tailwind v4**: No config file. Customize via `@theme` and `@custom-variant` in `src/index.css`. Don't create a `tailwind.config.js`.
 - **Search/filter is client-side**: All cards for a deck are loaded at once. No pagination needed for current scale.
-- **`VITE_ANTHROPIC_API_KEY`** and **`VITE_GOOGLE_API_KEY`** are removed. Server-side keys `ANTHROPIC_API_KEY` and `GOOGLE_API_KEY` live in Vercel environment variables and are accessed via `/api/claude`, `/api/translate`, `/api/pdf-extract`, and `/api/pdf-parse-vocab` serverless functions. The Anthropic key also lives in Supabase secrets for the Edge Function.
-- **`pdf-parse` import path**: Use `import pdfParse from 'pdf-parse/lib/pdf-parse.js'` (direct subpath) — the package's top-level entry tries to load test fixtures that don't exist in Vercel's serverless environment.
+- **`VITE_ANTHROPIC_API_KEY`** and **`VITE_GOOGLE_API_KEY`** are removed. Server-side keys `ANTHROPIC_API_KEY` and `GOOGLE_API_KEY` live in Vercel environment variables and are accessed via `/api/claude` and `/api/translate` serverless functions. The Anthropic key also lives in Supabase secrets for Edge Functions.
+- **PDF import** sends the file as a base64 `document` content block straight to the `parse-vocab` Edge Function (Claude Haiku 4.5 reads text + images natively). No server-side `pdf-parse` step.
 - **`source` column has no enum constraint** — the old `('class'|'homework')` check was dropped in migration `20260326044509`. Any string is valid; the category system in Supabase (`categories` table) is the source of truth for valid values.
 
 ## Dev Plans

@@ -11,6 +11,8 @@ contracts with its parents.
 
 **Review phase:** editable Vietnamese/English fields per row, checkbox to include/exclude, bulk category pill selector (multi-select), Select All / Deselect All. Categories default to `['class']` if that category exists, else empty.
 
+**Suggested tags are dynamic.** Tags come back from `parse-vocab` as kebab-case English derived from each slide's title (e.g. `dialogue`, `fill-in-the-blank`). There is no fixed palette — pill colors are looked up via `getCategoryColor(categories, tag)` and fall back to neutral gray for tags not yet promoted to categories. New tags are auto-created as `categories` rows on import.
+
 **Import loop:** sequential Supabase inserts with a live counter; individual failures are silently skipped. Calls `onCardsImported(results)` after all inserts, then transitions to `'done'` phase. Parent (Deck.jsx) queues breakdowns via `getOrCreateBreakdown` — do not call it from inside this modal.
 
 **Retry:** resets to `'uploading'` and clears the file input value so the same file can be re-selected.

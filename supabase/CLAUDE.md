@@ -28,12 +28,12 @@ supabase functions deploy batch-breakdown --project-ref zmbfpwjbnqsqywdeymow
 
 ## Edge Function: parse-vocab
 
-**Purpose:** Extracts `[{vietnamese, english}]` flashcard pairs from raw PDF text. Uses the same `ANTHROPIC_API_KEY` secret as `generate-breakdown`. Called by `src/lib/pdfImport.js` via `supabase.functions.invoke('parse-vocab', { body: { text } })`.
+**Purpose:** Slide-aware PDF flashcard extraction. The full PDF is sent as a Claude `document` content block so Haiku reads both text and image-only slides (e.g. MCQ pages) in a single call. Uses the same `ANTHROPIC_API_KEY` secret as `generate-breakdown`. Called by `src/lib/pdfImport.js` via `supabase.functions.invoke('parse-vocab', { body: { pdfBase64 } })`.
 
-**Request:** `POST /functions/v1/parse-vocab` with `{ text: string }`
-**Response:** `{ pairs: [{vietnamese, english}], truncated?: true }` — `truncated` is set when input exceeded 15,000 chars.
+**Request:** `POST /functions/v1/parse-vocab` with `{ pdfBase64: string }` — raw base64 (no `data:` prefix), ≤3MB (size validated server-side from base64 length; 413 if exceeded).
+**Response:** `{ pairs: [{vietnamese, english, tag}], suggestedTags: string[], truncated?: true }`. Tags are kebab-case English (`dialogue`, `fill-in-the-blank`, `multiple-choice`, …); the slide title is also emitted as its own card. `truncated` is set when Anthropic returns `stop_reason === 'max_tokens'`.
 
-**Model:** `claude-haiku-4-5-20251001`. System prompt handles `=` and `:` delimiters, `><` antonym pairs (extracts each side), and skips poetry/grammar examples.
+**Model:** `claude-haiku-4-5-20251001` with `max_tokens: 16384`. System prompt enforces: skip first + last slide, identify the slide title and use it as the tag for every card on that slide, complete fill-in-the-blank exercises using the word bank, complete MCQ via vision. `media_type` must be exactly `application/pdf`.
 
 **Deploy:**
 ```bash

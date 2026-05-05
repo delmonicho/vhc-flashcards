@@ -1,22 +1,8 @@
 import { useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { extractPdfText, parseVocabPairs } from '../lib/pdfImport'
-import { addCategory } from '../lib/categories'
-
-// Stable display colors per tag name so they don't shift between renders
-const TAG_COLORS = {
-  vocabulary: '#D6EEFF',
-  dialogue:   '#D6F5E3',
-  poem:       '#EDE4FF',
-  grammar:    '#FFF0C0',
-  review:     '#FFE8D6',
-  example:    '#D6F5E3',
-  exercise:   '#FCE4EC',
-}
-function tagColor(tag) {
-  return TAG_COLORS[tag] ?? '#F0F0F0'
-}
+import { parsePdfToCards } from '../lib/pdfImport'
+import { addCategory, getCategoryColor } from '../lib/categories'
 
 export default function PdfImportModal({ deckId, categories, onCategoriesChange, onCardsImported, onClose }) {
   const { user } = useAuth()
@@ -45,8 +31,7 @@ export default function PdfImportModal({ deckId, categories, onCategoriesChange,
     }
     setProcessing(true)
     try {
-      const text = await extractPdfText(file)
-      const { pairs, suggestedTags: tags, truncated: wasTruncated } = await parseVocabPairs(text)
+      const { pairs, suggestedTags: tags, truncated: wasTruncated } = await parsePdfToCards(file)
       setEdits(pairs.map(p => ({ vietnamese: p.vietnamese, english: p.english, tag: p.tag ?? null })))
       setChecked(pairs.map(() => true))
       setSuggestedTags(tags)
@@ -213,7 +198,7 @@ export default function PdfImportModal({ deckId, categories, onCategoriesChange,
                 </div>
                 {truncated && (
                   <p className="text-xs text-co-gold dark:text-yellow-400 bg-co-gold/10 dark:bg-yellow-900/20 rounded-xl px-3 py-2 mt-2">
-                    PDF was very long — only the first portion was analyzed.
+                    PDF was very long — some content may have been skipped.
                   </p>
                 )}
               </div>
@@ -244,10 +229,10 @@ export default function PdfImportModal({ deckId, categories, onCategoriesChange,
                 </div>
               )}
 
-              {/* Suggested section tags */}
+              {/* Suggested slide tags */}
               {suggestedTags.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-2">Also tag by section:</p>
+                  <p className="text-xs font-semibold text-co-muted dark:text-gray-400 uppercase tracking-widest mb-2">Tag by slide:</p>
                   <div className="flex flex-wrap gap-2">
                     {suggestedTags.map(tag => {
                       const active = activeSuggestedTags.has(tag)
@@ -255,7 +240,7 @@ export default function PdfImportModal({ deckId, categories, onCategoriesChange,
                         <button
                           key={tag}
                           onClick={() => toggleSuggestedTag(tag)}
-                          style={active ? { backgroundColor: tagColor(tag), color: '#2D1B12' } : {}}
+                          style={active ? { backgroundColor: getCategoryColor(categories, tag), color: '#2D1B12' } : {}}
                           className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
                             active
                               ? 'shadow-sm'
@@ -322,11 +307,11 @@ export default function PdfImportModal({ deckId, categories, onCategoriesChange,
                       <span
                         className="shrink-0 self-center text-xs px-2 py-0.5 rounded-full font-medium"
                         style={{
-                          backgroundColor: activeSuggestedTags.has(edit.tag) ? tagColor(edit.tag) : '#F0F0F0',
+                          backgroundColor: activeSuggestedTags.has(edit.tag) ? getCategoryColor(categories, edit.tag) : '#F0F0F0',
                           color: '#2D1B12',
                           opacity: activeSuggestedTags.has(edit.tag) ? 1 : 0.4,
                         }}
-                        aria-label={`Section: ${edit.tag}`}
+                        aria-label={`Slide: ${edit.tag}`}
                       >
                         {edit.tag}
                       </span>
