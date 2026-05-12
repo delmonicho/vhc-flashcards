@@ -17,6 +17,7 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
   useEffect(() => {
     const modal = modalRef.current
     if (!modal) return
+    modal.focus()
     const focusableSelectors = 'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
     function getFocusable() { return Array.from(modal.querySelectorAll(focusableSelectors)) }
     function handleKeyDown(e) {
@@ -79,6 +80,7 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
   return (
     <div
       ref={modalRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
@@ -110,7 +112,6 @@ export default function CardEditModal({ card, categories = [], onSave, onDelete,
               className="w-full border border-co-border dark:border-gray-700 rounded-xl px-3 py-2 text-base bg-white dark:bg-gray-800 text-co-ink dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-co-primary"
               value={vietnamese}
               onChange={e => setVietnamese(e.target.value)}
-              autoFocus
             />
           </div>
           <div className="space-y-1.5">
