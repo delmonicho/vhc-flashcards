@@ -389,6 +389,11 @@ export default function Quiz({ deckId, onNavigate, dark, onToggleDark }) {
                     )}
                   </div>
                 </div>
+                {deck?.language === 'zh' && card.breakdown?.some(s => s.pinyin) && (
+                  <div className="text-xs text-co-muted dark:text-gray-400 mt-0.5 tracking-wide">
+                    {card.breakdown.map(s => s.pinyin).filter(Boolean).join(' ')}
+                  </div>
+                )}
                 <div className="text-co-muted dark:text-gray-400 text-sm mt-0.5">{card.english}</div>
                 {expandedCardId === card.id && card.breakdown && (
                   <BreakdownDisplay breakdown={card.breakdown} speakingKey={null} />

@@ -18,30 +18,30 @@ Learn Lang helps you capture vocabulary from class and homework, review it as fl
 - Delete a deck (with confirmation) — removes the deck and all its cards
 
 ### Cards
-- Add cards by typing Vietnamese — English translation is fetched automatically
+- Add cards by typing supported language (Vietnamese, Chinese) — English translation is fetched automatically
 - Tag each card as **Class** or **Homework** at input time
 - Cards display in a grid with a corner tag (C / H) for source
-- Search cards by Vietnamese or English text
+- Search cards by supported language or English text
 - Filter by All / Class / Homework
-- Edit any card's Vietnamese, English, or word-by-word breakdown
+- Edit any card's word-by-word breakdown
 - Delete individual cards from the edit modal
 
 ### Flashcard Study
 - Tap a card to flip and reveal the translation
 - Cards with breakdowns show color-coded word chunks on both sides
-- Tap any Vietnamese chunk to hear it spoken (Web Speech API)
+- Tap any word chunk to hear it spoken (Web Speech API)
 - Corner speaker button pronounces the full phrase at any time
 - Progress bar and card counter track where you are
 - Navigate with ‹ › arrows
 
 ### Word Breakdown Import
 - Paste a Claude-generated JSON breakdown to annotate cards with chunk-by-chunk translations
-- Each Vietnamese chunk becomes a tappable, color-coded pill in Study mode
+- Each word chunk becomes a tappable, color-coded pill in Study mode
 
 ### Quiz Mode *(coming soon)*
 Three quiz formats planned:
-- **Multiple Choice** — pick the correct English for a Vietnamese card
-- **Pair Match** — tap to connect scrambled Vietnamese ↔ English pairs
+- **Multiple Choice** — pick the correct English for a card
+- **Pair Match** — tap to connect scrambled Lang ↔ English pairs
 - **Quick Fire** — reveal and self-grade with Got it / Not yet
 
 See [QUIZ.md](./QUIZ.md) for the full design spec.

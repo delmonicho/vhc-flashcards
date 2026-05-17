@@ -35,7 +35,7 @@ const STAGE_DESCS = [
 ]
 
 const NATIVE_LANGUAGES = ['English', 'French', 'Spanish', 'Mandarin', 'Japanese', 'Korean', 'Other']
-const LEARNING_LANGUAGES = ['Vietnamese', 'French', 'Spanish', 'Mandarin', 'Japanese', 'Korean', 'Other']
+const LEARNING_LANGUAGES = ['Vietnamese', 'Mandarin']
 // Maps display label → profile DB code
 const LANG_CODES = { Vietnamese: 'vi', French: 'fr', Spanish: 'es', Mandarin: 'zh', Japanese: 'ja', Korean: 'ko', Other: 'other' }
 
@@ -313,11 +313,10 @@ export default function Profile({ onNavigate }) {
                   key={lang}
                   type="button"
                   onClick={() => setLearningLanguage(code)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${
-                    active
-                      ? 'bg-co-primary text-white'
-                      : 'bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-400 border border-co-border dark:border-gray-600 hover:border-co-primary'
-                  }`}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-co-primary focus:ring-offset-1 ${active
+                    ? 'bg-co-primary text-white'
+                    : 'bg-co-surface dark:bg-gray-800 text-co-muted dark:text-gray-400 border border-co-border dark:border-gray-600 hover:border-co-primary'
+                    }`}
                 >
                   {lang}
                 </button>

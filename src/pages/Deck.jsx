@@ -47,7 +47,7 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
     if (nullCards.length === 0) return
     setPendingBreakdowns(new Set(nullCards.map(c => c.id)))
     for (const c of nullCards) {
-      getOrCreateBreakdown(c.vietnamese, c.id, c.english)
+      getOrCreateBreakdown(c.vietnamese, c.id, c.english, deck?.language ?? 'vi', deck?.script ?? null)
         .then(breakdown => {
           setCards(prev => prev.map(card => card.id === c.id ? { ...card, breakdown } : card))
           setPendingBreakdowns(prev => { const next = new Set(prev); next.delete(c.id); return next })
@@ -133,7 +133,7 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
 
   function handlePdfImport(newCards) {
     setCards(prev => [...newCards, ...prev])
-    batchGetOrCreateBreakdowns(newCards, handleBreakdownReady)
+    batchGetOrCreateBreakdowns(newCards, handleBreakdownReady, deck?.language ?? 'vi', deck?.script ?? null)
       .catch(err => logError('pdf import breakdown failed', { page: 'deck', action: 'batch-breakdown', err }))
   }
 
@@ -497,9 +497,14 @@ export default function Deck({ deckId, onNavigate, categories, onCategoriesChang
                       setEditingCard(card)
                     }}
                   >
-                    <div lang="vi" className="flex-1 font-display font-semibold text-co-ink dark:text-gray-100 mb-1.5 line-clamp-3 text-base leading-snug">
+                    <div lang="vi" className="flex-1 font-display font-semibold text-co-ink dark:text-gray-100 mb-1 line-clamp-3 text-base leading-snug">
                       {card.vietnamese}
                     </div>
+                    {deck?.language === 'zh' && card.breakdown?.some(s => s.pinyin) && (
+                      <div className="text-xs text-co-muted dark:text-gray-400 mb-1.5 tracking-wide">
+                        {card.breakdown.map(s => s.pinyin).filter(Boolean).join(' ')}
+                      </div>
+                    )}
                     <div className="text-co-muted dark:text-gray-300 text-sm line-clamp-2 mb-2">
                       {card.english}
                     </div>

@@ -40,6 +40,7 @@ function LoadingDots() {
 
 function InlineChunks({ breakdown, field, onSpeak, speakingKey }) {
   const interactive = field === 'vi' && !!onSpeak
+  const sizeClass = field === 'pinyin' ? 'text-xs tracking-wide' : 'text-base font-semibold'
   return (
     <div className="w-full text-center leading-relaxed">
       {breakdown.map((seg, i) => {
@@ -50,7 +51,7 @@ function InlineChunks({ breakdown, field, onSpeak, speakingKey }) {
             <button
               key={i}
               onClick={e => { e.stopPropagation(); onSpeak(i, seg.vi) }}
-              className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 mx-0.5 my-0.5 text-base font-semibold active:opacity-70 transition-opacity cursor-pointer ${colorClass}`}
+              className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 mx-0.5 my-0.5 active:opacity-70 transition-opacity cursor-pointer ${sizeClass} ${colorClass}`}
             >
               {seg[field]}
               <svg
@@ -68,7 +69,7 @@ function InlineChunks({ breakdown, field, onSpeak, speakingKey }) {
         return (
           <span
             key={i}
-            className={`inline-block rounded-md px-1.5 py-0.5 mx-0.5 my-0.5 text-base font-semibold ${colorClass}`}
+            className={`inline-block rounded-md px-1.5 py-0.5 mx-0.5 my-0.5 ${sizeClass} ${colorClass}`}
           >
             {seg[field]}
           </span>
@@ -425,6 +426,13 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark, categori
                         onSpeak={(i, text) => handleSpeak(`chunk-${i}`, text)}
                         speakingKey={speakingKey}
                       />
+                      {card.breakdown.some(s => s.pinyin) && (
+                        <InlineChunks
+                          breakdown={card.breakdown}
+                          field="pinyin"
+                          speakingKey={speakingKey}
+                        />
+                      )}
                       <div className="w-4/5 border-t border-co-border dark:border-white/15 my-4" />
                       <InlineChunks
                         breakdown={card.breakdown}
@@ -446,9 +454,16 @@ export default function Study({ deckId, onNavigate, dark, onToggleDark, categori
               ) : (
                 /* Front face */
                 <div className="flex flex-col items-center justify-center min-h-[8rem] text-center">
-                  <div className="font-display text-2xl font-bold text-co-ink dark:text-gray-100 mb-4">
+                  <div className="font-display text-2xl font-bold text-co-ink dark:text-gray-100 mb-1">
                     {card.vietnamese}
                   </div>
+                  {card.breakdown?.some(s => s.pinyin) ? (
+                    <div className="text-sm text-co-muted dark:text-gray-400 mb-3 tracking-wide">
+                      {card.breakdown.map(s => s.pinyin).join(' ')}
+                    </div>
+                  ) : (
+                    <div className="mb-3" />
+                  )}
                   <div className="text-sm text-co-muted dark:text-gray-500">
                     tap to reveal
                   </div>

@@ -135,7 +135,7 @@ function VocabPanel({ deckId, userId, onCardAdded, onBreakdownReady, onAddToSubm
         supabase.from('flashcards').update({ breakdown }).eq('id', data.id).catch(() => {})
       } else {
         import('../lib/breakdown').then(({ getOrCreateBreakdown }) => {
-          getOrCreateBreakdown(vi, data.id, en)
+          getOrCreateBreakdown(vi, data.id, en, deckLanguage, deckScript)
             .catch(err => logError('Breakdown failed in homework mode', { page: 'homework', action: 'breakdown', err }))
         })
       }
@@ -623,6 +623,12 @@ export default function HomeworkMode({ deckId, onNavigate }) {
                     </svg>
                   </button>
                 </div>
+                {/* Pinyin (Chinese only) */}
+                {deck?.language === 'zh' && card.breakdown?.some(s => s.pinyin) && (
+                  <p className="text-xs text-co-muted dark:text-gray-400 mb-0.5 tracking-wide">
+                    {card.breakdown.map(s => s.pinyin).filter(Boolean).join(' ')}
+                  </p>
+                )}
                 {/* English */}
                 <p className="text-xs text-co-muted dark:text-gray-400 mb-3">{card.english}</p>
                 {/* Breakdown */}

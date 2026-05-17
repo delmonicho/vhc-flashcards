@@ -204,12 +204,24 @@ export default function Home({ onNavigate, dark, onToggleDark }) {
   async function handleDelete() {
     if (!deleteTarget) return
     setDeleting(true)
-    const [flashcardsResult, decksResult] = await Promise.all([
+    const [flashcardsResult] = await Promise.all([
       supabase.from('flashcards').delete().eq('deck_id', deleteTarget.id),
-      supabase.from('decks').delete().eq('id', deleteTarget.id),
+      supabase.from('game_stats').delete().eq('deck_id', deleteTarget.id),
+      supabase.from('card_mastery').delete().eq('deck_id', deleteTarget.id),
     ])
-    if (flashcardsResult.error) logError('Failed to delete flashcards on deck delete', { page: 'home', action: 'deleteDeck', err: flashcardsResult.error, details: { deckId: deleteTarget.id } })
-    if (decksResult.error) logError('Failed to delete deck', { page: 'home', action: 'deleteDeck', err: decksResult.error, details: { deckId: deleteTarget.id } })
+    const decksResult = await supabase.from('decks').delete().eq('id', deleteTarget.id)
+    if (flashcardsResult.error) {
+      logError('Failed to delete flashcards on deck delete', { page: 'home', action: 'deleteDeck', err: flashcardsResult.error, details: { deckId: deleteTarget.id } })
+      setDeleting(false)
+      setDeleteTarget(null)
+      return
+    }
+    if (decksResult.error) {
+      logError('Failed to delete deck', { page: 'home', action: 'deleteDeck', err: decksResult.error, details: { deckId: deleteTarget.id } })
+      setDeleting(false)
+      setDeleteTarget(null)
+      return
+    }
     setWeeks(prev => prev.filter(w => w.id !== deleteTarget.id))
     setCardCounts(prev => {
       const next = { ...prev }
